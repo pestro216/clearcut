@@ -158,7 +158,7 @@ public enum Matting {
             let ratio = L / Lb
             let cr = r / L - rb / Lb, cg = g / L - gb / Lb, cb = b / L - bb / Lb
             let chroma = sqrt(cr * cr + cg * cg + cb * cb) * 0.33 * min(1, min(L, Lb) / 0.15)
-            if ratio > 0.15 && ratio < 1.04 && chroma < 0.06 {
+            if ratio > 0.35 && ratio < 1.04 && chroma < 0.06 {
                 shadowLike[i] = true
                 D[i] = chroma
             } else {
@@ -223,19 +223,31 @@ public enum Matting {
             fgArea += recoveredCount
         }
 
-        // Carve gaps the model filled in (between comb teeth, inside a handle): small regions
-        // inside the item whose colour is indistinguishable from the background around it.
-        // Large look-alike areas are part of the product (white on white) and are kept.
+        // Carve gaps the model filled in (between comb teeth, inside a handle): regions inside
+        // the item whose colour matches the background around them, and which are surrounded by
+        // product that is itself clearly different from the background. A light product on a
+        // light surface fails that second test, so it is never carved into.
         var carved = 0
-        if separation >= 10 {
+        if separation >= 8 {
+            let z = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1)
             var hole = [Bool](repeating: false, count: n)
-            for i in 0..<n where fg[i] && D[i] / noise < 1.5 { hole[i] = true }
+            for i in 0..<n where fg[i] && z.data[i] < 1.6 { hole[i] = true }
             let (hl, hs) = Regions.label(hole, width: w, height: h)
-            let minHole = max(12, Int(0.0002 * Float(n)))
-            let maxHole = Int(0.05 * Float(fgArea))
+            let minHole = max(12, Int(0.0001 * Float(n)))
+            var ring = [[Float]](repeating: [], count: hs.count)
+            for i in 0..<n {
+                let l = Int(hl[i]); if l == 0 || hs[l] < minHole { continue }
+                let x = i % w, y = i / w
+                for (nx, ny) in [(x - 2, y), (x + 2, y), (x, y - 2), (x, y + 2)] where nx >= 0 && ny >= 0 && nx < w && ny < h {
+                    let j = ny * w + nx
+                    if fg[j] && !hole[j] && ring[l].count < 400 { ring[l].append(z.data[j]) }
+                }
+            }
             var carve = [Bool](repeating: false, count: hs.count)
-            for c in 1..<hs.count where hs[c] >= minHole && hs[c] <= maxHole { carve[c] = true; carved += hs[c] }
-            if Float(carved) > 0.12 * Float(fgArea) {
+            for c in 1..<hs.count where hs[c] >= minHole && hs[c] < fgArea / 2 && ring[c].count >= 8 {
+                if median(ring[c]) >= 8 { carve[c] = true; carved += hs[c] }
+            }
+            if Float(carved) > 0.6 * Float(fgArea) {
                 warning = "Parts of the item look like the background"
                 notes["carveRejected"] = 1
                 carved = 0
