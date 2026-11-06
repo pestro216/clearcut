@@ -21,6 +21,8 @@ final class BatchStore: ObservableObject {
     @Published var exportProgress: (done: Int, total: Int)?
     @Published var exportResult: ExportResult?
     @Published var message: String?
+    /// The photo the user is looking at in a tool screen; it is re-rendered first.
+    var focusID: UUID?
 
     struct ExportResult: Identifiable {
         let id = UUID()
@@ -28,6 +30,8 @@ final class BatchStore: ObservableObject {
         let failed: Int
         let thumbs: [UIImage]
     }
+
+    nonisolated static let previewLongSide: CGFloat = 1100
 
     private let dir: URL
     private var previewTask: Task<Void, Never>?
@@ -39,17 +43,17 @@ final class BatchStore: ObservableObject {
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         var initial = Look()
-        if let data = UserDefaults.standard.data(forKey: "look"),
+        if let data = UserDefaults.standard.data(forKey: Look.storageKey),
            let saved = try? JSONDecoder().decode(Look.self, from: data) {
             initial = saved
         }
-        if initial.backdrop == .photo { initial.backdrop = .colour(RGB(1, 1, 1)) }
+        if initial.backdrop == .photo { initial.backdrop = Look().backdrop }
         look = initial
     }
 
     private func saveLook() {
         if let data = try? JSONEncoder().encode(look) {
-            UserDefaults.standard.set(data, forKey: "look")
+            UserDefaults.standard.set(data, forKey: Look.storageKey)
         }
     }
 
@@ -75,12 +79,13 @@ final class BatchStore: ObservableObject {
                         BatchStore.prepare(data: data, id: id, dir: folder)
                     }.value
                     if let p = prepared {
-                        var item = BatchItem(id: id, originalURL: p.originalURL, originalSize: p.originalSize)
+                        var item = BatchItem(id: id, originalURL: p.originalURL, pixelSize: p.pixelSize)
                         item.smallOriginal = p.smallOriginal
-                        item.cutoutURL = p.cutoutURL
-                        item.smallCutout = p.smallCutout
-                        item.status = p.cutoutURL == nil ? .noSubject : .ready
-                        item.removed = p.cutoutURL != nil
+                        item.maskURL = p.maskURL
+                        item.smallMask = p.smallMask
+                        item.bbox = p.bbox
+                        item.status = p.maskURL == nil ? .noSubject : .ready
+                        item.removed = p.maskURL != nil
                         items.append(item)
                         renderPreview(for: id)
                     }
@@ -100,52 +105,57 @@ final class BatchStore: ObservableObject {
 
     struct Prepared: @unchecked Sendable {
         let originalURL: URL
-        let originalSize: CGSize
+        let pixelSize: CGSize
         let smallOriginal: CGImage?
-        let cutoutURL: URL?
-        let smallCutout: CGImage?
+        let maskURL: URL?
+        let smallMask: CGImage?
+        let bbox: CGRect
     }
 
     nonisolated static func prepare(data: Data, id: UUID, dir: URL) -> Prepared? {
-        guard let cg = ImageFiles.loadOriented(data, maxPixel: 3200) else { return nil }
         let originalURL = dir.appendingPathComponent("\(id.uuidString)-original")
         do { try data.write(to: originalURL) } catch { return nil }
-        let size = CGSize(width: cg.width, height: cg.height)
-        let small = ImageFiles.scaled(cg, maxSide: 640)
+        // Full resolution, orientation applied. Nothing is resized for output.
+        let fullSide = ImageFiles.orientedSize(data).map { Int(max($0.width, $0.height)) } ?? 8192
+        guard let full = ImageFiles.loadOriented(data, maxPixel: min(fullSide, 8192)) else { return nil }
+        let size = CGSize(width: full.width, height: full.height)
+        let small = ImageFiles.scaled(full, maxSide: previewLongSide)
 
-        var cutoutURL: URL?
-        var smallCut: CGImage?
-        if let subject = try? Cutout.subject(from: cg),
-           let cutCG = Renderer.context.createCGImage(subject, from: subject.extent, format: .RGBA8, colorSpace: Renderer.sRGB),
-           let png = ImageFiles.encode(cutCG, type: .png) {
-            let url = dir.appendingPathComponent("\(id.uuidString)-cutout.png")
+        var maskURL: URL?
+        var smallMask: CGImage?
+        var bbox = CGRect(x: 0, y: 0, width: 1, height: 1)
+        if let mask = try? Cutout.mask(for: full), let png = ImageFiles.encode(mask, type: .png) {
+            let url = dir.appendingPathComponent("\(id.uuidString)-mask.png")
             if (try? png.write(to: url)) != nil {
-                cutoutURL = url
-                smallCut = ImageFiles.scaled(cutCG, maxSide: 640)
+                maskURL = url
+                if let small {
+                    smallMask = ImageFiles.scaledGray(mask, to: CGSize(width: small.width, height: small.height))
+                }
+                bbox = Cutout.boundingBox(of: smallMask ?? mask)
             }
         }
-        return Prepared(originalURL: originalURL, originalSize: size, smallOriginal: small,
-                        cutoutURL: cutoutURL, smallCutout: smallCut)
+        return Prepared(originalURL: originalURL, pixelSize: size, smallOriginal: small,
+                        maskURL: maskURL, smallMask: smallMask, bbox: bbox)
     }
 
     // MARK: Previews
 
-    nonisolated static func renderSmall(cut: CGImage, originalSize: CGSize, place: Renderer.Placement,
-                                        look: Look, photo: CIImage?) -> UIImage? {
-        let size = Renderer.canvasSize(look: look, originalSize: originalSize, longSide: 720)
-        let image = Renderer.compose(cutout: CIImage(cgImage: cut), look: look, place: place, photo: photo, size: size)
+    nonisolated static func renderSmall(original: CGImage, mask: CGImage, bbox: CGRect, look: Look, photo: CIImage?) -> UIImage? {
+        let size = CGSize(width: original.width, height: original.height)
+        let image = Renderer.compose(original: CIImage(cgImage: original), mask: Renderer.maskImage(mask),
+                                     bbox: bbox, look: look, photo: photo, size: size)
         guard let cg = Renderer.cgImage(image, size: size) else { return nil }
         return UIImage(cgImage: cg)
     }
 
     func renderPreview(for id: UUID) {
-        guard let item = items.first(where: { $0.id == id }), item.removed, let cut = item.smallCutout else { return }
-        let look = self.look, photo = backdropPhoto
-        let place = Renderer.Placement(offset: item.offset, scale: item.scale)
-        let size = item.originalSize
+        guard let item = items.first(where: { $0.id == id }), item.removed,
+              let original = item.smallOriginal, let mask = item.smallMask else { return }
+        let look = self.look, photo = Box(backdropPhoto), bbox = item.bbox
+        let o = Box(original), m = Box(mask)
         Task {
             let image = await Task.detached(priority: .userInitiated) {
-                Box(BatchStore.renderSmall(cut: cut, originalSize: size, place: place, look: look, photo: photo))
+                Box(BatchStore.renderSmall(original: o.value, mask: m.value, bbox: bbox, look: look, photo: photo.value))
             }.value.value
             if let image, self.look == look { previews[id] = image }
         }
@@ -153,17 +163,20 @@ final class BatchStore: ObservableObject {
 
     func refreshPreviews() {
         previewTask?.cancel()
-        let look = self.look, photo = backdropPhoto
-        let jobs: [(UUID, CGImage, CGSize, Renderer.Placement)] = items.compactMap { item in
-            guard item.removed, let cut = item.smallCutout else { return nil }
-            return (item.id, cut, item.originalSize, Renderer.Placement(offset: item.offset, scale: item.scale))
+        let look = self.look, photo = Box(backdropPhoto)
+        var list = items.filter { $0.removed && $0.smallOriginal != nil && $0.smallMask != nil }
+        if let f = focusID, let i = list.firstIndex(where: { $0.id == f }) {
+            list.insert(list.remove(at: i), at: 0)
+        }
+        let jobs = list.map { item in
+            (item.id, Box(item.smallOriginal!), Box(item.smallMask!), item.bbox)
         }
         previewTask = Task {
-            try? await Task.sleep(nanoseconds: 50_000_000)
+            try? await Task.sleep(nanoseconds: 40_000_000)
             for job in jobs {
                 if Task.isCancelled { return }
                 let image = await Task.detached(priority: .userInitiated) {
-                    Box(BatchStore.renderSmall(cut: job.1, originalSize: job.2, place: job.3, look: look, photo: photo))
+                    Box(BatchStore.renderSmall(original: job.1.value, mask: job.2.value, bbox: job.3, look: look, photo: photo.value))
                 }.value.value
                 if Task.isCancelled { return }
                 if let image { previews[job.0] = image }
@@ -173,23 +186,23 @@ final class BatchStore: ObservableObject {
 
     // MARK: Editing
 
-    func update(_ id: UUID, _ change: (inout BatchItem) -> Void) {
-        guard let i = items.firstIndex(where: { $0.id == id }) else { return }
-        change(&items[i])
-        renderPreview(for: id)
+    func setRemoved(_ id: UUID, _ removed: Bool) {
+        guard let i = items.firstIndex(where: { $0.id == id }), items[i].canRemove else { return }
+        items[i].removed = removed
+        if removed { renderPreview(for: id) }
     }
 
     func setAllRemoved(_ removed: Bool) {
         for i in items.indices where items[i].canRemove {
             items[i].removed = removed
         }
-        refreshPreviews()
+        if removed { refreshPreviews() }
     }
 
     func delete(_ id: UUID) {
         if let item = items.first(where: { $0.id == id }) {
             try? FileManager.default.removeItem(at: item.originalURL)
-            if let c = item.cutoutURL { try? FileManager.default.removeItem(at: c) }
+            if let m = item.maskURL { try? FileManager.default.removeItem(at: m) }
         }
         items.removeAll { $0.id == id }
         previews[id] = nil
@@ -207,7 +220,7 @@ final class BatchStore: ObservableObject {
     func setBackdropPhoto(_ pick: PhotosPickerItem) {
         Task {
             guard let data = try? await pick.loadTransferable(type: Data.self) else { return }
-            let box = await Task.detached(priority: .userInitiated) { Box(ImageFiles.loadOriented(data, maxPixel: 3200)) }.value
+            let box = await Task.detached(priority: .userInitiated) { Box(ImageFiles.loadOriented(data, maxPixel: 4096)) }.value
             guard let cg = box.value else { message = "That photo couldn't be opened."; return }
             backdropPhoto = CIImage(cgImage: cg)
             backdropPhotoID += 1
@@ -226,13 +239,13 @@ final class BatchStore: ObservableObject {
                 return
             }
             let list = items
-            let look = self.look, photo = backdropPhoto
+            let look = self.look, photo = Box(backdropPhoto)
             exportProgress = (0, list.count)
             var saved = 0, failed = 0
             var thumbs: [UIImage] = []
             for (i, item) in list.enumerated() {
                 let result = await Task.detached(priority: .userInitiated) {
-                    BatchStore.exportData(item: item, look: look, photo: photo)
+                    BatchStore.exportData(item: item, look: look, photo: photo.value)
                 }.value
                 if let result {
                     do {
@@ -260,20 +273,22 @@ final class BatchStore: ObservableObject {
         let thumb: UIImage
     }
 
+    /// Full-resolution output: same pixel size and framing as the original photo.
     nonisolated static func exportData(item: BatchItem, look: Look, photo: CIImage?) -> Exported? {
-        if !item.removed || item.cutoutURL == nil {
+        if !item.removed || item.maskURL == nil {
             guard let data = try? Data(contentsOf: item.originalURL) else { return nil }
             let thumb = item.smallOriginal.map { UIImage(cgImage: $0) } ?? UIImage()
             return Exported(data: data, thumb: thumb)
         }
-        guard let url = item.cutoutURL, let cut = CIImage(contentsOf: url) else { return nil }
-        let size = Renderer.canvasSize(look: look, originalSize: item.originalSize, longSide: CGFloat(look.exportLongSide))
-        let image = Renderer.compose(cutout: cut, look: look,
-                                     place: Renderer.Placement(offset: item.offset, scale: item.scale),
-                                     photo: photo, size: size)
+        guard let maskURL = item.maskURL,
+              let mask = Renderer.maskImage(url: maskURL),
+              let full = ImageFiles.loadOriented(item.originalURL, maxPixel: Int(max(item.pixelSize.width, item.pixelSize.height))) else { return nil }
+        let size = CGSize(width: full.width, height: full.height)
+        let image = Renderer.compose(original: CIImage(cgImage: full), mask: mask, bbox: item.bbox,
+                                     look: look, photo: photo, size: size)
         guard let cg = Renderer.cgImage(image, size: size) else { return nil }
-        let png = look.preferPNG || look.backdrop == .transparent
-        guard let data = ImageFiles.encode(cg, type: png ? .png : .jpeg, quality: 0.93) else { return nil }
+        let png = look.backdrop == .transparent
+        guard let data = ImageFiles.encode(cg, type: png ? .png : .jpeg, quality: 0.95) else { return nil }
         let thumb = UIImage(cgImage: ImageFiles.scaled(cg, maxSide: 300) ?? cg)
         return Exported(data: data, thumb: thumb)
     }

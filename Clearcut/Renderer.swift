@@ -2,7 +2,8 @@ import CoreImage
 import CoreImage.CIFilterBuiltins
 import UIKit
 
-/// All compositing happens in Core Image, in a bottom-left origin coordinate space of the output size.
+/// All compositing happens in Core Image, in a bottom-left origin space the size of the photo.
+/// The photo is never moved, cropped or resized: the item stays exactly where it was shot.
 enum Renderer {
     static let sRGB = CGColorSpace(name: CGColorSpace.sRGB)!
     static let context = CIContext(options: [
@@ -10,72 +11,93 @@ enum Renderer {
         .cacheIntermediates: false
     ])
 
-    struct Placement {
-        var offset: CGSize
-        var scale: CGFloat
-    }
-
-    static func canvasSize(look: Look, originalSize: CGSize, longSide: CGFloat) -> CGSize {
-        let ratio = look.shape.ratio ?? (originalSize.width / max(originalSize.height, 1))
-        if ratio >= 1 {
-            return CGSize(width: longSide, height: max(1, (longSide / ratio).rounded()))
-        }
-        return CGSize(width: max(1, (longSide * ratio).rounded()), height: longSide)
-    }
-
     static func cgImage(_ image: CIImage, size: CGSize) -> CGImage? {
         context.createCGImage(image, from: CGRect(origin: .zero, size: size), format: .RGBA8, colorSpace: sRGB)
     }
 
-    // MARK: Full composition
-
-    static func compose(cutout: CIImage, look: Look, place: Placement, photo: CIImage?, size: CGSize) -> CIImage {
-        let rect = CGRect(origin: .zero, size: size)
-        let fg = layer(cutout: cutout, look: look, place: place, size: size)
-        let bg = backdrop(look, photo: photo, size: size)
-        return fg.composited(over: bg).cropped(to: rect)
+    /// Loads a greyscale mask without colour management so its values stay exact.
+    static func maskImage(_ cg: CGImage) -> CIImage {
+        CIImage(cgImage: cg, options: [.colorSpace: NSNull()])
     }
 
-    /// The item with its shadow, on a transparent canvas.
-    static func layer(cutout: CIImage, look: Look, place: Placement, size: CGSize) -> CIImage {
+    static func maskImage(url: URL) -> CIImage? {
+        CIImage(contentsOf: url, options: [.colorSpace: NSNull()])
+    }
+
+    /// Scales an image so its extent is exactly `size` at the origin.
+    static func fitted(_ image: CIImage, to size: CGSize) -> CIImage {
+        let e = image.extent
+        guard e.width > 0, e.height > 0 else { return image }
+        return image
+            .transformed(by: CGAffineTransform(translationX: -e.minX, y: -e.minY))
+            .transformed(by: CGAffineTransform(scaleX: size.width / e.width, y: size.height / e.height))
+    }
+
+    // MARK: Composition
+
+    static func compose(original: CIImage, mask: CIImage, bbox: CGRect, look: Look, photo: CIImage?, size: CGSize) -> CIImage {
         let rect = CGRect(origin: .zero, size: size)
-        let ce = cutout.extent
-        guard ce.width > 0, ce.height > 0 else { return CIImage.empty() }
-        let fit = min(size.width / ce.width, size.height / ce.height) * CGFloat(look.itemSize) * place.scale
-        let iw = ce.width * fit, ih = ce.height * fit
-        let cx = (0.5 + place.offset.width) * size.width
-        let cyFromTop = (0.5 + place.offset.height) * size.height
-        let x = cx - iw / 2
-        let groundY = size.height - cyFromTop - ih / 2
-        let lift: CGFloat = look.shadow == .floating ? ih * 0.06 : 0
-
-        let grounded = cutout
-            .transformed(by: CGAffineTransform(translationX: -ce.minX, y: -ce.minY))
-            .transformed(by: CGAffineTransform(scaleX: fit, y: fit))
-            .transformed(by: CGAffineTransform(translationX: x, y: groundY))
-        let item = grounded.transformed(by: CGAffineTransform(translationX: 0, y: lift))
-
-        var out = item
-        if let shadow = shadowImage(item: grounded, style: look.shadow, strength: CGFloat(look.shadowStrength),
-                                    base: groundY, cx: cx, iw: iw, ih: ih) {
-            out = item.composited(over: shadow)
+        let o = fitted(original, to: size).cropped(to: rect)
+        let m = fitted(mask, to: size).cropped(to: rect)
+        let item = cutout(original: o, mask: m, size: size)
+        var below = backdrop(look, photo: photo, size: size)
+        if let shadow = shadowImage(mask: m, bbox: bbox, look: look, size: size) {
+            below = shadow.composited(over: below)
         }
-        return out.cropped(to: rect)
+        return item.composited(over: below).cropped(to: rect)
+    }
+
+    /// The item on transparency, with edge colours cleaned of the old background.
+    static func cutout(original: CIImage, mask: CIImage, size: CGSize) -> CIImage {
+        let rect = CGRect(origin: .zero, size: size)
+        let long = max(size.width, size.height)
+        let choke = max(1.0, long / 1600)
+
+        // Pixels safely inside the item.
+        let inner = mask
+            .applyingFilter("CIMorphologyMinimum", parameters: [kCIInputRadiusKey: choke])
+            .cropped(to: rect)
+        let innerColour = original.applyingFilter("CIBlendWithRedMask", parameters: [
+            kCIInputBackgroundImageKey: CIImage.empty(),
+            kCIInputMaskImageKey: inner
+        ])
+        // Spread the item's own colours outwards so edge pixels don't carry the old background's tint.
+        let spread = innerColour
+            .applyingGaussianBlur(sigma: Double(choke * 2.5))
+            .cropped(to: rect)
+            .applyingFilter("CIColorMatrix", parameters: [
+                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
+                "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 1)
+            ])
+        let colour = original.applyingFilter("CIBlendWithRedMask", parameters: [
+            kCIInputBackgroundImageKey: spread,
+            kCIInputMaskImageKey: inner
+        ])
+        return colour.applyingFilter("CIBlendWithRedMask", parameters: [
+            kCIInputBackgroundImageKey: CIImage.empty(),
+            kCIInputMaskImageKey: mask
+        ]).cropped(to: rect)
     }
 
     // MARK: Shadows
 
-    static func silhouette(_ image: CIImage, alpha: CGFloat) -> CIImage {
-        image.applyingFilter("CIColorMatrix", parameters: [
+    /// Black, with alpha taken from the mask's red channel times `alpha`.
+    static func silhouette(_ mask: CIImage, alpha: CGFloat) -> CIImage {
+        mask.applyingFilter("CIColorMatrix", parameters: [
             "inputRVector": CIVector(x: 0, y: 0, z: 0, w: 0),
             "inputGVector": CIVector(x: 0, y: 0, z: 0, w: 0),
             "inputBVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: alpha),
+            "inputAVector": CIVector(x: alpha, y: 0, z: 0, w: 0),
             "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 0)
         ])
     }
 
-    /// Squashes an image towards a ground line, optionally narrowing it around cx.
+    static func fade(_ image: CIImage, by alpha: CGFloat) -> CIImage {
+        image.applyingFilter("CIColorMatrix", parameters: [
+            "inputAVector": CIVector(x: 0, y: 0, z: 0, w: alpha)
+        ])
+    }
+
     static func flatten(_ image: CIImage, base: CGFloat, factor: CGFloat, widthFactor: CGFloat, cx: CGFloat) -> CIImage {
         let t = CGAffineTransform(translationX: -cx, y: -base)
             .concatenating(CGAffineTransform(scaleX: widthFactor, y: factor))
@@ -83,35 +105,75 @@ enum Renderer {
         return image.transformed(by: t)
     }
 
-    static func shadowImage(item: CIImage, style: ShadowStyle, strength: CGFloat,
-                            base: CGFloat, cx: CGFloat, iw: CGFloat, ih: CGFloat) -> CIImage? {
-        let a = max(0, min(1, strength))
-        let m = max(iw, ih)
-        let sil = silhouette(item, alpha: 1)
-        switch style {
+    static func shadowImage(mask: CIImage, bbox: CGRect, look: Look, size: CGSize) -> CIImage? {
+        let rect = CGRect(origin: .zero, size: size)
+        let a = CGFloat(max(0, min(1, look.shadowStrength)))
+        let soft = CGFloat(max(0, min(1, look.shadowSoftness)))
+        let dist = CGFloat(max(0, min(1, look.shadowDistance)))
+        let long = max(size.width, size.height)
+        let angle = CGFloat(look.shadowAngle) * .pi / 180
+        // Screen direction (y down) converted to Core Image's y-up space.
+        let dir = CGVector(dx: cos(angle), dy: -sin(angle))
+
+        let iw = bbox.width * size.width, ih = bbox.height * size.height
+        let cx = (bbox.midX) * size.width
+        let base = (1 - bbox.maxY) * size.height
+        let m = max(iw, ih, 1)
+        let sil = silhouette(mask, alpha: 1)
+
+        let shadow: CIImage?
+        switch look.shadow {
         case .none:
-            return nil
-        case .soft:
-            let contact = silhouette(flatten(sil, base: base - ih * 0.004, factor: 0.035, widthFactor: 0.96, cx: cx), alpha: 0.85 * a)
-                .applyingGaussianBlur(sigma: Double(m * 0.008))
-            let spread = silhouette(flatten(sil, base: base - ih * 0.01, factor: 0.10, widthFactor: 1.05, cx: cx), alpha: 0.45 * a)
-                .applyingGaussianBlur(sigma: Double(m * 0.035))
-            return contact.composited(over: spread)
+            shadow = nil
+        case .drop:
+            // Light from above, item lying flat: a tight, offset copy of its outline.
+            let off = (0.002 + dist * 0.03) * long
+            let blur = 0.5 + soft * long * 0.012
+            shadow = fade(sil.transformed(by: CGAffineTransform(translationX: dir.dx * off, y: dir.dy * off))
+                            .applyingGaussianBlur(sigma: Double(blur)), by: 0.8 * a)
         case .floating:
-            return silhouette(flatten(sil, base: base - ih * 0.02, factor: 0.07, widthFactor: 0.82, cx: cx), alpha: 0.55 * a)
-                .applyingGaussianBlur(sigma: Double(m * 0.04))
+            // Item hovering above the surface: further away, much softer and lighter.
+            let off = (0.015 + dist * 0.05) * long
+            let blur = long * (0.01 + soft * 0.03)
+            shadow = fade(sil.transformed(by: CGAffineTransform(translationX: dir.dx * off, y: dir.dy * off))
+                            .applyingGaussianBlur(sigma: Double(blur)), by: 0.55 * a)
+        case .soft:
+            // Product standing on a surface: contact shadow under its base.
+            let contact = fade(flatten(sil, base: base - ih * 0.004, factor: 0.035, widthFactor: 0.96, cx: cx)
+                                .applyingGaussianBlur(sigma: Double(m * (0.004 + soft * 0.008))), by: 0.85 * a)
+            let spread = fade(flatten(sil, base: base - ih * 0.01, factor: 0.10, widthFactor: 1.05, cx: cx)
+                                .applyingGaussianBlur(sigma: Double(m * (0.02 + soft * 0.03))), by: 0.45 * a)
+            shadow = contact.composited(over: spread)
         case .hard:
-            let k: CGFloat = 0.7, squash: CGFloat = 0.42
+            // Low sun: the outline cast across the surface behind the product.
+            let k = dir.dx * 0.9, squash: CGFloat = 0.42
             let t = CGAffineTransform(a: 1, b: 0, c: k, d: squash, tx: -k * base, ty: base - squash * base)
-            let cast = silhouette(sil.transformed(by: t), alpha: 0.5 * a)
-                .applyingGaussianBlur(sigma: Double(m * 0.006))
-            let contact = silhouette(flatten(sil, base: base, factor: 0.03, widthFactor: 0.95, cx: cx), alpha: 0.7 * a)
-                .applyingGaussianBlur(sigma: Double(m * 0.006))
-            return contact.composited(over: cast)
+            let cast = fade(sil.transformed(by: t).applyingGaussianBlur(sigma: Double(1 + soft * m * 0.02)), by: 0.55 * a)
+            let contact = fade(flatten(sil, base: base, factor: 0.03, widthFactor: 0.95, cx: cx)
+                                .applyingGaussianBlur(sigma: Double(1 + m * 0.005)), by: 0.7 * a)
+            shadow = contact.composited(over: cast)
         }
+        return shadow?.cropped(to: rect)
     }
 
     // MARK: Backdrops
+
+    private static var surfaceCache: [String: CIImage] = [:]
+    private static let cacheLock = NSLock()
+
+    static func surfaceImage(_ id: String) -> CIImage? {
+        cacheLock.lock(); defer { cacheLock.unlock() }
+        if let c = surfaceCache[id] { return c }
+        guard let url = Bundle.main.url(forResource: id, withExtension: "jpg"),
+              let img = CIImage(contentsOf: url) else { return nil }
+        surfaceCache[id] = img
+        return img
+    }
+
+    static func surfaceThumb(_ id: String) -> UIImage? {
+        guard let url = Bundle.main.url(forResource: "thumb-\(id)", withExtension: "jpg") else { return nil }
+        return UIImage(contentsOfFile: url.path)
+    }
 
     static func backdrop(_ look: Look, photo: CIImage?, size: CGSize) -> CIImage {
         let rect = CGRect(origin: .zero, size: size)
@@ -122,8 +184,9 @@ enum Renderer {
             var base = CIImage(color: c.ciColor).cropped(to: rect)
             if look.studioLight { base = studio(base, size: size) }
             return base
-        case .texture(let kind):
-            return texture(kind, size: size)
+        case .surface(let id):
+            if let img = surfaceImage(id) { return aspectFill(img, size: size).cropped(to: rect) }
+            return CIImage(color: CIColor(red: 1, green: 1, blue: 1)).cropped(to: rect)
         case .photo:
             if let photo { return aspectFill(photo, size: size).cropped(to: rect) }
             return CIImage(color: CIColor(red: 1, green: 1, blue: 1)).cropped(to: rect)
@@ -162,73 +225,4 @@ enum Renderer {
             .transformed(by: CGAffineTransform(scaleX: k, y: k))
             .transformed(by: CGAffineTransform(translationX: dx, y: dy))
     }
-
-    static func texture(_ kind: TextureKind, size: CGSize) -> CIImage {
-        let rect = CGRect(origin: .zero, size: size)
-        let s = max(size.width, size.height) / 1000
-
-        func noise(_ sx: CGFloat, _ sy: CGFloat, blur: CGFloat, contrast: Float) -> CIImage {
-            guard let random = CIFilter.randomGenerator().outputImage else { return CIImage.empty() }
-            let opaque = random.applyingFilter("CIColorMatrix", parameters: [
-                "inputAVector": CIVector(x: 0, y: 0, z: 0, w: 0),
-                "inputBiasVector": CIVector(x: 0, y: 0, z: 0, w: 1)
-            ])
-            let mono = CIFilter.colorControls()
-            mono.inputImage = opaque.transformed(by: CGAffineTransform(scaleX: sx * s, y: sy * s))
-            mono.saturation = 0
-            mono.contrast = contrast
-            var out = mono.outputImage ?? CIImage.empty()
-            if blur > 0 { out = out.applyingGaussianBlur(sigma: Double(blur * s)) }
-            return out.cropped(to: rect)
-        }
-        func blend(_ top: CIImage, over base: CIImage) -> CIImage {
-            let f = CIFilter.softLightBlendMode()
-            f.inputImage = top
-            f.backgroundImage = base
-            return (f.outputImage ?? base).cropped(to: rect)
-        }
-        func colour(_ r: CGFloat, _ g: CGFloat, _ b: CGFloat) -> CIImage {
-            CIImage(color: CIColor(red: r, green: g, blue: b)).cropped(to: rect)
-        }
-
-        switch kind {
-        case .paper:
-            return blend(noise(1.5, 1.5, blur: 0.6, contrast: 0.35), over: colour(0.95, 0.94, 0.91))
-        case .plaster:
-            var b = colour(0.89, 0.86, 0.81)
-            b = blend(noise(40, 40, blur: 30, contrast: 1.0), over: b)
-            return blend(noise(1.5, 1.5, blur: 0.8, contrast: 0.5), over: b)
-        case .concrete:
-            var b = colour(0.63, 0.62, 0.60)
-            b = blend(noise(60, 60, blur: 40, contrast: 1.4), over: b)
-            return blend(noise(2, 2, blur: 0.7, contrast: 0.9), over: b)
-        case .slate:
-            var b = colour(0.24, 0.26, 0.28)
-            b = blend(noise(50, 50, blur: 30, contrast: 1.0), over: b)
-            return blend(noise(1.5, 1.5, blur: 0.7, contrast: 0.8), over: b)
-        case .sand:
-            var b = colour(0.86, 0.79, 0.67)
-            b = blend(noise(30, 30, blur: 25, contrast: 0.6), over: b)
-            return blend(noise(1.2, 1.2, blur: 0.5, contrast: 1.2), over: b)
-        case .oak:
-            var b = colour(0.70, 0.53, 0.36)
-            b = blend(noise(300, 1.2, blur: 1.2, contrast: 1.3), over: b)
-            return blend(noise(900, 6, blur: 3, contrast: 1.0), over: b)
-        case .walnut:
-            var b = colour(0.36, 0.24, 0.16)
-            b = blend(noise(300, 1.2, blur: 1.2, contrast: 1.4), over: b)
-            return blend(noise(900, 6, blur: 3, contrast: 1.1), over: b)
-        }
-    }
-
-    static let textureThumbs: [TextureKind: UIImage] = {
-        var out: [TextureKind: UIImage] = [:]
-        let size = CGSize(width: 600, height: 600)
-        for k in TextureKind.allCases {
-            if let cg = Renderer.cgImage(Renderer.texture(k, size: size), size: size), let small = ImageFiles.scaled(cg, maxSide: 180) {
-                out[k] = UIImage(cgImage: small)
-            }
-        }
-        return out
-    }()
 }

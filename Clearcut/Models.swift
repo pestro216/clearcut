@@ -35,60 +35,71 @@ struct RGB: Codable, Hashable {
     ]
 }
 
-enum TextureKind: String, CaseIterable, Identifiable, Codable, Hashable {
-    case paper, plaster, concrete, slate, sand, oak, walnut
-    var id: String { rawValue }
-    var title: String { rawValue.capitalized }
+/// A photographic surface bundled with the app (Clearcut/Backdrops/<id>.jpg).
+struct Surface: Identifiable, Hashable {
+    let id: String
+    let title: String
+
+    enum Group: String, CaseIterable, Identifiable {
+        case studio = "Studio", wood = "Wood", marble = "Marble", stone = "Stone", fabric = "Fabric and paper"
+        var id: String { rawValue }
+    }
+
+    static let catalogue: [Group: [Surface]] = [
+        .studio: [
+            Surface(id: "studio-white", title: "White"), Surface(id: "studio-warm", title: "Warm"),
+            Surface(id: "studio-grey", title: "Grey"), Surface(id: "studio-blush", title: "Blush"),
+            Surface(id: "studio-sage", title: "Sage")
+        ],
+        .wood: [
+            Surface(id: "wood-cherry", title: "Cherry"), Surface(id: "wood-oak", title: "Oak"),
+            Surface(id: "wood-walnut", title: "Walnut"), Surface(id: "wood-whitewash", title: "Whitewash")
+        ],
+        .marble: [
+            Surface(id: "marble-white", title: "White"), Surface(id: "marble-warm", title: "Warm"),
+            Surface(id: "marble-black", title: "Black")
+        ],
+        .stone: [
+            Surface(id: "concrete-light", title: "Concrete"), Surface(id: "concrete-dark", title: "Dark concrete"),
+            Surface(id: "plaster", title: "Plaster"), Surface(id: "terrazzo", title: "Terrazzo")
+        ],
+        .fabric: [
+            Surface(id: "linen", title: "Linen"), Surface(id: "linen-grey", title: "Grey linen"),
+            Surface(id: "paper-kraft", title: "Kraft paper")
+        ]
+    ]
+
+    static func group(of id: String) -> Group? {
+        catalogue.first { $0.value.contains { $0.id == id } }?.key
+    }
 }
 
 enum Backdrop: Codable, Hashable {
     case transparent
     case colour(RGB)
-    case texture(TextureKind)
+    case surface(String)
     case photo
 }
 
 enum ShadowStyle: String, CaseIterable, Identifiable, Codable, Hashable {
-    case none, soft, floating, hard
+    case none, drop, soft, floating, hard
     var id: String { rawValue }
     var title: String { rawValue.capitalized }
-}
-
-enum CanvasShape: String, CaseIterable, Identifiable, Codable, Hashable {
-    case original, square, portrait, tall, story, landscape
-    var id: String { rawValue }
-    var title: String {
-        switch self {
-        case .original: return "Original"
-        case .square: return "Square"
-        case .portrait: return "4:5"
-        case .tall: return "3:4"
-        case .story: return "9:16"
-        case .landscape: return "4:3"
-        }
-    }
-    /// width divided by height; nil means use the photo's own shape
-    var ratio: CGFloat? {
-        switch self {
-        case .original: return nil
-        case .square: return 1
-        case .portrait: return 4.0 / 5.0
-        case .tall: return 3.0 / 4.0
-        case .story: return 9.0 / 16.0
-        case .landscape: return 4.0 / 3.0
-        }
-    }
+    var usesDistance: Bool { self == .drop || self == .floating }
+    var usesDirection: Bool { self == .drop || self == .floating || self == .hard }
 }
 
 struct Look: Codable, Hashable {
-    var backdrop: Backdrop = .colour(RGB(1, 1, 1))
-    var studioLight: Bool = true
-    var shadow: ShadowStyle = .soft
-    var shadowStrength: Double = 0.6
-    var shape: CanvasShape = .square
-    var itemSize: Double = 0.78
-    var exportLongSide: Int = 2048
-    var preferPNG: Bool = false
+    var backdrop: Backdrop = .surface("wood-cherry")
+    var studioLight: Bool = false
+    var shadow: ShadowStyle = .drop
+    var shadowStrength: Double = 0.55
+    var shadowSoftness: Double = 0.5
+    var shadowDistance: Double = 0.35
+    /// Direction the shadow falls, in degrees: 0 right, 90 down, 180 left, 270 up.
+    var shadowAngle: Double = 120
+
+    static let storageKey = "look.v2"
 }
 
 struct BatchItem: Identifiable, @unchecked Sendable {
@@ -97,15 +108,15 @@ struct BatchItem: Identifiable, @unchecked Sendable {
     let id: UUID
     var status: Status = .ready
     var removed: Bool = true
-    var offset: CGSize = .zero
-    var scale: CGFloat = 1
     var originalURL: URL
-    var originalSize: CGSize
-    var cutoutURL: URL?
+    var pixelSize: CGSize
+    var maskURL: URL?
+    /// Bounding box of the item, normalised, top-left origin.
+    var bbox: CGRect = .zero
     var smallOriginal: CGImage?
-    var smallCutout: CGImage?
+    var smallMask: CGImage?
 
-    var canRemove: Bool { cutoutURL != nil }
+    var canRemove: Bool { maskURL != nil }
 }
 
 struct EditTarget: Identifiable {

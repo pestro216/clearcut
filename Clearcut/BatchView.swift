@@ -1,21 +1,9 @@
 import SwiftUI
 import PhotosUI
 
-enum Panel: String, Identifiable {
-    case background, shadow, layout
-    var id: String { rawValue }
-    var height: CGFloat {
-        switch self {
-        case .background: return 470
-        case .shadow: return 250
-        case .layout: return 400
-        }
-    }
-}
-
 struct BatchView: View {
     @EnvironmentObject var store: BatchStore
-    @State private var panel: Panel?
+    @State private var tool: Tool?
     @State private var editing: EditTarget?
     @State private var confirmClose = false
     @State private var morePicks: [PhotosPickerItem] = []
@@ -42,11 +30,8 @@ struct BatchView: View {
             bottomBar
         }
         .background(Theme.paper.ignoresSafeArea())
-        .sheet(item: $panel) { p in
-            PanelSheet(panel: p)
-                .presentationDetents([.height(p.height)])
-                .presentationBackgroundInteraction(.enabled(upThrough: .height(p.height)))
-                .presentationCornerRadius(18)
+        .fullScreenCover(item: $tool) { t in
+            ToolScreen(tool: t, startID: nil)
         }
         .fullScreenCover(item: $editing) { target in
             ItemEditor(id: target.id)
@@ -115,7 +100,6 @@ struct BatchView: View {
             HStack(spacing: 0) {
                 toolButton("Background", "square.on.square", .background)
                 toolButton("Shadow", "shadow", .shadow)
-                toolButton("Layout", "aspectratio", .layout)
             }
         }
         .padding(.horizontal, 16)
@@ -124,8 +108,8 @@ struct BatchView: View {
         .background(Theme.paper.overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 0.5) })
     }
 
-    private func toolButton(_ title: String, _ symbol: String, _ p: Panel) -> some View {
-        Button { panel = p } label: {
+    private func toolButton(_ title: String, _ symbol: String, _ t: Tool) -> some View {
+        Button { tool = t } label: {
             VStack(spacing: 4) {
                 Image(systemName: symbol).font(.system(size: 20))
                 Text(title).font(.system(size: 12, weight: .medium))
@@ -134,7 +118,7 @@ struct BatchView: View {
             .padding(.vertical, 6)
             .foregroundStyle(Theme.ink)
         }
-        .disabled(store.exportProgress != nil)
+        .disabled(store.busy || store.items.isEmpty)
     }
 }
 
@@ -143,14 +127,14 @@ struct Tile: View {
     let item: BatchItem
 
     var body: some View {
-        Color.white
+        Color(red: 0.91, green: 0.90, blue: 0.87)
             .aspectRatio(1, contentMode: .fit)
             .overlay {
                 ZStack {
                     if item.removed {
-                        if store.look.backdrop == .transparent { Checker() }
                         if let p = store.previews[item.id] {
                             Image(uiImage: p).resizable().scaledToFit()
+                                .background { if store.look.backdrop == .transparent { Checker() } }
                         } else {
                             ProgressView()
                         }

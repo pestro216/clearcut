@@ -1,24 +1,25 @@
 import SwiftUI
 import CoreImage
 
-/// Full-screen view of one photo: move and resize the item, or remove/restore its background.
+/// One photo, large. Pinch to zoom in and check the edges, double-tap to fit.
+/// Remove or restore this photo's background, or take it out of the batch.
 struct ItemEditor: View {
     @EnvironmentObject var store: BatchStore
     @Environment(\.dismiss) private var dismiss
     let id: UUID
 
-    @State private var background: UIImage?
-    @State private var foreground: UIImage?
-    @State private var original: UIImage?
-    @State private var canvas: CGSize = CGSize(width: 1, height: 1)
-    @State private var drag: CGSize = .zero
-    @State private var pinch: CGFloat = 1
+    @State private var image: UIImage?
+    @State private var zoom: CGFloat = 1
+    @State private var zoomBase: CGFloat = 1
+    @State private var pan: CGSize = .zero
+    @State private var panBase: CGSize = .zero
+    @State private var tool: Tool?
 
     private var item: BatchItem? { store.items.first { $0.id == id } }
 
     private var renderKey: String {
         guard let item else { return "gone" }
-        return "\(store.look.hashValue)|\(item.offset.width)|\(item.offset.height)|\(item.scale)|\(item.removed)|\(store.backdropPhotoID)"
+        return "\(store.look.hashValue)|\(item.removed)|\(store.backdropPhotoID)"
     }
 
     var body: some View {
@@ -40,35 +41,40 @@ struct ItemEditor: View {
             .padding(.vertical, 12)
 
             GeometryReader { geo in
-                let fitted = fit(canvas, in: CGSize(width: geo.size.width - 32, height: geo.size.height - 16))
+                let size = item?.pixelSize ?? CGSize(width: 1, height: 1)
+                let aspect = size.width / max(size.height, 1)
+                let w = min(geo.size.width - 24, (geo.size.height - 12) * aspect)
+                let h = w / aspect
                 ZStack {
-                    if let item, item.removed {
-                        if store.look.backdrop == .transparent { Checker() }
-                        if let background { Image(uiImage: background).resizable() }
-                        if let foreground {
-                            Image(uiImage: foreground).resizable()
-                                .scaleEffect(pinch, anchor: UnitPoint(x: 0.5 + item.offset.width, y: 0.5 + item.offset.height))
-                                .offset(drag)
-                        }
-                    } else if let original {
-                        Image(uiImage: original).resizable()
+                    if let item, item.removed, store.look.backdrop == .transparent { Checker() }
+                    if let image {
+                        Image(uiImage: image).resizable()
+                    } else if let o = item?.smallOriginal {
+                        Image(uiImage: UIImage(cgImage: o)).resizable().opacity(0.5)
+                        ProgressView()
                     }
                 }
-                .frame(width: fitted.width, height: fitted.height)
-                .clipped()
+                .frame(width: w, height: h)
+                .scaleEffect(zoom)
+                .offset(pan)
+                .position(x: geo.size.width / 2, y: geo.size.height / 2)
                 .contentShape(Rectangle())
                 .gesture(
                     SimultaneousGesture(
-                        DragGesture()
-                            .onChanged { v in if item?.removed == true { drag = v.translation } }
-                            .onEnded { v in commit(translation: v.translation, scale: 1, fitted: fitted) },
                         MagnifyGesture()
-                            .onChanged { v in if item?.removed == true { pinch = v.magnification } }
-                            .onEnded { v in commit(translation: .zero, scale: v.magnification, fitted: fitted) }
+                            .onChanged { v in zoom = min(8, max(1, zoomBase * v.magnification)) }
+                            .onEnded { _ in zoomBase = zoom; if zoom <= 1.01 { resetZoom() } },
+                        DragGesture()
+                            .onChanged { v in
+                                guard zoom > 1 else { return }
+                                pan = CGSize(width: panBase.width + v.translation.width, height: panBase.height + v.translation.height)
+                            }
+                            .onEnded { _ in panBase = pan }
                     )
                 )
-                .position(x: geo.size.width / 2, y: geo.size.height / 2)
+                .onTapGesture(count: 2) { withAnimation(.easeOut(duration: 0.2)) { resetZoom() } }
             }
+            .clipped()
 
             controls
                 .padding(.horizontal, 20)
@@ -76,18 +82,25 @@ struct ItemEditor: View {
         }
         .background(Theme.paper.ignoresSafeArea())
         .task(id: renderKey) { await render() }
+        .fullScreenCover(item: $tool) { t in
+            ToolScreen(tool: t, startID: id)
+        }
     }
 
     @ViewBuilder private var controls: some View {
         if let item {
             VStack(spacing: 10) {
-                if item.removed {
-                    Text("Drag to move. Pinch to resize.")
-                        .font(.system(size: 14)).foregroundStyle(Theme.muted)
-                }
+                Text(zoom > 1 ? "Double-tap to fit." : "Pinch to zoom in and check the edges.")
+                    .font(.system(size: 14)).foregroundStyle(Theme.muted)
                 if item.canRemove {
+                    if item.removed {
+                        HStack(spacing: 10) {
+                            pill("Background") { tool = .background }
+                            pill("Shadow") { tool = .shadow }
+                        }
+                    }
                     Button {
-                        store.update(id) { $0.removed.toggle() }
+                        store.setRemoved(id, !item.removed)
                     } label: {
                         Text(item.removed ? "Restore background" : "Remove background")
                             .font(.system(size: 17, weight: .semibold))
@@ -103,65 +116,49 @@ struct ItemEditor: View {
                         .font(.system(size: 15)).foregroundStyle(Theme.muted)
                         .multilineTextAlignment(.center)
                 }
-                if item.removed && (item.offset != .zero || item.scale != 1) {
-                    Button("Reset position") {
-                        store.update(id) { $0.offset = .zero; $0.scale = 1 }
-                    }
-                    .font(.system(size: 16, weight: .medium))
-                    .padding(.top, 2)
-                }
             }
         }
     }
 
-    private func fit(_ size: CGSize, in box: CGSize) -> CGSize {
-        guard size.width > 0, size.height > 0, box.width > 0, box.height > 0 else { return .zero }
-        let k = min(box.width / size.width, box.height / size.height)
-        return CGSize(width: size.width * k, height: size.height * k)
-    }
-
-    private func commit(translation: CGSize, scale: CGFloat, fitted: CGSize) {
-        guard let item, item.removed, fitted.width > 0 else { drag = .zero; pinch = 1; return }
-        let dx = translation.width / fitted.width
-        let dy = translation.height / fitted.height
-        store.update(id) {
-            $0.offset.width = min(0.7, max(-0.7, item.offset.width + dx))
-            $0.offset.height = min(0.7, max(-0.7, item.offset.height + dy))
-            $0.scale = min(2.5, max(0.15, item.scale * scale))
+    private func pill(_ title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .frame(maxWidth: .infinity).padding(.vertical, 12)
+                .background(Color.white)
+                .foregroundStyle(Theme.ink)
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.line))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
     }
 
+    private func resetZoom() {
+        zoom = 1; zoomBase = 1; pan = .zero; panBase = .zero
+    }
+
+    /// Renders this photo at up to 2400px so the edges can be inspected closely.
     private func render() async {
         guard let item else { return }
-        if !item.removed {
-            let url = item.originalURL
+        let url = item.originalURL
+        if !item.removed || item.maskURL == nil {
             let box = await Task.detached(priority: .userInitiated) {
-                Box(ImageFiles.loadOriented(url, maxPixel: 1600))
+                Box(ImageFiles.loadOriented(url, maxPixel: 2400))
             }.value
-            if let cg = box.value {
-                original = UIImage(cgImage: cg)
-                canvas = CGSize(width: cg.width, height: cg.height)
-            }
-            drag = .zero; pinch = 1
+            if Task.isCancelled { return }
+            image = box.value.map { UIImage(cgImage: $0) }
             return
         }
-        guard let url = item.cutoutURL else { return }
-        let look = store.look, photo = Box(store.backdropPhoto)
-        let size = Renderer.canvasSize(look: look, originalSize: item.originalSize, longSide: 1400)
-        let place = Renderer.Placement(offset: item.offset, scale: item.scale)
-        let result = await Task.detached(priority: .userInitiated) { () -> Box<(UIImage?, UIImage?)> in
-            guard let cut = CIImage(contentsOf: url) else { return Box((nil, nil)) }
-            let bgCI = Renderer.backdrop(look, photo: photo.value, size: size)
-            let fgCI = Renderer.layer(cutout: cut, look: look, place: place, size: size)
-            let bg = look.backdrop == .transparent ? nil : Renderer.cgImage(bgCI, size: size).map { UIImage(cgImage: $0) }
-            let fg = Renderer.cgImage(fgCI, size: size).map { UIImage(cgImage: $0) }
-            return Box((bg, fg))
+        guard let maskURL = item.maskURL else { return }
+        let look = store.look, photo = Box(store.backdropPhoto), bbox = item.bbox
+        let result = await Task.detached(priority: .userInitiated) { () -> Box<UIImage?> in
+            guard let cg = ImageFiles.loadOriented(url, maxPixel: 2400),
+                  let mask = Renderer.maskImage(url: maskURL) else { return Box(nil) }
+            let size = CGSize(width: cg.width, height: cg.height)
+            let ci = Renderer.compose(original: CIImage(cgImage: cg), mask: mask, bbox: bbox,
+                                      look: look, photo: photo.value, size: size)
+            return Box(Renderer.cgImage(ci, size: size).map { UIImage(cgImage: $0) })
         }.value
         if Task.isCancelled { return }
-        canvas = size
-        background = result.value.0
-        foreground = result.value.1
-        drag = .zero
-        pinch = 1
+        image = result.value
     }
 }
