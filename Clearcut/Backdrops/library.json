@@ -1,0 +1,148 @@
+{
+  "surfaces": [
+    {
+      "id": "dark_wood",
+      "title": "Red-brown timber",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/dark_wood",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4096
+    },
+    {
+      "id": "wood_floor",
+      "title": "Floorboards",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/wood_floor",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "oak_veneer_01",
+      "title": "Oak",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/oak_veneer_01",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "laminate_floor_02",
+      "title": "Pale boards",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/laminate_floor_02",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "plywood",
+      "title": "Plywood",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/plywood",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4798
+    },
+    {
+      "id": "herringbone_parquet",
+      "title": "Parquet",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/herringbone_parquet",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "wood_table_001",
+      "title": "Wenge",
+      "group": "Wood",
+      "source": "https://polyhaven.com/a/wood_table_001",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "brushed_concrete",
+      "title": "Brushed concrete",
+      "group": "Stone",
+      "source": "https://polyhaven.com/a/brushed_concrete",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 3277
+    },
+    {
+      "id": "white_stucco",
+      "title": "White stucco",
+      "group": "Stone",
+      "source": "https://polyhaven.com/a/white_stucco",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4100
+    },
+    {
+      "id": "plastered_wall_05",
+      "title": "Charcoal plaster",
+      "group": "Stone",
+      "source": "https://polyhaven.com/a/plastered_wall_05",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4096
+    },
+    {
+      "id": "beige_wall_001",
+      "title": "Taupe plaster",
+      "group": "Stone",
+      "source": "https://polyhaven.com/a/beige_wall_001",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "granite_tile",
+      "title": "Slate tiles",
+      "group": "Stone",
+      "source": "https://polyhaven.com/a/granite_tile",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 3562
+    },
+    {
+      "id": "marble_01",
+      "title": "Limestone tiles",
+      "group": "Stone",
+      "source": "https://polyhaven.com/a/marble_01",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "hessian_230",
+      "title": "Hessian",
+      "group": "Fabric",
+      "source": "https://polyhaven.com/a/hessian_230",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4800
+    },
+    {
+      "id": "rough_linen",
+      "title": "Blue linen",
+      "group": "Fabric",
+      "source": "https://polyhaven.com/a/rough_linen",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4799
+    },
+    {
+      "id": "poly_wool_herringbone",
+      "title": "Grey wool",
+      "group": "Fabric",
+      "source": "https://polyhaven.com/a/poly_wool_herringbone",
+      "licence": "CC0",
+      "metres": 1.0,
+      "pixels": 4799
+    }
+  ]
+}
