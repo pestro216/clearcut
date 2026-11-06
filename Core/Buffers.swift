@@ -38,7 +38,7 @@ public struct RGBAImage {
             return true
         }
         guard ok else { return nil }
-        width = w; height = h; pixels = p
+        self.width = w; self.height = h; self.pixels = p
     }
 
     /// Opaque CGImage (alpha ignored).
@@ -134,20 +134,44 @@ public struct Plane {
         return Plane(width: w, height: h, data: out)
     }
 
-    /// Box filter of the given radius (window 2r+1), edges extended.
+    /// Box filter of the given radius (window 2r+1), edges extended. Running sums, O(n) per pass.
     public func boxBlurred(radius r: Int) -> Plane {
-        guard r > 0 else { return self }
-        let k = UInt32(2 * r + 1)
+        guard r > 0, width > 0, height > 0 else { return self }
+        let w = width, h = height
+        let norm = 1 / Float(2 * r + 1)
+        var tmp = [Float](repeating: 0, count: count)
         var out = [Float](repeating: 0, count: count)
-        var src = data
-        src.withUnsafeMutableBytes { s in
-            out.withUnsafeMutableBytes { d in
-                var sb = vImage_Buffer(data: s.baseAddress, height: vImagePixelCount(height), width: vImagePixelCount(width), rowBytes: width * 4)
-                var db = vImage_Buffer(data: d.baseAddress, height: vImagePixelCount(height), width: vImagePixelCount(width), rowBytes: width * 4)
-                _ = vImageBoxConvolve_PlanarF(&sb, &db, nil, 0, 0, k, k, 0, vImage_Flags(kvImageEdgeExtend))
+        data.withUnsafeBufferPointer { src in
+            tmp.withUnsafeMutableBufferPointer { t in
+                for y in 0..<h {
+                    let row = y * w
+                    var acc: Float = 0
+                    for k in -r...r { acc += src[row + min(w - 1, max(0, k))] }
+                    for x in 0..<w {
+                        t[row + x] = acc * norm
+                        acc += src[row + min(w - 1, x + r + 1)] - src[row + max(0, x - r)]
+                    }
+                }
             }
         }
-        return Plane(width: width, height: height, data: out)
+        tmp.withUnsafeBufferPointer { t in
+            out.withUnsafeMutableBufferPointer { o in
+                var acc = [Float](repeating: 0, count: w)
+                for k in -r...r {
+                    let row = min(h - 1, max(0, k)) * w
+                    for x in 0..<w { acc[x] += t[row + x] }
+                }
+                for y in 0..<h {
+                    let row = y * w
+                    let addRow = min(h - 1, y + r + 1) * w, subRow = max(0, y - r) * w
+                    for x in 0..<w {
+                        o[row + x] = acc[x] * norm
+                        acc[x] += t[addRow + x] - t[subRow + x]
+                    }
+                }
+            }
+        }
+        return Plane(width: w, height: h, data: out)
     }
 
     /// Gaussian approximated by three box passes.
