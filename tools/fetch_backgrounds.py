@@ -18,7 +18,7 @@ OUT = "Clearcut/Backdrops"
 
 # id, title, group  (curated: clean, flatlay-friendly surfaces)
 CANDIDATES = [
-    ("dark_wood", "Red-brown timber", "Wood"),
+    ("dark_wood", "Timber", "Wood"),
     ("wood_floor", "Floorboards", "Wood"),
     ("oak_veneer_01", "Oak", "Wood"),
     ("laminate_floor_02", "Pale boards", "Wood"),
