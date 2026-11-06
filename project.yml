@@ -14,6 +14,7 @@ targets:
     platform: iOS
     sources:
       - Clearcut
+      - Core
     info:
       path: Clearcut/Info.plist
       properties:

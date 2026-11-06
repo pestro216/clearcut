@@ -1,231 +1,311 @@
 import SwiftUI
 import PhotosUI
 import Photos
-import CoreImage
 import UniformTypeIdentifiers
 
+/// The batch: imports photos, cuts them out at full resolution with the Core engine,
+/// keeps small copies for a responsive grid, and exports finished photos to Photos.
+///
+/// Memory: only one photo is ever held at full resolution (while it is being processed or
+/// exported). Everything else lives on disk, plus ~0.5 MB per photo for the grid.
 @MainActor
 final class BatchStore: ObservableObject {
     @Published var items: [BatchItem] = []
     @Published var look: Look {
         didSet {
             guard look != oldValue else { return }
-            saveLook()
-            refreshPreviews()
+            if let d = try? JSONEncoder().encode(look) { UserDefaults.standard.set(d, forKey: Look.storageKey) }
+            lookVersion += 1
+            refreshGrid()
         }
     }
-    @Published private(set) var backdropPhoto: CIImage?
-    @Published private(set) var backdropPhotoID = 0
-    @Published var previews: [UUID: UIImage] = [:]
+    /// Bumped whenever the finished appearance changes; views key their renders on it.
+    @Published private(set) var lookVersion = 0
+    @Published var grid: [UUID: UIImage] = [:]
     @Published var importing: (done: Int, total: Int)?
     @Published var exportProgress: (done: Int, total: Int)?
     @Published var exportResult: ExportResult?
     @Published var message: String?
-    /// The photo the user is looking at in a tool screen; it is re-rendered first.
-    var focusID: UUID?
+
+    let library: BackgroundLibrary
 
     struct ExportResult: Identifiable {
         let id = UUID()
         let saved: Int
-        let failed: Int
+        let failures: [String]
         let thumbs: [UIImage]
     }
 
-    nonisolated static let previewLongSide: CGFloat = 1100
+    nonisolated static let previewSide = 1100
+    nonisolated static let gridSide = 340
 
     private let dir: URL
-    private var previewTask: Task<Void, Never>?
-    private var importQueue: [PhotosPickerItem] = []
-    private var importRunning = false
+    private var gridTask: Task<Void, Never>?
+    private var queue: [PhotosPickerItem] = []
+    private var running = false
 
-    init() {
+    init(library: BackgroundLibrary) {
+        self.library = library
         dir = FileManager.default.temporaryDirectory.appendingPathComponent("ClearcutBatch", isDirectory: true)
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         var initial = Look()
-        if let data = UserDefaults.standard.data(forKey: Look.storageKey),
-           let saved = try? JSONDecoder().decode(Look.self, from: data) {
+        if let d = UserDefaults.standard.data(forKey: Look.storageKey), let saved = try? JSONDecoder().decode(Look.self, from: d) {
             initial = saved
         }
-        if initial.backdrop == .photo { initial.backdrop = Look().backdrop }
+        if case .surface(let id) = initial.backdrop, library.surface(id) == nil { initial.backdrop = Look().backdrop }
         look = initial
     }
 
-    private func saveLook() {
-        if let data = try? JSONEncoder().encode(look) {
-            UserDefaults.standard.set(data, forKey: Look.storageKey)
-        }
-    }
-
-    var anyRemoved: Bool { items.contains { $0.removed } }
     var busy: Bool { importing != nil || exportProgress != nil }
+    var transparent: Bool { if case .transparent = look.backdrop { return true }; return false }
+    var attentionCount: Int { items.filter { $0.needsAttention }.count }
+    var anyRemoved: Bool { items.contains { $0.removed && $0.canRemove } }
 
-    // MARK: Import and cut out
+    // MARK: Import
 
     func add(_ picks: [PhotosPickerItem]) {
         guard !picks.isEmpty else { return }
-        importQueue.append(contentsOf: picks)
-        let total = (importing?.total ?? 0) + picks.count
-        importing = (importing?.done ?? 0, total)
-        guard !importRunning else { return }
-        importRunning = true
+        queue.append(contentsOf: picks)
+        importing = (importing?.done ?? 0, (importing?.total ?? 0) + picks.count)
+        guard !running else { return }
+        running = true
         Task {
-            while !importQueue.isEmpty {
-                let pick = importQueue.removeFirst()
+            while !queue.isEmpty {
+                let pick = queue.removeFirst()
+                let id = UUID()
                 if let data = try? await pick.loadTransferable(type: Data.self) {
-                    let id = UUID()
-                    let folder = dir
-                    let prepared = await Task.detached(priority: .userInitiated) {
-                        BatchStore.prepare(data: data, id: id, dir: folder)
-                    }.value
-                    if let p = prepared {
-                        var item = BatchItem(id: id, originalURL: p.originalURL, pixelSize: p.pixelSize)
-                        item.smallOriginal = p.smallOriginal
-                        item.maskURL = p.maskURL
-                        item.smallMask = p.smallMask
-                        item.bbox = p.bbox
-                        item.status = p.maskURL == nil ? .noSubject : .ready
-                        item.removed = p.maskURL != nil
-                        items.append(item)
-                        renderPreview(for: id)
+                    let original = dir.appendingPathComponent("\(id.uuidString)-original")
+                    if (try? data.write(to: original)) != nil {
+                        items.append(BatchItem(id: id, originalURL: original))
+                        let folder = dir
+                        let result = await Task.detached(priority: .userInitiated) {
+                            BatchStore.process(data: data, id: id, dir: folder)
+                        }.value
+                        if let i = items.firstIndex(where: { $0.id == id }) {
+                            if let r = result {
+                                items[i].pixelSize = r.size
+                                items[i].alphaURL = r.alphaURL
+                                items[i].previewPhotoURL = r.previewPhotoURL
+                                items[i].previewAlphaURL = r.previewAlphaURL
+                                items[i].gridPhoto = r.gridPhoto
+                                items[i].gridAlpha = r.gridAlpha
+                                items[i].status = r.status
+                                items[i].removed = r.alphaURL != nil
+                                renderGrid(items[i])
+                            } else {
+                                items[i].status = .failed("This photo couldn't be opened")
+                                items[i].removed = false
+                            }
+                        }
                     }
                 }
-                if let i = importing { importing = (i.done + 1, i.total) }
+                if let p = importing { importing = (p.done + 1, p.total) }
             }
             importing = nil
-            importRunning = false
-            let missing = items.filter { $0.status == .noSubject }.count
-            if missing > 0 {
-                message = missing == 1
-                    ? "Clearcut couldn't find an item in one photo, so it's been kept as it is."
-                    : "Clearcut couldn't find an item in \(missing) photos, so they've been kept as they are."
-            }
+            running = false
         }
     }
 
-    struct Prepared: @unchecked Sendable {
-        let originalURL: URL
-        let pixelSize: CGSize
-        let smallOriginal: CGImage?
-        let maskURL: URL?
-        let smallMask: CGImage?
-        let bbox: CGRect
+    struct Processed: @unchecked Sendable {
+        let size: CGSize
+        let alphaURL: URL?
+        let previewPhotoURL: URL?
+        let previewAlphaURL: URL?
+        let gridPhoto: RGBAImage?
+        let gridAlpha: [UInt8]?
+        let status: BatchItem.Status
     }
 
-    nonisolated static func prepare(data: Data, id: UUID, dir: URL) -> Prepared? {
-        let originalURL = dir.appendingPathComponent("\(id.uuidString)-original")
-        do { try data.write(to: originalURL) } catch { return nil }
-        // Full resolution, orientation applied. Nothing is resized for output.
-        let fullSide = ImageFiles.orientedSize(data).map { Int(max($0.width, $0.height)) } ?? 8192
-        guard let full = ImageFiles.loadOriented(data, maxPixel: min(fullSide, 8192)) else { return nil }
-        let size = CGSize(width: full.width, height: full.height)
-        let small = ImageFiles.scaled(full, maxSide: previewLongSide)
+    /// Full-resolution cutout for one photo. Runs off the main thread.
+    nonisolated static func process(data: Data, id: UUID, dir: URL) -> Processed? {
+        autoreleasepool {
+            guard let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg) else { return nil }
+            let size = CGSize(width: photo.width, height: photo.height)
+            let pw = scaled(photo.width, photo.height, previewSide), gw = scaled(photo.width, photo.height, gridSide)
+            let preview = photo.resized(width: pw.0, height: pw.1)
+            let previewURL = dir.appendingPathComponent("\(id.uuidString)-preview.jpg")
+            if let pcg = preview.makeOpaqueCGImage(), let d = ImageIOHelpers.encode(pcg, type: .jpeg, quality: 0.9) { try? d.write(to: previewURL) }
+            let gridPhoto = preview.resized(width: gw.0, height: gw.1)
 
-        var maskURL: URL?
-        var smallMask: CGImage?
-        var bbox = CGRect(x: 0, y: 0, width: 1, height: 1)
-        if let mask = try? Cutout.mask(for: full), let png = ImageFiles.encode(mask, type: .png) {
-            let url = dir.appendingPathComponent("\(id.uuidString)-mask.png")
-            if (try? png.write(to: url)) != nil {
-                maskURL = url
-                if let small {
-                    smallMask = ImageFiles.scaledGray(mask, to: CGSize(width: small.width, height: small.height))
-                }
-                bbox = Cutout.boundingBox(of: smallMask ?? mask)
+            guard let seg = try? Segmenter.segment(cg) else {
+                return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
+                                 gridPhoto: gridPhoto, gridAlpha: nil, status: .failed("No item found, kept as the original"))
             }
+            let matte = Matting.refine(full: photo, segmentation: seg)
+            if case .failed(let why) = matte.confidence {
+                return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
+                                 gridPhoto: gridPhoto, gridAlpha: nil, status: .failed(why + ", kept as the original"))
+            }
+            let alphaURL = dir.appendingPathComponent("\(id.uuidString)-alpha.png")
+            let previewAlphaURL = dir.appendingPathComponent("\(id.uuidString)-preview-alpha.png")
+            writeAlpha(matte.alpha, photo.width, photo.height, to: alphaURL)
+            let full = Plane(bytes: matte.alpha, width: photo.width, height: photo.height)
+            writeAlpha(full.resized(width: pw.0, height: pw.1).toBytes(), pw.0, pw.1, to: previewAlphaURL)
+            let gridAlpha = full.resized(width: gw.0, height: gw.1).toBytes()
+            let status: BatchItem.Status
+            switch matte.confidence {
+            case .check(let s): status = .check(s)
+            default: status = .ready
+            }
+            return Processed(size: size, alphaURL: alphaURL, previewPhotoURL: previewURL, previewAlphaURL: previewAlphaURL,
+                             gridPhoto: gridPhoto, gridAlpha: gridAlpha, status: status)
         }
-        return Prepared(originalURL: originalURL, pixelSize: size, smallOriginal: small,
-                        maskURL: maskURL, smallMask: smallMask, bbox: bbox)
     }
 
-    // MARK: Previews
+    nonisolated static func scaled(_ w: Int, _ h: Int, _ side: Int) -> (Int, Int) {
+        let k = min(1, Double(side) / Double(max(w, h)))
+        return (max(1, Int((Double(w) * k).rounded())), max(1, Int((Double(h) * k).rounded())))
+    }
 
-    nonisolated static func renderSmall(original: CGImage, mask: CGImage, bbox: CGRect, look: Look, photo: CIImage?) -> UIImage? {
-        let size = CGSize(width: original.width, height: original.height)
-        let image = Renderer.compose(original: CIImage(cgImage: original), mask: Renderer.maskImage(mask),
-                                     bbox: bbox, look: look, photo: photo, size: size)
-        guard let cg = Renderer.cgImage(image, size: size) else { return nil }
+    nonisolated static func writeAlpha(_ bytes: [UInt8], _ w: Int, _ h: Int, to url: URL) {
+        if let cg = ImageIOHelpers.grayImage(bytes, width: w, height: h), let d = ImageIOHelpers.encode(cg, type: .png) {
+            try? d.write(to: url)
+        }
+    }
+
+    nonisolated static func readAlpha(_ url: URL, width: Int, height: Int) -> [UInt8]? {
+        guard let data = try? Data(contentsOf: url), let src = CGImageSourceCreateWithData(data as CFData, nil),
+              let cg = CGImageSourceCreateImageAtIndex(src, 0, nil) else { return nil }
+        return ImageIOHelpers.grayBytes(cg, width: width, height: height)
+    }
+
+    // MARK: Rendering
+
+    /// The backdrop for a render, sized for the job.
+    nonisolated static func backdropSource(_ look: Look, surfaceURL: URL?, maxPixel: Int?) -> BackdropSource {
+        switch look.backdrop {
+        case .transparent: return .transparent
+        case .colour(let c): return .colour(r: Float(c.r), g: Float(c.g), b: Float(c.b), studioLight: look.studioLight)
+        case .surface:
+            if let u = surfaceURL, let cg = BackdropImages.image(u, maxPixel: maxPixel) { return .image(cg) }
+            return .colour(r: 1, g: 1, b: 1, studioLight: false)
+        }
+    }
+
+    func surfaceURL(_ look: Look) -> URL? {
+        if case .surface(let id) = look.backdrop { return library.surface(id)?.url }
+        return nil
+    }
+
+    nonisolated static func renderSmall(photo: RGBAImage, alpha: [UInt8], look: Look, surfaceURL: URL?) -> UIImage? {
+        let source = backdropSource(look, surfaceURL: surfaceURL, maxPixel: 1400)
+        let out = Compositor.render(photo: photo, alpha: alpha, backdrop: source, shadow: look.shadow)
+        let transparent: Bool = { if case .transparent = source { return true }; return false }()
+        guard let cg = transparent ? out.makeAlphaCGImage() : out.makeOpaqueCGImage() else { return nil }
         return UIImage(cgImage: cg)
     }
 
-    func renderPreview(for id: UUID) {
-        guard let item = items.first(where: { $0.id == id }), item.removed,
-              let original = item.smallOriginal, let mask = item.smallMask else { return }
-        let look = self.look, photo = Box(backdropPhoto), bbox = item.bbox
-        let o = Box(original), m = Box(mask)
+    private func renderGrid(_ item: BatchItem) {
+        guard let photo = item.gridPhoto else { return }
+        if !item.removed || item.gridAlpha == nil {
+            if let cg = photo.makeOpaqueCGImage() { grid[item.id] = UIImage(cgImage: cg) }
+            return
+        }
+        let alpha = item.gridAlpha!, look = self.look, url = surfaceURL(look), id = item.id
+        let p = Box(photo)
         Task {
-            let image = await Task.detached(priority: .userInitiated) {
-                Box(BatchStore.renderSmall(original: o.value, mask: m.value, bbox: bbox, look: look, photo: photo.value))
+            let img = await Task.detached(priority: .userInitiated) {
+                Box(BatchStore.renderSmall(photo: p.value, alpha: alpha, look: look, surfaceURL: url))
             }.value.value
-            if let image, self.look == look { previews[id] = image }
+            if self.look == look, let img { grid[id] = img }
         }
     }
 
-    func refreshPreviews() {
-        previewTask?.cancel()
-        let look = self.look, photo = Box(backdropPhoto)
-        var list = items.filter { $0.removed && $0.smallOriginal != nil && $0.smallMask != nil }
-        if let f = focusID, let i = list.firstIndex(where: { $0.id == f }) {
-            list.insert(list.remove(at: i), at: 0)
-        }
-        let jobs = list.map { item in
-            (item.id, Box(item.smallOriginal!), Box(item.smallMask!), item.bbox)
-        }
-        previewTask = Task {
-            try? await Task.sleep(nanoseconds: 40_000_000)
-            for job in jobs {
+    func refreshGrid() {
+        gridTask?.cancel()
+        let jobs = items.map { $0 }
+        let look = self.look, url = surfaceURL(look)
+        gridTask = Task {
+            try? await Task.sleep(nanoseconds: 30_000_000)
+            for item in jobs {
                 if Task.isCancelled { return }
-                let image = await Task.detached(priority: .userInitiated) {
-                    Box(BatchStore.renderSmall(original: job.1.value, mask: job.2.value, bbox: job.3, look: look, photo: photo.value))
+                guard let photo = item.gridPhoto else { continue }
+                if !item.removed || item.gridAlpha == nil {
+                    if let cg = photo.makeOpaqueCGImage() { grid[item.id] = UIImage(cgImage: cg) }
+                    continue
+                }
+                let alpha = item.gridAlpha!, p = Box(photo)
+                let img = await Task.detached(priority: .userInitiated) {
+                    Box(BatchStore.renderSmall(photo: p.value, alpha: alpha, look: look, surfaceURL: url))
                 }.value.value
                 if Task.isCancelled { return }
-                if let image { previews[job.0] = image }
+                if let img { grid[item.id] = img }
             }
         }
     }
 
-    // MARK: Editing
+    /// A larger render for the photo view and the tool screens (1100 px).
+    func renderPreview(_ id: UUID, look: Look? = nil) async -> UIImage? {
+        guard let item = items.first(where: { $0.id == id }), let pu = item.previewPhotoURL else { return nil }
+        let look = look ?? self.look, url = surfaceURL(look)
+        let removed = item.removed && item.previewAlphaURL != nil, au = item.previewAlphaURL
+        return await Task.detached(priority: .userInitiated) { () -> Box<UIImage?> in
+            guard let data = try? Data(contentsOf: pu), let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg) else { return Box(nil) }
+            guard removed, let au, let alpha = BatchStore.readAlpha(au, width: photo.width, height: photo.height) else {
+                return Box(UIImage(cgImage: cg))
+            }
+            return Box(BatchStore.renderSmall(photo: photo, alpha: alpha, look: look, surfaceURL: url))
+        }.value.value
+    }
+
+    // MARK: Corrections
 
     func setRemoved(_ id: UUID, _ removed: Bool) {
         guard let i = items.firstIndex(where: { $0.id == id }), items[i].canRemove else { return }
         items[i].removed = removed
-        if removed { renderPreview(for: id) }
+        lookVersion += 1
+        renderGrid(items[i])
     }
 
     func setAllRemoved(_ removed: Bool) {
-        for i in items.indices where items[i].canRemove {
-            items[i].removed = removed
-        }
-        if removed { refreshPreviews() }
+        for i in items.indices where items[i].canRemove { items[i].removed = removed }
+        lookVersion += 1
+        refreshGrid()
+    }
+
+    /// Applies touch-up strokes to the full-resolution matte and its smaller copies.
+    func applyTouchUp(_ id: UUID, strokes: [BrushStroke]) async {
+        guard !strokes.isEmpty, let i = items.firstIndex(where: { $0.id == id }),
+              let au = items[i].alphaURL, let pau = items[i].previewAlphaURL else { return }
+        let size = items[i].pixelSize
+        let grid = items[i].gridPhoto.map { ($0.width, $0.height) }
+        let result = await Task.detached(priority: .userInitiated) { () -> Box<[UInt8]?> in
+            let w = Int(size.width), h = Int(size.height)
+            guard var alpha = BatchStore.readAlpha(au, width: w, height: h) else { return Box(nil) }
+            Brush.apply(strokes, to: &alpha, width: w, height: h)
+            BatchStore.writeAlpha(alpha, w, h, to: au)
+            let full = Plane(bytes: alpha, width: w, height: h)
+            let p = BatchStore.scaled(w, h, BatchStore.previewSide)
+            BatchStore.writeAlpha(full.resized(width: p.0, height: p.1).toBytes(), p.0, p.1, to: pau)
+            guard let grid else { return Box(nil) }
+            return Box(full.resized(width: grid.0, height: grid.1).toBytes())
+        }.value.value
+        guard let j = items.firstIndex(where: { $0.id == id }) else { return }
+        if let g = result { items[j].gridAlpha = g }
+        items[j].edited = true
+        if case .check = items[j].status { items[j].status = .ready }
+        lookVersion += 1
+        renderGrid(items[j])
     }
 
     func delete(_ id: UUID) {
         if let item = items.first(where: { $0.id == id }) {
-            try? FileManager.default.removeItem(at: item.originalURL)
-            if let m = item.maskURL { try? FileManager.default.removeItem(at: m) }
+            for u in [item.originalURL, item.alphaURL, item.previewPhotoURL, item.previewAlphaURL].compactMap({ $0 }) {
+                try? FileManager.default.removeItem(at: u)
+            }
         }
         items.removeAll { $0.id == id }
-        previews[id] = nil
+        grid[id] = nil
     }
 
     func clear() {
-        previewTask?.cancel()
+        gridTask?.cancel()
         items = []
-        previews = [:]
+        grid = [:]
         exportResult = nil
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-    }
-
-    func setBackdropPhoto(_ pick: PhotosPickerItem) {
-        Task {
-            guard let data = try? await pick.loadTransferable(type: Data.self) else { return }
-            let box = await Task.detached(priority: .userInitiated) { Box(ImageFiles.loadOriented(data, maxPixel: 4096)) }.value
-            guard let cg = box.value else { message = "That photo couldn't be opened."; return }
-            backdropPhoto = CIImage(cgImage: cg)
-            backdropPhotoID += 1
-            if look.backdrop == .photo { refreshPreviews() } else { look.backdrop = .photo }
-        }
     }
 
     // MARK: Export
@@ -238,14 +318,15 @@ final class BatchStore: ObservableObject {
                 message = "Clearcut needs permission to add photos. Open Settings, then Clearcut, then Photos, and allow Add Photos Only."
                 return
             }
-            let list = items
-            let look = self.look, photo = Box(backdropPhoto)
+            let list = items.filter { $0.status != .processing }
+            let look = self.look, url = surfaceURL(look)
             exportProgress = (0, list.count)
-            var saved = 0, failed = 0
+            var saved = 0
+            var failures: [String] = []
             var thumbs: [UIImage] = []
-            for (i, item) in list.enumerated() {
+            for (n, item) in list.enumerated() {
                 let result = await Task.detached(priority: .userInitiated) {
-                    BatchStore.exportData(item: item, look: look, photo: photo.value)
+                    BatchStore.exportData(item: item, look: look, surfaceURL: url)
                 }.value
                 if let result {
                     do {
@@ -254,42 +335,39 @@ final class BatchStore: ObservableObject {
                             request.addResource(with: .photo, data: result.data, options: nil)
                         }
                         saved += 1
-                        if thumbs.count < 20 { thumbs.append(result.thumb) }
+                        if thumbs.count < 20, let t = grid[item.id] { thumbs.append(t) }
                     } catch {
-                        failed += 1
+                        failures.append("Photo \(n + 1): Photos refused to save it")
                     }
                 } else {
-                    failed += 1
+                    failures.append("Photo \(n + 1): couldn't be rendered")
                 }
-                exportProgress = (i + 1, list.count)
+                exportProgress = (n + 1, list.count)
             }
             exportProgress = nil
-            exportResult = ExportResult(saved: saved, failed: failed, thumbs: thumbs)
+            exportResult = ExportResult(saved: saved, failures: failures, thumbs: thumbs)
         }
     }
 
-    struct Exported: @unchecked Sendable {
-        let data: Data
-        let thumb: UIImage
-    }
+    struct Exported: @unchecked Sendable { let data: Data }
 
-    /// Full-resolution output: same pixel size and framing as the original photo.
-    nonisolated static func exportData(item: BatchItem, look: Look, photo: CIImage?) -> Exported? {
-        if !item.removed || item.maskURL == nil {
+    /// Full resolution, original size and framing. One photo in memory at a time.
+    nonisolated static func exportData(item: BatchItem, look: Look, surfaceURL: URL?) -> Exported? {
+        autoreleasepool {
             guard let data = try? Data(contentsOf: item.originalURL) else { return nil }
-            let thumb = item.smallOriginal.map { UIImage(cgImage: $0) } ?? UIImage()
-            return Exported(data: data, thumb: thumb)
+            if !item.removed || item.alphaURL == nil {
+                return Exported(data: data)    // untouched original, byte for byte
+            }
+            guard let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg),
+                  let au = item.alphaURL, let alpha = readAlpha(au, width: photo.width, height: photo.height) else { return nil }
+            let source = backdropSource(look, surfaceURL: surfaceURL, maxPixel: nil)
+            let out = Compositor.render(photo: photo, alpha: alpha, backdrop: source, shadow: look.shadow)
+            if case .transparent = source {
+                guard let cg = out.makeAlphaCGImage(), let png = ImageIOHelpers.encode(cg, type: .png) else { return nil }
+                return Exported(data: png)
+            }
+            guard let cg = out.makeOpaqueCGImage(), let jpg = ImageIOHelpers.encode(cg, type: .jpeg, quality: 0.95) else { return nil }
+            return Exported(data: jpg)
         }
-        guard let maskURL = item.maskURL,
-              let mask = Renderer.maskImage(url: maskURL),
-              let full = ImageFiles.loadOriented(item.originalURL, maxPixel: Int(max(item.pixelSize.width, item.pixelSize.height))) else { return nil }
-        let size = CGSize(width: full.width, height: full.height)
-        let image = Renderer.compose(original: CIImage(cgImage: full), mask: mask, bbox: item.bbox,
-                                     look: look, photo: photo, size: size)
-        guard let cg = Renderer.cgImage(image, size: size) else { return nil }
-        let png = look.backdrop == .transparent
-        guard let data = ImageFiles.encode(cg, type: png ? .png : .jpeg, quality: 0.95) else { return nil }
-        let thumb = UIImage(cgImage: ImageFiles.scaled(cg, maxSide: 300) ?? cg)
-        return Exported(data: data, thumb: thumb)
     }
 }

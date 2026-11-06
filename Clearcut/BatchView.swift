@@ -7,38 +7,44 @@ struct BatchView: View {
     @State private var editing: EditTarget?
     @State private var confirmClose = false
     @State private var morePicks: [PhotosPickerItem] = []
+    @State private var onlyAttention = false
 
-    private let columns = [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)]
+    private let columns = [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
+
+    private var shown: [BatchItem] {
+        onlyAttention ? store.items.filter { $0.needsAttention } : store.items
+    }
 
     var body: some View {
         VStack(spacing: 0) {
             header
+            if store.attentionCount > 0 {
+                Button { onlyAttention.toggle() } label: {
+                    Text(onlyAttention ? "Show all photos"
+                         : store.attentionCount == 1 ? "1 photo needs a look" : "\(store.attentionCount) photos need a look")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundStyle(onlyAttention ? Theme.ink : Theme.warning)
+                        .padding(.vertical, 6)
+                }
+            }
             ScrollView {
-                LazyVGrid(columns: columns, spacing: 10) {
-                    ForEach(store.items) { item in
+                LazyVGrid(columns: columns, spacing: 8) {
+                    ForEach(shown) { item in
                         Tile(item: item)
-                            .onTapGesture { if !store.busy { editing = EditTarget(id: item.id) } }
-                    }
-                    if let p = store.importing {
-                        ProgressTile(done: p.done, total: p.total)
+                            .onTapGesture { if item.status != .processing { editing = EditTarget(id: item.id) } }
                     }
                 }
-                .padding(.horizontal, 14)
+                .padding(.horizontal, 12)
                 .padding(.top, 4)
-                .padding(.bottom, 24)
+                .padding(.bottom, 20)
             }
             bottomBar
         }
         .background(Theme.paper.ignoresSafeArea())
-        .fullScreenCover(item: $tool) { t in
-            ToolScreen(tool: t, startID: nil)
-        }
-        .fullScreenCover(item: $editing) { target in
-            ItemEditor(id: target.id)
-        }
+        .fullScreenCover(item: $tool) { t in ToolScreen(tool: t, startID: nil) }
+        .fullScreenCover(item: $editing) { target in ItemEditor(id: target.id) }
         .sheet(item: $store.exportResult) { result in
-            ExportDoneView(result: result)
-                .presentationDetents([.medium])
+            ExportDoneView(result: result).presentationDetents([.medium])
         }
         .confirmationDialog("Close this batch?", isPresented: $confirmClose, titleVisibility: .visible) {
             Button("Close batch", role: .destructive) { store.clear() }
@@ -50,24 +56,27 @@ struct BatchView: View {
             store.add(new)
             morePicks = []
         }
+        .onChange(of: store.attentionCount) { _, n in if n == 0 { onlyAttention = false } }
     }
 
     private var header: some View {
         HStack {
             Button { confirmClose = true } label: {
-                Image(systemName: "xmark")
-                    .font(.system(size: 17, weight: .semibold))
-                    .frame(width: 40, height: 40)
+                Image(systemName: "xmark").font(.system(size: 17, weight: .semibold)).frame(width: 40, height: 40)
             }
             .accessibilityLabel("Close batch")
             Spacer()
-            Text(store.items.count == 1 ? "1 photo" : "\(store.items.count) photos")
-                .font(.system(size: 17, weight: .semibold))
+            VStack(spacing: 1) {
+                Text(store.items.count == 1 ? "1 photo" : "\(store.items.count) photos")
+                    .font(.system(size: 17, weight: .semibold))
+                if let p = store.importing {
+                    Text("Cutting out \(min(p.done + 1, p.total)) of \(p.total)")
+                        .font(.system(size: 13)).foregroundStyle(Theme.muted)
+                }
+            }
             Spacer()
             PhotosPicker(selection: $morePicks, maxSelectionCount: 250, selectionBehavior: .ordered, matching: .images) {
-                Image(systemName: "plus")
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: 40, height: 40)
+                Image(systemName: "plus").font(.system(size: 18, weight: .semibold)).frame(width: 40, height: 40)
             }
             .accessibilityLabel("Add photos")
             .disabled(store.exportProgress != nil)
@@ -78,13 +87,13 @@ struct BatchView: View {
     }
 
     private var bottomBar: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 10) {
             Button { store.exportAll() } label: {
                 Group {
                     if let p = store.exportProgress {
                         Text("Saving \(p.done) of \(p.total)")
                     } else {
-                        Text(store.items.count == 1 ? "Export 1 image" : "Export \(store.items.count) images")
+                        Text(store.items.count == 1 ? "Export 1 photo" : "Export \(store.items.count) photos")
                     }
                 }
                 .font(.system(size: 17, weight: .semibold))
@@ -95,7 +104,7 @@ struct BatchView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .disabled(store.busy || store.items.isEmpty)
-            .opacity(store.importing != nil ? 0.5 : 1)
+            .opacity(store.importing != nil ? 0.45 : 1)
 
             HStack(spacing: 0) {
                 toolButton("Background", "square.on.square", .background)
@@ -103,7 +112,7 @@ struct BatchView: View {
             }
         }
         .padding(.horizontal, 16)
-        .padding(.top, 12)
+        .padding(.top, 10)
         .padding(.bottom, 6)
         .background(Theme.paper.overlay(alignment: .top) { Rectangle().fill(Theme.line).frame(height: 0.5) })
     }
@@ -118,7 +127,7 @@ struct BatchView: View {
             .padding(.vertical, 6)
             .foregroundStyle(Theme.ink)
         }
-        .disabled(store.busy || store.items.isEmpty)
+        .disabled(store.exportProgress != nil || store.items.isEmpty)
     }
 }
 
@@ -127,52 +136,38 @@ struct Tile: View {
     let item: BatchItem
 
     var body: some View {
-        Color(red: 0.91, green: 0.90, blue: 0.87)
+        Theme.tile
             .aspectRatio(1, contentMode: .fit)
             .overlay {
-                ZStack {
-                    if item.removed {
-                        if let p = store.previews[item.id] {
-                            Image(uiImage: p).resizable().scaledToFit()
-                                .background { if store.look.backdrop == .transparent { Checker() } }
-                        } else {
-                            ProgressView()
-                        }
-                    } else if let o = item.smallOriginal {
-                        Image(uiImage: UIImage(cgImage: o)).resizable().scaledToFit()
-                    }
+                if let img = store.grid[item.id] {
+                    Image(uiImage: img).resizable().scaledToFit()
+                        .background { if item.removed && store.transparent { Checker() } }
+                } else {
+                    ProgressView()
                 }
             }
             .overlay(alignment: .bottomLeading) {
-                if item.status == .noSubject {
-                    Text("No item found")
-                        .font(.system(size: 12, weight: .medium))
-                        .padding(.horizontal, 8).padding(.vertical, 4)
-                        .background(.white)
-                        .clipShape(Capsule())
-                        .padding(8)
+                switch item.status {
+                case .check:
+                    badge("Check")
+                case .failed:
+                    badge("Not cut out")
+                default:
+                    if !item.removed && item.canRemove { badge("Original") }
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
             .contentShape(Rectangle())
     }
-}
 
-struct ProgressTile: View {
-    let done: Int
-    let total: Int
-    var body: some View {
-        Color.white.opacity(0.6)
-            .aspectRatio(1, contentMode: .fit)
-            .overlay {
-                VStack(spacing: 10) {
-                    ProgressView()
-                    Text("Cutting out \(min(done + 1, total)) of \(total)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.muted)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+    private func badge(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(text == "Original" ? Theme.ink : Theme.warning)
+            .padding(.horizontal, 8).padding(.vertical, 4)
+            .background(.white)
+            .clipShape(Capsule())
+            .padding(6)
     }
 }
 
@@ -202,26 +197,26 @@ struct ExportDoneView: View {
     let result: BatchStore.ExportResult
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(result.saved == 1 ? "1 image saved" : "\(result.saved) images saved")
+        VStack(alignment: .leading, spacing: 14) {
+            Text(result.saved == 1 ? "1 photo saved" : "\(result.saved) photos saved")
                 .font(.system(size: 22, weight: .bold))
-            Text(result.failed > 0
-                 ? "Saved to your camera roll. \(result.failed) couldn't be saved."
-                 : "Saved to your camera roll.")
+            Text(result.failures.isEmpty ? "Saved to your camera roll at full resolution."
+                 : "Saved to your camera roll. \(result.failures.count) couldn't be saved:")
                 .foregroundStyle(Theme.muted)
+            if !result.failures.isEmpty {
+                ForEach(result.failures, id: \.self) { Text($0).font(.system(size: 14)).foregroundStyle(Theme.warning) }
+            }
             ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     ForEach(Array(result.thumbs.enumerated()), id: \.offset) { _, img in
                         Image(uiImage: img).resizable().scaledToFill()
-                            .frame(width: 92, height: 92)
-                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .frame(width: 88, height: 88)
+                            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
                     }
                 }
             }
             Spacer()
-            Button {
-                store.clear()
-            } label: {
+            Button { store.clear() } label: {
                 Text("Close batch")
                     .font(.system(size: 17, weight: .semibold))
                     .frame(maxWidth: .infinity).padding(.vertical, 16)
@@ -229,9 +224,7 @@ struct ExportDoneView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             Button { dismiss() } label: {
-                Text("Keep editing")
-                    .font(.system(size: 17, weight: .medium))
-                    .frame(maxWidth: .infinity).padding(.vertical, 8)
+                Text("Keep editing").font(.system(size: 17, weight: .medium)).frame(maxWidth: .infinity).padding(.vertical, 8)
             }
         }
         .padding(24)

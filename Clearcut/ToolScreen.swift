@@ -7,8 +7,8 @@ enum Tool: String, Identifiable {
     var title: String { self == .background ? "Background" : "Shadow" }
 }
 
-/// Full-screen editing tool: a large live preview you can swipe through, the tool's
-/// controls underneath, Cancel to undo every change made here, Done to go back.
+/// Full-screen tool: a large live preview you can swipe through, the tool's controls underneath,
+/// Cancel to undo everything changed here, Done to go back.
 struct ToolScreen: View {
     @EnvironmentObject var store: BatchStore
     @Environment(\.dismiss) private var dismiss
@@ -25,19 +25,17 @@ struct ToolScreen: View {
                     if let entryLook { store.look = entryLook }
                     dismiss()
                 }
-                .font(.system(size: 17))
                 Spacer()
                 Text(tool.title).font(.system(size: 17, weight: .semibold))
                 Spacer()
-                Button("Done") { dismiss() }
-                    .font(.system(size: 17, weight: .semibold))
+                Button("Done") { dismiss() }.font(.system(size: 17, weight: .semibold))
             }
+            .font(.system(size: 17))
             .foregroundStyle(Theme.ink)
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
 
-            PreviewPager(page: $page)
-                .frame(maxHeight: .infinity)
+            PreviewPager(page: $page).frame(maxHeight: .infinity)
 
             Group {
                 switch tool {
@@ -45,17 +43,13 @@ struct ToolScreen: View {
                 case .shadow: ShadowControls()
                 }
             }
-            .padding(.top, 8)
-            .background(Theme.paper)
+            .padding(.top, 10)
         }
         .background(Theme.paper.ignoresSafeArea())
         .onAppear {
             entryLook = store.look
-            page = startID ?? store.items.first(where: { $0.removed })?.id ?? store.items.first?.id
-            store.focusID = page
+            page = startID ?? store.items.first(where: { $0.removed && $0.canRemove })?.id ?? store.items.first?.id
         }
-        .onChange(of: page) { _, new in store.focusID = new }
-        .onDisappear { store.focusID = nil }
     }
 }
 
@@ -68,57 +62,48 @@ struct PreviewPager: View {
         VStack(spacing: 6) {
             TabView(selection: $page) {
                 ForEach(store.items) { item in
-                    PreviewImage(item: item)
-                        .padding(.horizontal, 16)
-                        .tag(Optional(item.id))
+                    LargePreview(id: item.id).padding(.horizontal, 16).tag(Optional(item.id))
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             if store.items.count > 1, let page, let i = store.items.firstIndex(where: { $0.id == page }) {
-                Text("\(i + 1) of \(store.items.count)")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.muted)
+                Text("\(i + 1) of \(store.items.count)").font(.system(size: 13)).foregroundStyle(Theme.muted)
             }
         }
     }
 }
 
-/// One photo as it will be exported, fitted into the available space.
-struct PreviewImage: View {
+/// One photo rendered at 1100 px with the current look, re-rendered whenever the look changes.
+struct LargePreview: View {
     @EnvironmentObject var store: BatchStore
-    let item: BatchItem
+    let id: UUID
+    @State private var image: UIImage?
+
+    private var item: BatchItem? { store.items.first { $0.id == id } }
 
     var body: some View {
         GeometryReader { geo in
-            let aspect = item.pixelSize.width / max(item.pixelSize.height, 1)
+            let size = item?.pixelSize ?? CGSize(width: 4, height: 3)
+            let aspect = size.width / max(size.height, 1)
             let w = min(geo.size.width, geo.size.height * aspect)
-            let h = w / aspect
             ZStack {
-                if item.removed {
-                    if store.look.backdrop == .transparent { Checker() }
-                    if let p = store.previews[item.id] {
-                        Image(uiImage: p).resizable()
-                    } else if let o = item.smallOriginal {
-                        Image(uiImage: UIImage(cgImage: o)).resizable().opacity(0.4)
-                        ProgressView()
-                    }
-                } else if let o = item.smallOriginal {
-                    Image(uiImage: UIImage(cgImage: o)).resizable()
+                if item?.removed == true, store.transparent { Checker() }
+                if let image {
+                    Image(uiImage: image).resizable()
+                } else if let g = store.grid[id] {
+                    Image(uiImage: g).resizable().opacity(0.6)
+                    ProgressView()
                 }
             }
-            .frame(width: w, height: h)
-            .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
+            .frame(width: w, height: w / aspect)
+            .clipShape(RoundedRectangle(cornerRadius: 3, style: .continuous))
             .position(x: geo.size.width / 2, y: geo.size.height / 2)
         }
-    }
-}
-
-private struct SectionTitle: View {
-    let text: String
-    var body: some View {
-        Text(text)
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(Theme.ink)
+        .task(id: "\(store.lookVersion)-\(id)") {
+            try? await Task.sleep(nanoseconds: 60_000_000)
+            if Task.isCancelled { return }
+            if let img = await store.renderPreview(id), !Task.isCancelled { image = img }
+        }
     }
 }
 
@@ -126,14 +111,16 @@ private struct SectionTitle: View {
 
 struct BackgroundControls: View {
     @EnvironmentObject var store: BatchStore
-    @State private var group: String = "Colour"
+    @EnvironmentObject var library: BackgroundLibrary
+    @State private var group = "Wood"
     @State private var custom: Color = .white
-    @State private var photoPick: PhotosPickerItem?
+    @State private var addPick: PhotosPickerItem?
+    @State private var adding = false
 
-    private var groups: [String] { ["Colour"] + Surface.Group.allCases.map(\.rawValue) + ["Your photo"] }
+    private var groups: [String] { library.groups().map(\.0) + ["Colour"] }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 12) {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(groups, id: \.self) { g in
@@ -152,102 +139,81 @@ struct BackgroundControls: View {
             }
 
             Group {
-                if group == "Colour" {
-                    colourRow
-                } else if group == "Your photo" {
-                    photoRow
-                } else if let g = Surface.Group(rawValue: group), let list = Surface.catalogue[g] {
-                    surfaceRow(list)
-                }
+                if group == "Colour" { colourRow } else { surfaceRow(library.surfaces.filter { $0.group == group }, yours: group == "Yours") }
             }
-            .frame(height: 118, alignment: .top)
+            .frame(height: 122, alignment: .top)
 
-            Button {
-                store.setAllRemoved(!store.anyRemoved)
-            } label: {
-                Text(store.anyRemoved ? "Restore original backgrounds" : "Remove backgrounds")
-                    .font(.system(size: 16, weight: .medium))
+            Button { store.setAllRemoved(!store.anyRemoved) } label: {
+                Text(store.anyRemoved ? "Show original backgrounds" : "Remove backgrounds")
+                    .font(.system(size: 15, weight: .medium))
+                    .foregroundStyle(Theme.muted)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
-                    .background(Color.white)
-                    .foregroundStyle(Theme.ink)
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.line))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                    .padding(.vertical, 8)
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 8)
+            .padding(.bottom, 6)
         }
         .onAppear {
             switch store.look.backdrop {
+            case .surface(let id): group = library.surface(id)?.group ?? "Wood"
             case .colour(let c): group = "Colour"; custom = c.color
             case .transparent: group = "Colour"
-            case .surface(let id): group = Surface.group(of: id)?.rawValue ?? "Colour"
-            case .photo: group = "Your photo"
             }
         }
         .onChange(of: custom) { _, c in
             let rgb = RGB(color: c)
             if store.look.backdrop != .colour(rgb) { store.look.backdrop = .colour(rgb) }
         }
-        .onChange(of: photoPick) { _, p in
-            if let p { store.setBackdropPhoto(p) }
-            photoPick = nil
-        }
-    }
-
-    private var colourRow: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    Button { store.look.backdrop = .transparent } label: {
-                        Checker()
-                            .frame(width: 44, height: 44)
-                            .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.black.opacity(0.15)))
-                            .overlay(ring(store.look.backdrop == .transparent))
-                    }
-                    .accessibilityLabel("Transparent")
-                    ForEach(RGB.swatches, id: \.self) { c in
-                        Button { store.look.backdrop = .colour(c) } label: {
-                            Circle().fill(c.color)
-                                .frame(width: 44, height: 44)
-                                .overlay(Circle().stroke(Color.black.opacity(0.15)))
-                                .overlay(ring(store.look.backdrop == .colour(c)))
-                        }
-                    }
-                    ColorPicker("Custom colour", selection: $custom, supportsOpacity: false)
-                        .labelsHidden()
-                        .frame(width: 44, height: 44)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 5)
+        .onChange(of: addPick) { _, p in
+            guard let p else { return }
+            adding = true
+            Task {
+                if let id = await library.add(p) { store.look.backdrop = .surface(id) }
+                adding = false
+                addPick = nil
             }
-            Toggle("Studio light", isOn: $store.look.studioLight)
-                .font(.system(size: 16))
-                .padding(.horizontal, 20)
-                .disabled(!isColour)
-                .opacity(isColour ? 1 : 0.4)
         }
     }
 
-    private func surfaceRow(_ list: [Surface]) -> some View {
+    private func surfaceRow(_ list: [Surface], yours: Bool) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                if yours {
+                    PhotosPicker(selection: $addPick, matching: .images) {
+                        VStack(spacing: 6) {
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 6, style: .continuous).stroke(Theme.line, lineWidth: 1.5)
+                                if adding { ProgressView() } else { Image(systemName: "plus").font(.system(size: 22)) }
+                            }
+                            .frame(width: 84, height: 84)
+                            Text("Add").font(.system(size: 13))
+                        }
+                        .foregroundStyle(Theme.ink)
+                    }
+                }
                 ForEach(list) { s in
                     Button { store.look.backdrop = .surface(s.id) } label: {
                         VStack(spacing: 6) {
                             Group {
-                                if let img = Renderer.surfaceThumb(s.id) {
+                                if let u = s.thumbURL, let img = UIImage(contentsOfFile: u.path) {
                                     Image(uiImage: img).resizable().scaledToFill()
-                                } else {
-                                    Color.gray
-                                }
+                                } else { Theme.tile }
                             }
                             .frame(width: 84, height: 84)
-                            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-                            .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 6, style: .continuous)
                                 .stroke(store.look.backdrop == .surface(s.id) ? Theme.ink : Color.clear, lineWidth: 3))
-                            Text(s.title).font(.system(size: 13)).foregroundStyle(Theme.ink)
+                            Text(s.title).font(.system(size: 13)).foregroundStyle(Theme.ink).lineLimit(1).frame(width: 88)
+                            if s.pixels > 0 && s.pixels < 3000 {
+                                Text("Low resolution").font(.system(size: 11)).foregroundStyle(Theme.warning)
+                            }
+                        }
+                    }
+                    .contextMenu {
+                        if s.custom {
+                            Button("Delete background", role: .destructive) {
+                                if store.look.backdrop == .surface(s.id) { store.look.backdrop = Look().backdrop }
+                                library.remove(s)
+                            }
                         }
                     }
                 }
@@ -257,34 +223,35 @@ struct BackgroundControls: View {
         }
     }
 
-    private var photoRow: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            PhotosPicker(selection: $photoPick, matching: .images) {
-                Text(store.look.backdrop == .photo ? "Change backdrop photo" : "Choose from Photos")
-                    .font(.system(size: 16, weight: .medium))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 13)
-                    .background(Color.white)
-                    .foregroundStyle(Theme.ink)
-                    .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous)
-                        .stroke(store.look.backdrop == .photo ? Theme.ink : Theme.line,
-                                lineWidth: store.look.backdrop == .photo ? 2 : 1))
-                    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    private var colourRow: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 12) {
+                    Button { store.look.backdrop = .transparent } label: {
+                        Checker().frame(width: 44, height: 44).clipShape(Circle())
+                            .overlay(Circle().stroke(Color.black.opacity(0.15)))
+                            .overlay(ring(store.look.backdrop == .transparent))
+                    }
+                    .accessibilityLabel("Transparent")
+                    ForEach(RGB.swatches, id: \.self) { c in
+                        Button { store.look.backdrop = .colour(c) } label: {
+                            Circle().fill(c.color).frame(width: 44, height: 44)
+                                .overlay(Circle().stroke(Color.black.opacity(0.15)))
+                                .overlay(ring(store.look.backdrop == .colour(c)))
+                        }
+                    }
+                    ColorPicker("Custom colour", selection: $custom, supportsOpacity: false).labelsHidden().frame(width: 44, height: 44)
+                }
+                .padding(.horizontal, 20).padding(.vertical, 5)
             }
-            Text("A photo of your own surface, such as a table or floor, shot from above.")
-                .font(.system(size: 13)).foregroundStyle(Theme.muted)
+            Toggle("Soft studio light", isOn: $store.look.studioLight)
+                .font(.system(size: 16)).padding(.horizontal, 20)
+                .disabled(!isColour).opacity(isColour ? 1 : 0.4)
         }
-        .padding(.horizontal, 20)
     }
 
-    private var isColour: Bool {
-        if case .colour = store.look.backdrop { return true }
-        return false
-    }
-
-    private func ring(_ on: Bool) -> some View {
-        Circle().stroke(on ? Theme.ink : Color.clear, lineWidth: 2.5).padding(-4)
-    }
+    private var isColour: Bool { if case .colour = store.look.backdrop { return true }; return false }
+    private func ring(_ on: Bool) -> some View { Circle().stroke(on ? Theme.ink : Color.clear, lineWidth: 2.5).padding(-4) }
 }
 
 // MARK: Shadow
@@ -292,91 +259,59 @@ struct BackgroundControls: View {
 struct ShadowControls: View {
     @EnvironmentObject var store: BatchStore
 
+    private var strength: Binding<Double> {
+        Binding(get: { Double(store.look.shadow.strength) }, set: { store.look.shadow.strength = Float($0) })
+    }
+    private var angle: Binding<Double> {
+        Binding(get: { Double(store.look.shadow.angle) }, set: { store.look.shadow.angle = Float($0) })
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
-                ForEach(ShadowStyle.allCases) { s in
-                    Button { store.look.shadow = s } label: {
-                        VStack(spacing: 5) {
-                            ShadowGlyph(style: s)
-                                .frame(maxWidth: .infinity)
-                                .frame(height: 56)
-                                .background(Color.white)
-                                .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                                .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                    .stroke(store.look.shadow == s ? Theme.ink : Theme.line,
-                                            lineWidth: store.look.shadow == s ? 2.5 : 1))
-                            Text(s.title).font(.system(size: 12)).foregroundStyle(Theme.ink)
-                        }
+                ForEach(ShadowKind.allCases) { k in
+                    Button { store.look.shadow.kind = k } label: {
+                        Text(k.title)
+                            .font(.system(size: 15, weight: store.look.shadow.kind == k ? .semibold : .regular))
+                            .frame(maxWidth: .infinity).padding(.vertical, 11)
+                            .background(store.look.shadow.kind == k ? Theme.ink : Color.white)
+                            .foregroundStyle(store.look.shadow.kind == k ? Color.white : Theme.ink)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(Theme.line, lineWidth: store.look.shadow.kind == k ? 0 : 1))
                     }
                 }
             }
-            .padding(.horizontal, 20)
-
-            if store.look.shadow != .none {
-                VStack(spacing: 2) {
-                    sliderRow("Strength", value: $store.look.shadowStrength, range: 0.05...1,
-                              label: "\(Int(store.look.shadowStrength * 100))%")
-                    sliderRow("Softness", value: $store.look.shadowSoftness, range: 0...1,
-                              label: "\(Int(store.look.shadowSoftness * 100))%")
-                    if store.look.shadow.usesDistance {
-                        sliderRow("Distance", value: $store.look.shadowDistance, range: 0...1,
-                                  label: "\(Int(store.look.shadowDistance * 100))%")
-                    }
-                    if store.look.shadow.usesDirection {
-                        sliderRow("Direction", value: $store.look.shadowAngle, range: 0...359,
-                                  label: directionName(store.look.shadowAngle))
-                    }
-                }
-                .padding(.horizontal, 20)
-            } else {
-                Text("No shadow is added.")
-                    .font(.system(size: 14)).foregroundStyle(Theme.muted)
-                    .padding(.horizontal, 20)
+            Text(description).font(.system(size: 14)).foregroundStyle(Theme.muted).frame(height: 38, alignment: .top)
+            if store.look.shadow.kind != .none {
+                row("Strength", Slider(value: strength, in: 0.15...1), "\(Int(store.look.shadow.strength * 100))%")
+                row("Light from", Slider(value: angle, in: 0...359), lightName)
             }
-            Spacer().frame(height: 6)
+            Spacer().frame(height: 4)
         }
-        .frame(minHeight: 250, alignment: .top)
+        .padding(.horizontal, 20)
+        .frame(minHeight: 230, alignment: .top)
     }
 
-    private func sliderRow(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, label: String) -> some View {
+    private var description: String {
+        switch store.look.shadow.kind {
+        case .flatlay: return "Lying on the surface: dark where it touches, softening where it is thicker."
+        case .lifted: return "Raised slightly off the surface, with a wider, softer shadow."
+        case .none: return "No shadow."
+        }
+    }
+
+    /// The shadow falls away from the light, so name the light's side.
+    private var lightName: String {
+        let lightDeg = (Double(store.look.shadow.angle) + 180).truncatingRemainder(dividingBy: 360)
+        let names = ["right", "bottom right", "below", "bottom left", "left", "top left", "above", "top right"]
+        return names[Int(((lightDeg + 22.5).truncatingRemainder(dividingBy: 360)) / 45) % 8].capitalized
+    }
+
+    private func row(_ title: String, _ slider: Slider<EmptyView, EmptyView>, _ value: String) -> some View {
         HStack(spacing: 12) {
-            Text(title).font(.system(size: 15)).frame(width: 78, alignment: .leading)
-            Slider(value: value, in: range)
-            Text(label).font(.system(size: 14)).foregroundStyle(Theme.muted).frame(width: 74, alignment: .trailing)
-        }
-    }
-
-    private func directionName(_ deg: Double) -> String {
-        let names = ["Right", "Down right", "Down", "Down left", "Left", "Up left", "Up", "Up right"]
-        let i = Int(((deg + 22.5).truncatingRemainder(dividingBy: 360)) / 45) % 8
-        return names[i]
-    }
-}
-
-struct ShadowGlyph: View {
-    let style: ShadowStyle
-    var body: some View {
-        ZStack {
-            switch style {
-            case .none:
-                EmptyView()
-            case .drop:
-                RoundedRectangle(cornerRadius: 3).fill(Color.black.opacity(0.35))
-                    .frame(width: 18, height: 24).blur(radius: 1.5).offset(x: 3, y: 4)
-            case .soft:
-                Ellipse().fill(Color.black.opacity(0.4)).frame(width: 26, height: 6).blur(radius: 2.5).offset(y: 13)
-            case .floating:
-                RoundedRectangle(cornerRadius: 3).fill(Color.black.opacity(0.2))
-                    .frame(width: 18, height: 24).blur(radius: 4).offset(x: 6, y: 8)
-            case .hard:
-                Rectangle().fill(Color.black.opacity(0.22))
-                    .frame(width: 18, height: 10)
-                    .transformEffect(CGAffineTransform(a: 1, b: 0, c: -1.0, d: 1, tx: 0, ty: 0))
-                    .offset(x: 16, y: 7)
-            }
-            RoundedRectangle(cornerRadius: 3).fill(Theme.ink)
-                .frame(width: 18, height: 24)
+            Text(title).font(.system(size: 15)).frame(width: 82, alignment: .leading)
+            slider
+            Text(value).font(.system(size: 14)).foregroundStyle(Theme.muted).frame(width: 92, alignment: .trailing)
         }
     }
 }

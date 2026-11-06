@@ -201,9 +201,9 @@ public enum Matting {
             let l = Int(cl[i]); if l == 0 { continue }
             sumC[l * 3] += R.data[i]; sumC[l * 3 + 1] += G.data[i]; sumC[l * 3 + 2] += B.data[i]
             let x = i % w, y = i / w
-            for (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] where nx >= 0 && ny >= 0 && nx < w && ny < h {
+            for (nx, ny) in [(x - 2, y), (x + 2, y), (x, y - 2), (x, y + 2)] where nx >= 0 && ny >= 0 && nx < w && ny < h {
                 let j = ny * w + nx
-                if fg[j] && p.data[j] > 0.8 {
+                if fg[j] {
                     sumT[l * 3] += R.data[j]; sumT[l * 3 + 1] += G.data[j]; sumT[l * 3 + 2] += B.data[j]; cntT[l] += 1
                 }
             }
