@@ -115,7 +115,7 @@ public enum Matting {
             let aw = Plane(bytes: alpha, width: full.width, height: full.height).resized(width: ww, height: wh)
             var inside = [Bool](repeating: false, count: n)
             let solid = aw.map { $0 > 0.5 ? 1 : 0 }.boxBlurred(radius: 2)
-            for i in 0..<n where solid.data[i] >= 0.999 && z.data[i] < 1.6 { inside[i] = true }
+            for i in 0..<n where solid.data[i] >= 0.999 && z.data[i] < 4 { inside[i] = true }
             let (lab, sz) = Regions.label(inside, width: ww, height: wh)
             var ring = [[Float]](repeating: [], count: sz.count)
             for i in 0..<n {
@@ -263,7 +263,7 @@ public enum Matting {
         if separation >= 8 {
             let z = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1)
             var hole = [Bool](repeating: false, count: n)
-            for i in 0..<n where fg[i] && z.data[i] < 1.6 { hole[i] = true }
+            for i in 0..<n where fg[i] && z.data[i] < 2.5 { hole[i] = true }
             let (hl, hs) = Regions.label(hole, width: w, height: h)
             let minHole = max(12, Int(0.0001 * Float(n)))
             var ring = [[Float]](repeating: [], count: hs.count)
