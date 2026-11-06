@@ -81,28 +81,54 @@ strongly) or "Not cut out" (no item found, or too small). Failed photos are kept
 - `QA/photos/`: put real photos here; they are processed every run and shown on contact sheets with
   blind measures (edge width, pieces, confidence).
 
-## 4. Results on the ground-truth scenes (run 7)
+## 4. Results on the ground-truth scenes
 
-| Method (mean over 9 scenes) | IoU | Boundary F | Edge alpha error | Kept background | Edge ΔE 95% |
-|---|---|---|---|---|---|
-| Previous app | 0.956 | 0.89 | 0.13 | 4.0% | 36 |
-| New engine | **0.980** | **0.949** | **0.095** | **1.9%** | **23** |
+Means over the 10 scenes that produced a cutout (the fine chain produced none with either method;
+see section 5). From the quality run on commit df7e8e7, now the regression baseline.
 
-Per scene, the worst visible edge spot (ΔE 95%) dropped from 35 to 12 (navy shirt), 33 to 7
-(watch straps), 17 to 7 (mug), 33 to 15 (bottle), 32 to 22 (black on dark wood).
+| Method | IoU | Boundary F (2 px) | Edge alpha error | Missed item | Kept background | Edge ΔE mean | Edge ΔE 95% |
+|---|---|---|---|---|---|---|---|
+| Previous app | 0.960 | 0.835 | 0.127 | 1.20% | 4.03% | 7.61 | 37.2 |
+| New engine | **0.995** | **0.972** | **0.088** | **0.28%** | **0.27%** | **5.60** | **18.3** |
+
+Worst visible edge spot (ΔE 95%) per scene, previous app to new: navy shirt 35 to 9, watch straps
+33 to 9, mug 17 to 8, bottle 33 to 18, black on dark wood 32 to 25, comb 48 to 7.
+
+24 MP export check: a 5712 × 4284 photo comes out 5712 × 4284; cutout 4.5 s and compositing plus
+JPEG 2.8 s on the CI Mac (Apple M2, virtualised); whole-benchmark peak memory 750 MB.
+
+Deliberate trade-off: edge alpha and edge colours are solved in linear light (physically correct).
+Against solving in sRGB it lowers the worst edge errors (shirt ΔE 95% 20 to 9, white on white 27 to
+21) but raises the mean edge error slightly on two scenes (shirt 3.6 to 4.7, watch 2.5 to 3.3).
+The baseline was reset on that basis.
+
+Independent review (a separate reviewer with no part in writing the code) found: the confidence
+flag almost never fired; edge solving and compositing used different colour encodings; the shadow
+was weak and its contact term read as an outline; 24 MP memory was unmeasured; exports re-saved
+untouched originals. All were fixed and re-measured. It also found the comb's leftover background,
+traced with debug maps to the background estimate falling to black under large items, now fixed.
 
 ## 5. Known limitations (honest list)
 
 - **Fine jewellery**: Apple's model finds no subject in the fine-chain scene. The photo is flagged
   "Not cut out" and kept as the original. A touch-up can't create a cutout from nothing.
-- **Thin parts touching nothing distinctive**: the sunglasses' arms are still missed in the test
-  scene (2.5% of the item). Touch-up (Restore) fixes it by hand.
+- **Very thin parts**: the sunglasses' arms (about 10 px wide) are still missed in the test scene
+  (2.3% of the item) and this is not flagged, because nothing tells the engine a part is missing.
+  Touch-up (Restore) fixes it by hand.
 - **Low contrast edges** (white on white, black on dark): edges are correct in position but softer
-  (ΔE 95% 22–27), because there is little colour difference to work with.
+  (ΔE 95% 21–25), because there is little colour difference to work with. Black on dark is flagged
+  "Check".
 - **Synthetic scenes are not real photos.** They measure the engine reliably but cannot represent
   every real material (fur, glass, sheer fabric). Real photos in `QA/photos/` are needed to judge
   those, by eye.
-- Colour: output is sRGB (the web standard). iPhone Display P3 colours outside sRGB are mapped in.
+- Colour: output is 8-bit sRGB (the web standard). iPhone Display P3 and HDR colour outside sRGB is
+  mapped in, so very saturated colours can lose a little intensity.
+- Background scale is fixed at about 1 m across the frame; very close-up shots of small items show
+  the grain larger than it would really appear.
+- The supplied timber photo is 1771 px, so it is enlarged for full-size photos (labelled
+  "Low resolution" in the app).
+- Apple's model does not run in the iOS simulator, so the automated app check proves the screens and
+  the failure path, not on-device cutting. On-device speed and memory are untested.
 
 ## 6. Background library
 
