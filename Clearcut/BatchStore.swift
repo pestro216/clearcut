@@ -16,8 +16,16 @@ final class BatchStore: ObservableObject {
             guard look != oldValue else { return }
             if let d = try? JSONEncoder().encode(look) { UserDefaults.standard.set(d, forKey: Look.storageKey) }
             lookVersion += 1
-            refreshGrid()
+            PreviewRenderer.gate.set(lookVersion)
+            if gridSuspended { gridStale = true } else { refreshGrid() }
         }
+    }
+    /// While a full-screen tool is open the grid can't be seen, so it isn't re-rendered on every change.
+    private var gridSuspended = false
+    private var gridStale = false
+    func suspendGrid(_ on: Bool) {
+        gridSuspended = on
+        if !on && gridStale { gridStale = false; refreshGrid() }
     }
     /// Bumped whenever the finished appearance changes; views key their renders on it.
     @Published private(set) var lookVersion = 0
@@ -253,17 +261,34 @@ final class BatchStore: ObservableObject {
         }
     }
 
-    /// A larger render for the photo view and the tool screens (1100 px).
+    /// A larger render for the photo view and the tool screens (1100 px). Renders go through one
+    /// queue, reuse the decoded photo and its edge colours, and are skipped once the look has moved
+    /// on, so dragging a slider never piles up work.
     func renderPreview(_ id: UUID, look: Look? = nil) async -> UIImage? {
         guard let item = items.first(where: { $0.id == id }), let pu = item.previewPhotoURL else { return nil }
         let look = look ?? self.look, url = surfaceURL(look)
-        let removed = item.removed && item.previewAlphaURL != nil, au = item.previewAlphaURL
+        let removed = item.removed && item.previewAlphaURL != nil
+        return await PreviewRenderer.shared.render(id: id, photoURL: pu, alphaURL: removed ? item.previewAlphaURL : nil,
+                                                   look: look, surfaceURL: url, version: lookVersion)
+    }
+
+    /// A sharper render for zooming in: up to 2600 px from the full-resolution photo and matte.
+    func renderDetail(_ id: UUID) async -> UIImage? {
+        guard let item = items.first(where: { $0.id == id }) else { return nil }
+        let look = self.look, url = surfaceURL(look)
+        let snapshot = item
         return await Task.detached(priority: .userInitiated) { () -> Box<UIImage?> in
-            guard let data = try? Data(contentsOf: pu), let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg) else { return Box(nil) }
-            guard removed, let au, let alpha = BatchStore.readAlpha(au, width: photo.width, height: photo.height) else {
-                return Box(UIImage(cgImage: cg))
+            autoreleasepool {
+                guard let data = try? Data(contentsOf: snapshot.originalURL),
+                      let cg = ImageIOHelpers.loadOriented(data, maxPixel: 2600), let photo = RGBAImage(cgImage: cg) else { return Box(nil) }
+                guard snapshot.removed, let au = snapshot.alphaURL,
+                      let alpha = BatchStore.readAlpha(au, width: photo.width, height: photo.height) else { return Box(UIImage(cgImage: cg)) }
+                let source = BatchStore.backdropSource(look, surfaceURL: url, maxPixel: 2600)
+                let out = Compositor.render(photo: photo, alpha: alpha, backdrop: source, shadow: look.shadow)
+                let transparent: Bool = { if case .transparent = source { return true }; return false }()
+                guard let ocg = transparent ? out.makeAlphaCGImage() : out.makeOpaqueCGImage() else { return Box(nil) }
+                return Box(UIImage(cgImage: ocg))
             }
-            return Box(BatchStore.renderSmall(photo: photo, alpha: alpha, look: look, surfaceURL: url))
         }.value.value
     }
 
@@ -273,12 +298,14 @@ final class BatchStore: ObservableObject {
         guard let i = items.firstIndex(where: { $0.id == id }), items[i].canRemove else { return }
         items[i].removed = removed
         lookVersion += 1
+        PreviewRenderer.gate.set(lookVersion)
         renderGrid(items[i])
     }
 
     func setAllRemoved(_ removed: Bool) {
         for i in items.indices where items[i].canRemove { items[i].removed = removed }
         lookVersion += 1
+        PreviewRenderer.gate.set(lookVersion)
         refreshGrid()
     }
 
@@ -303,7 +330,9 @@ final class BatchStore: ObservableObject {
         if let g = result { items[j].gridAlpha = g }
         items[j].edited = true
         if case .check = items[j].status { items[j].status = .ready }
+        await PreviewRenderer.shared.forget(id)
         lookVersion += 1
+        PreviewRenderer.gate.set(lookVersion)
         renderGrid(items[j])
     }
 
@@ -385,5 +414,59 @@ final class BatchStore: ObservableObject {
             guard let cg = out.makeOpaqueCGImage(), let jpg = ImageIOHelpers.encode(cg, type: .jpeg, quality: 0.95) else { return nil }
             return Exported(data: jpg)
         }
+    }
+}
+
+/// One queue for large previews. Keeps the last few photos decoded with their edge colours worked
+/// out, so a change of look only redoes the backdrop, the shadow and the blend.
+actor PreviewRenderer {
+    static let shared = PreviewRenderer()
+
+    /// The newest look version; a queued render for an older one is dropped.
+    final class Gate: @unchecked Sendable {
+        private let lock = NSLock()
+        private var v = 0
+        func set(_ n: Int) { lock.lock(); v = n; lock.unlock() }
+        var current: Int { lock.lock(); defer { lock.unlock() }; return v }
+    }
+    static let gate = Gate()
+
+    private struct Prepared { let photo: RGBAImage; let alpha: [UInt8]?; let fg: RGBAImage?; let cg: CGImage }
+    private var cache: [String: Prepared] = [:]
+    private var order: [String] = []
+
+    func forget(_ id: UUID) {
+        cache = cache.filter { !$0.key.hasPrefix(id.uuidString) }
+        order.removeAll { $0.hasPrefix(id.uuidString) }
+    }
+
+    func render(id: UUID, photoURL: URL, alphaURL: URL?, look: Look, surfaceURL: URL?, version: Int) -> UIImage? {
+        if version < PreviewRenderer.gate.current { return nil }
+        let key = id.uuidString + (alphaURL == nil ? "-o" : "-c")
+        let prepared: Prepared
+        if let p = cache[key] {
+            prepared = p
+        } else {
+            guard let data = try? Data(contentsOf: photoURL), let cg = ImageIOHelpers.loadOriented(data),
+                  let photo = RGBAImage(cgImage: cg) else { return nil }
+            var alpha: [UInt8]?
+            var fg: RGBAImage?
+            if let alphaURL, let a = BatchStore.readAlpha(alphaURL, width: photo.width, height: photo.height) {
+                alpha = a
+                fg = Matting.foreground(full: photo, alpha: a)
+            }
+            prepared = Prepared(photo: photo, alpha: alpha, fg: fg, cg: cg)
+            cache[key] = prepared
+            order.removeAll { $0 == key }
+            order.append(key)
+            while order.count > 6 { cache[order.removeFirst()] = nil }
+        }
+        guard let alpha = prepared.alpha, let fg = prepared.fg else { return UIImage(cgImage: prepared.cg) }
+        if version < PreviewRenderer.gate.current { return nil }
+        let source = BatchStore.backdropSource(look, surfaceURL: surfaceURL, maxPixel: 1400)
+        let out = Compositor.render(foreground: fg, alpha: alpha, backdrop: source, shadow: look.shadow)
+        let transparent: Bool = { if case .transparent = source { return true }; return false }()
+        guard let ocg = transparent ? out.makeAlphaCGImage() : out.makeOpaqueCGImage() else { return nil }
+        return UIImage(cgImage: ocg)
     }
 }

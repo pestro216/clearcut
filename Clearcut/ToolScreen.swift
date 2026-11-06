@@ -46,7 +46,9 @@ struct ToolScreen: View {
             .padding(.top, 10)
         }
         .background(Theme.paper.ignoresSafeArea())
+        .onDisappear { store.suspendGrid(false) }
         .onAppear {
+            store.suspendGrid(true)
             entryLook = store.look
             page = startID ?? store.items.first(where: { $0.removed && $0.canRemove })?.id ?? store.items.first?.id
         }
@@ -258,13 +260,37 @@ struct BackgroundControls: View {
 
 struct ShadowControls: View {
     @EnvironmentObject var store: BatchStore
+    /// Slider positions follow the finger at once; the look (and so the renders) follows a moment
+    /// later and on release, so dragging stays smooth.
+    @State private var strengthDraft: Double = 0.7
+    @State private var angleDraft: Double = 100
+    @State private var pending: Task<Void, Never>?
 
     private var strength: Binding<Double> {
-        Binding(get: { Double(store.look.shadow.strength) }, set: { store.look.shadow.strength = Float($0) })
+        Binding(get: { strengthDraft }, set: { v in strengthDraft = v; schedule() })
     }
     private var angle: Binding<Double> {
-        Binding(get: { Double(store.look.shadow.angle) }, set: { store.look.shadow.angle = Float($0) })
+        Binding(get: { angleDraft }, set: { v in angleDraft = v; schedule() })
     }
+
+    private func schedule() {
+        pending?.cancel()
+        pending = Task { @MainActor in
+            try? await Task.sleep(nanoseconds: 150_000_000)
+            if !Task.isCancelled { commit() }
+        }
+    }
+
+    private func commit() {
+        pending?.cancel()
+        var s = store.look.shadow
+        s.strength = Float(strengthDraft)
+        s.angle = Float(angleDraft)
+        pending = nil
+        if s != store.look.shadow { store.look.shadow = s }
+    }
+
+    private func released(_ editing: Bool) { if !editing { commit() } }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -283,13 +309,23 @@ struct ShadowControls: View {
             }
             Text(description).font(.system(size: 14)).foregroundStyle(Theme.muted).frame(height: 38, alignment: .top)
             if store.look.shadow.kind != .none {
-                row("Strength", Slider(value: strength, in: 0.15...1), "\(Int(store.look.shadow.strength * 100))%")
-                row("Light from", Slider(value: angle, in: 0...359), lightName)
+                row("Strength", Slider(value: strength, in: 0.15...1, onEditingChanged: released), "\(Int((strengthDraft * 100).rounded()))%")
+                row("Light from", Slider(value: angle, in: 0...359, onEditingChanged: released), lightName)
             }
             Spacer().frame(height: 4)
         }
         .padding(.horizontal, 20)
         .frame(minHeight: 230, alignment: .top)
+        .onAppear {
+            strengthDraft = Double(store.look.shadow.strength)
+            angleDraft = Double(store.look.shadow.angle)
+        }
+        .onChange(of: store.look.shadow) { _, s in
+            // Cancel in the tool screen puts the old look back; follow it.
+            if pending == nil {
+                strengthDraft = Double(s.strength); angleDraft = Double(s.angle)
+            }
+        }
     }
 
     private var description: String {
@@ -302,7 +338,7 @@ struct ShadowControls: View {
 
     /// The shadow falls away from the light, so name the light's side.
     private var lightName: String {
-        let lightDeg = (Double(store.look.shadow.angle) + 180).truncatingRemainder(dividingBy: 360)
+        let lightDeg = (angleDraft + 180).truncatingRemainder(dividingBy: 360)
         let names = ["Right", "Bottom right", "Bottom", "Bottom left", "Left", "Top left", "Top", "Top right"]
         return names[Int(((lightDeg + 22.5).truncatingRemainder(dividingBy: 360)) / 45) % 8]
     }

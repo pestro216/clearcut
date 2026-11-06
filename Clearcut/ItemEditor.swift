@@ -7,6 +7,12 @@ struct ItemEditor: View {
     let id: UUID
 
     @State private var image: UIImage?
+    /// A sharper render, fetched the first time you zoom in.
+    @State private var detail: UIImage?
+    @State private var detailVersion = -1
+    @State private var loadingDetail = false
+    @State private var box: CGSize = .zero
+    @State private var container: CGSize = .zero
     @State private var zoom: CGFloat = 1
     @State private var zoomBase: CGFloat = 1
     @State private var pan: CGSize = .zero
@@ -34,7 +40,9 @@ struct ItemEditor: View {
                 let h = w / aspect
                 ZStack {
                     if item?.removed == true, store.transparent { Checker() }
-                    if let image { Image(uiImage: image).resizable() } else { ProgressView() }
+                    if let shown = (detailVersion == store.lookVersion ? detail : nil) ?? image {
+                        Image(uiImage: shown).resizable().interpolation(.high)
+                    } else { ProgressView() }
                     if touching { strokeOverlay(width: w, height: h) }
                 }
                 .frame(width: w, height: h)
@@ -44,9 +52,22 @@ struct ItemEditor: View {
                 .contentShape(Rectangle())
                 .gesture(touching && mode != .move ? AnyGesture(paintGesture(width: w, height: h, geo: geo).map { _ in () }) : AnyGesture(viewGesture.map { _ in () }))
                 .simultaneousGesture(MagnifyGesture()
-                    .onChanged { v in zoom = min(8, max(1, zoomBase * v.magnification)) }
-                    .onEnded { _ in zoomBase = zoom; if zoom <= 1.01 { resetZoom() } })
+                    .onChanged { v in
+                        let z = min(8, max(1, zoomBase * v.magnification))
+                        // Zoom towards the pinch point, then keep the photo filling the view.
+                        let k = z / zoom
+                        let px = v.startLocation.x - geo.size.width / 2, py = v.startLocation.y - geo.size.height / 2
+                        pan = clamped(CGSize(width: px - (px - pan.width) * k, height: py - (py - pan.height) * k), zoom: z)
+                        zoom = z
+                    }
+                    .onEnded { _ in
+                        zoomBase = zoom; panBase = pan
+                        if zoom <= 1.01 { withAnimation(.easeOut(duration: 0.15)) { resetZoom() } }
+                        if zoom > 1.4 { loadDetail() }
+                    })
                 .onTapGesture(count: 2) { if !touching { withAnimation(.easeOut(duration: 0.2)) { resetZoom() } } }
+                .onAppear { box = CGSize(width: w, height: h); container = geo.size }
+                .onChange(of: geo.size) { _, g in container = g; box = CGSize(width: w, height: h) }
             }
             .clipped()
             controls.padding(.horizontal, 20).padding(.bottom, 12)
@@ -54,6 +75,7 @@ struct ItemEditor: View {
         .background(Theme.paper.ignoresSafeArea())
         .task(id: "\(store.lookVersion)-\(item?.removed ?? false)") {
             if let img = await store.renderPreview(id), !Task.isCancelled { image = img }
+            if zoom > 1.4 { loadDetail() }
         }
         .fullScreenCover(item: $tool) { t in ToolScreen(tool: t, startID: id) }
     }
@@ -150,7 +172,7 @@ struct ItemEditor: View {
         DragGesture()
             .onChanged { v in
                 guard zoom > 1 else { return }
-                pan = CGSize(width: panBase.width + v.translation.width, height: panBase.height + v.translation.height)
+                pan = clamped(CGSize(width: panBase.width + v.translation.width, height: panBase.height + v.translation.height), zoom: zoom)
             }
             .onEnded { _ in panBase = pan }
     }
@@ -191,4 +213,23 @@ struct ItemEditor: View {
     }
 
     private func resetZoom() { zoom = 1; zoomBase = 1; pan = .zero; panBase = .zero }
+
+    /// Limits panning so the photo's edges never pull in past the edges of the view: there is
+    /// always photo under every part of the view once zoomed in.
+    private func clamped(_ p: CGSize, zoom z: CGFloat) -> CGSize {
+        let mx = max(0, (box.width * z - container.width) / 2)
+        let my = max(0, (box.height * z - container.height) / 2)
+        return CGSize(width: min(mx, max(-mx, p.width)), height: min(my, max(-my, p.height)))
+    }
+
+    private func loadDetail() {
+        guard !loadingDetail, detailVersion != store.lookVersion else { return }
+        loadingDetail = true
+        let v = store.lookVersion
+        Task {
+            let img = await store.renderDetail(id)
+            if let img, v == store.lookVersion { detail = img; detailVersion = v }
+            loadingDetail = false
+        }
+    }
 }
