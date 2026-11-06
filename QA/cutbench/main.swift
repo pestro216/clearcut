@@ -84,10 +84,10 @@ func runModelOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
     guard let seg else { return nil }
     return Output(alpha: seg.prob.resized(width: photo.width, height: photo.height).toBytes(), fg: photo, seconds: t, confidence: "", notes: [:])
 }
-func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true) throws -> Output? {
+func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true, linear: Bool = true) throws -> Output? {
     let start = Date()
     guard let seg = try Segmenter.segment(cg, zoom: zoom) else { return nil }
-    var o = MatteOptions(); o.colourEvidence = colour; o.guidedRefinement = guided
+    var o = MatteOptions(); o.colourEvidence = colour; o.guidedRefinement = guided; o.linearEdges = linear
     let m = Matting.refine(full: photo, segmentation: seg, options: o)
     let fg = Matting.foreground(full: photo, alpha: m.alpha)
     let conf: String
@@ -101,6 +101,7 @@ let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
     ("new: no zoom pass", { try runNew($0, $1, zoom: false) }),
     ("new: no colour evidence", { try runNew($0, $1, colour: false) }),
     ("new: no edge refinement", { try runNew($0, $1, guided: false) }),
+    ("new: edges solved in sRGB", { try runNew($0, $1, linear: false) }),
     ("new", { try runNew($0, $1) }),
 ]
 let shipping = "new"

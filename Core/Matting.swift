@@ -35,6 +35,8 @@ public struct MatteOptions {
     /// Values below/above these become fully clear/opaque. A light clean-up, not a steepening.
     public var levelsLow: Float = 0.03
     public var levelsHigh: Float = 0.97
+    /// Solve edge alpha in linear light (true) or in encoded sRGB (false).
+    public var linearEdges = true
 
     public init() {}
 }
@@ -100,7 +102,7 @@ public enum Matting {
         let alpha: [UInt8]
         if options.guidedRefinement {
             alpha = guidedUpsample(full: full, R: R, G: G, B: B, p: p, radius: options.guidedRadius, eps: options.guidedEps,
-                                   low: options.levelsLow, high: options.levelsHigh)
+                                   low: options.levelsLow, high: options.levelsHigh, linear: options.linearEdges)
         } else {
             let up = p.resized(width: full.width, height: full.height)
             alpha = levels(up, low: options.levelsLow, high: options.levelsHigh)
@@ -285,7 +287,7 @@ public enum Matting {
     /// Colour guided filter at working resolution; coefficients bilinearly upsampled and
     /// applied to every full-resolution pixel (He & Sun, "Fast Guided Filter").
     static func guidedUpsample(full: RGBAImage, R: Plane, G: Plane, B: Plane, p: Plane,
-                               radius r: Int, eps: Float, low: Float, high: Float) -> [UInt8] {
+                               radius r: Int, eps: Float, low: Float, high: Float, linear: Bool = true) -> [UInt8] {
         let w = p.width, h = p.height, n = w * h
         func mean(_ x: Plane) -> Plane { x.boxBlurred(radius: r) }
         let mR = mean(R), mG = mean(G), mB = mean(B), mP = mean(p)
@@ -324,7 +326,7 @@ public enum Matting {
         let fW = p.map { $0 >= 0.97 ? 1 : 0 }, bW = p.map { $0 <= 0.03 ? 1 : 0 }
         // Colours mix in linear light (lens blur and partial coverage add light), so the
         // projection works on linear values.
-        let lin = Linear.toLinear
+        let lin: [Float] = linear ? Linear.toLinear : (0..<256).map { Float($0) / 255 }
         let RL = R.map { lin[Int($0 * 255 + 0.5)] }, GL = G.map { lin[Int($0 * 255 + 0.5)] }, BL = B.map { lin[Int($0 * 255 + 0.5)] }
         // Local colour means at two reaches: near (preferred) and wide (when the model's edge is
         // so soft that no confident pixels are near).
@@ -362,11 +364,12 @@ public enum Matting {
                                 let er = fr - br, eg = fgc - bg, eb = fb - bbc
                                 let c2 = er * er + eg * eg + eb * eb
                                 let c = sqrt(c2)
-                                if c > 0.03 {
+                                let cMin: Float = linear ? 0.03 : 0.06, cSpan: Float = linear ? 0.08 : 0.12
+                                if c > cMin {
                                     let lr = lin[Int(px[i * 4])], lg = lin[Int(px[i * 4 + 1])], lb = lin[Int(px[i * 4 + 2])]
                                     var ap = ((lr - br) * er + (lg - bg) * eg + (lb - bbc) * eb) / c2
                                     ap = ap < 0 ? 0 : (ap > 1 ? 1 : ap)
-                                    let t = min(1, (c - 0.03) / 0.08)
+                                    let t = min(1, (c - cMin) / cSpan)
                                     let trustContrast = t * t * (3 - 2 * t)
                                     let pc = p.sample(fx, fy)
                                     let m = 2 * pc - 1
