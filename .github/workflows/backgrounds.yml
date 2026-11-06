@@ -1,0 +1,30 @@
+name: Background library
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: preview (contact sheet only) or final (commit library)
+        default: preview
+
+jobs:
+  backgrounds:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: pip install pillow
+      - run: python3 tools/fetch_backgrounds.py ${{ github.event.inputs.mode }}
+      - if: github.event.inputs.mode == 'preview'
+        uses: actions/upload-artifact@v4
+        with:
+          name: bg-preview
+          path: bg_preview/
+      - if: github.event.inputs.mode == 'final'
+        run: |
+          git config user.name "Clearcut build"
+          git config user.email "actions@users.noreply.github.com"
+          git add Clearcut/Backdrops
+          git commit -m "Background library: CC0 photographic surfaces" || echo "nothing to commit"
+          git push
