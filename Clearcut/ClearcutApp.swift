@@ -24,6 +24,7 @@ struct ClearcutApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var store: BatchStore
+    @State private var demoTool: Tool?
 
     var body: some View {
         Group {
@@ -31,6 +32,20 @@ struct ContentView: View {
                 HomeView()
             } else {
                 BatchView()
+            }
+        }
+        .fullScreenCover(item: $demoTool) { t in ToolScreen(tool: t, startID: nil) }
+        .task {
+            // Automated simulator check only: load a folder of photos and optionally open a tool.
+            let env = ProcessInfo.processInfo.environment
+            guard let dir = env["CLEARCUT_DEMO_DIR"] else { return }
+            let urls = ((try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []).sorted()
+                .filter { $0.hasSuffix(".jpg") }.map { URL(fileURLWithPath: dir).appendingPathComponent($0) }
+            store.addFiles(urls)
+            if let t = env["CLEARCUT_DEMO_TOOL"], let tool = Tool(rawValue: t) {
+                while store.importing != nil { try? await Task.sleep(nanoseconds: 300_000_000) }
+                try? await Task.sleep(nanoseconds: 1_500_000_000)
+                demoTool = tool
             }
         }
         .alert("Clearcut", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {

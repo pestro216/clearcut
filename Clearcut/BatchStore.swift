@@ -41,7 +41,8 @@ final class BatchStore: ObservableObject {
 
     private let dir: URL
     private var gridTask: Task<Void, Never>?
-    private var queue: [PhotosPickerItem] = []
+    private enum Source { case pick(PhotosPickerItem), file(URL) }
+    private var queue: [Source] = []
     private var running = false
 
     init(library: BackgroundLibrary) {
@@ -65,16 +66,30 @@ final class BatchStore: ObservableObject {
     // MARK: Import
 
     func add(_ picks: [PhotosPickerItem]) {
-        guard !picks.isEmpty else { return }
-        queue.append(contentsOf: picks)
-        importing = (importing?.done ?? 0, (importing?.total ?? 0) + picks.count)
+        enqueue(picks.map { .pick($0) })
+    }
+
+    /// Adds photos from files (used by the automated simulator check).
+    func addFiles(_ urls: [URL]) {
+        enqueue(urls.map { .file($0) })
+    }
+
+    private func enqueue(_ sources: [Source]) {
+        guard !sources.isEmpty else { return }
+        queue.append(contentsOf: sources)
+        importing = (importing?.done ?? 0, (importing?.total ?? 0) + sources.count)
         guard !running else { return }
         running = true
         Task {
             while !queue.isEmpty {
-                let pick = queue.removeFirst()
+                let source = queue.removeFirst()
                 let id = UUID()
-                if let data = try? await pick.loadTransferable(type: Data.self) {
+                let loaded: Data?
+                switch source {
+                case .pick(let p): loaded = try? await p.loadTransferable(type: Data.self)
+                case .file(let u): loaded = try? Data(contentsOf: u)
+                }
+                if let data = loaded {
                     let original = dir.appendingPathComponent("\(id.uuidString)-original")
                     if (try? data.write(to: original)) != nil {
                         items.append(BatchItem(id: id, originalURL: original))

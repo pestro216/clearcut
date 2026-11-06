@@ -1,0 +1,55 @@
+name: App check on simulator
+
+on:
+  push:
+    branches: [main]
+    paths: ['Clearcut/**', 'Core/**', 'project.yml', '.github/workflows/app-check.yml']
+  workflow_dispatch:
+
+jobs:
+  simulator:
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build for the simulator
+        run: |
+          brew install xcodegen >/dev/null
+          xcodegen generate
+          xcodebuild -project Clearcut.xcodeproj -scheme Clearcut -configuration Debug -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 || { grep -E "error:" build.log | head -40; exit 1; }
+      - uses: actions/cache@v4
+        with:
+          path: QA/.texture_cache
+          key: textures-v1
+      - name: Test photos
+        run: |
+          python3 -m pip install --quiet --break-system-packages numpy pillow scipy 2>/dev/null || python3 -m pip install --quiet numpy pillow scipy
+          python3 QA/make_testset.py "$RUNNER_TEMP/testset" > /dev/null
+          mkdir -p "$RUNNER_TEMP/demo"
+          for d in 01_navy_shirt_on_white 04_watch_thin_straps 06_mug_handle_gap 07_reflective_bottle 05_fine_chain_on_marble 10_comb_narrow_teeth; do cp "$RUNNER_TEMP/testset/$d/photo.jpg" "$RUNNER_TEMP/demo/$d.jpg"; done
+      - name: Launch, load a batch, take screenshots
+        run: |
+          set -x
+          mkdir -p shots
+          DEV=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print([x['udid'] for k,v in d.items() if 'iOS' in k for x in v if 'iPhone 16' in x['name'] or 'iPhone 15' in x['name']][0])")
+          xcrun simctl boot "$DEV"
+          xcrun simctl bootstatus "$DEV" -b
+          APP=$(find build/Build/Products/Debug-iphonesimulator -name Clearcut.app -maxdepth 1)
+          xcrun simctl install "$DEV" "$APP"
+          xcrun simctl launch "$DEV" app.clearcut.photos; sleep 6
+          xcrun simctl io "$DEV" screenshot shots/1_home.png
+          xcrun simctl terminate "$DEV" app.clearcut.photos
+          SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" xcrun simctl launch "$DEV" app.clearcut.photos; sleep 75
+          xcrun simctl io "$DEV" screenshot shots/2_batch.png
+          xcrun simctl terminate "$DEV" app.clearcut.photos
+          SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=background xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
+          xcrun simctl io "$DEV" screenshot shots/3_background.png
+          xcrun simctl terminate "$DEV" app.clearcut.photos
+          SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=shadow xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
+          xcrun simctl io "$DEV" screenshot shots/4_shadow.png
+          xcrun simctl spawn "$DEV" log show --last 6m --predicate 'process == "Clearcut"' --style compact 2>/dev/null | grep -iE "error|crash|fault" | tail -40 > shots/log.txt || true
+      - name: Publish screenshots
+        if: always()
+        run: QA/publish.sh shots "app-check" "App check ${{ github.run_number }}"
