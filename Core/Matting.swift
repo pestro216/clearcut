@@ -190,38 +190,44 @@ public enum Matting {
         // item, and are made of the same material as the part of the item they touch
         // (a strap continuing from a watch). Background texture, other objects and shadows fail
         // the material test and are left out.
-        let reach = fgPlane.boxBlurred(radius: max(4, Int(0.10 * longSide)))
-        var cand = [Bool](repeating: false, count: n)
-        for i in 0..<n where !fg[i] && !shadowLike[i] && reach.data[i] > 0 && D[i] / noise > 12 { cand[i] = true }
-        let (cl, cs) = Regions.label(cand, width: w, height: h)
-        // Mean colour per candidate region, and the mean colour of the item pixels it touches.
-        let nc = cs.count
-        var sumC = [Float](repeating: 0, count: nc * 3), sumT = [Float](repeating: 0, count: nc * 3), cntT = [Int](repeating: 0, count: nc)
-        for i in 0..<n {
-            let l = Int(cl[i]); if l == 0 { continue }
-            sumC[l * 3] += R.data[i]; sumC[l * 3 + 1] += G.data[i]; sumC[l * 3 + 2] += B.data[i]
+        let reach = fgPlane.boxBlurred(radius: max(4, Int(0.12 * longSide)))
+        // Grow outwards from the item's edge, pixel by pixel, into pixels that are clearly not
+        // background and match the colour of the item pixel the growth started from.
+        var seedR = [Float](repeating: -1, count: n), seedG = seedR, seedB = seedR
+        var stack: [Int32] = []
+        stack.reserveCapacity(8192)
+        for i in 0..<n where fg[i] {
             let x = i % w, y = i / w
-            for (nx, ny) in [(x - 2, y), (x + 2, y), (x, y - 2), (x, y + 2)] where nx >= 0 && ny >= 0 && nx < w && ny < h {
+            let edge = (x > 0 && !fg[i - 1]) || (x < w - 1 && !fg[i + 1]) || (y > 0 && !fg[i - w]) || (y < h - 1 && !fg[i + w])
+            if edge { seedR[i] = R.data[i]; seedG[i] = G.data[i]; seedB[i] = B.data[i]; stack.append(Int32(i)) }
+        }
+        var grown = [Bool](repeating: false, count: n)
+        var recoveredCount = 0
+        let limit = max(20, Int(0.15 * Float(fgArea)))
+        while let t = stack.popLast(), recoveredCount <= limit {
+            let i = Int(t)
+            let x = i % w, y = i / w
+            for (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] {
+                if nx < 0 || ny < 0 || nx >= w || ny >= h { continue }
                 let j = ny * w + nx
-                if fg[j] {
-                    sumT[l * 3] += R.data[j]; sumT[l * 3 + 1] += G.data[j]; sumT[l * 3 + 2] += B.data[j]; cntT[l] += 1
-                }
+                if fg[j] || grown[j] || shadowLike[j] || reach.data[j] <= 0 || D[j] / noise <= 10 { continue }
+                let dr = R.data[j] - seedR[i], dg = G.data[j] - seedG[i], db = B.data[j] - seedB[i]
+                if dr * dr + dg * dg + db * db > 0.11 * 0.11 { continue }
+                grown[j] = true
+                seedR[j] = seedR[i]; seedG[j] = seedG[i]; seedB[j] = seedB[i]
+                recoveredCount += 1
+                stack.append(Int32(j))
             }
         }
-        var accept = [Bool](repeating: false, count: nc)
-        var recoveredCount = 0
-        let maxRegion = max(20, Int(0.15 * Float(fgArea)))
-        for l in 1..<nc where cntT[l] >= 3 && cs[l] <= maxRegion {
-            let cr = sumC[l * 3] / Float(cs[l]), cg = sumC[l * 3 + 1] / Float(cs[l]), cb = sumC[l * 3 + 2] / Float(cs[l])
-            let tr = sumT[l * 3] / Float(cntT[l]), tg = sumT[l * 3 + 1] / Float(cntT[l]), tb = sumT[l * 3 + 2] / Float(cntT[l])
-            let d = sqrt((cr - tr) * (cr - tr) + (cg - tg) * (cg - tg) + (cb - tb) * (cb - tb))
-            if d < 0.10 { accept[l] = true; recoveredCount += cs[l] }
-        }
-        notes["recoveredPx"] = Double(recoveredCount)
-        if recoveredCount > 0 {
-            for i in 0..<n where accept[Int(cl[i])] { fg[i] = true; p.data[i] = 1 }
+        if recoveredCount > limit {
+            warning = "The background may contain other objects"
+            notes["recoveryRejected"] = 1
+            recoveredCount = 0
+        } else if recoveredCount > 0 {
+            for i in 0..<n where grown[i] { fg[i] = true; p.data[i] = 1 }
             fgArea += recoveredCount
         }
+        notes["recoveredPx"] = Double(recoveredCount)
 
         // Carve gaps the model filled in (between comb teeth, inside a handle): regions inside
         // the item whose colour matches the background around them, and which are surrounded by
