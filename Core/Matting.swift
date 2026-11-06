@@ -170,9 +170,22 @@ public enum Matting {
         let sigma = 0.05 * longSide
         let wPlane = Plane(width: w, height: h, data: bgW)
         let den = wPlane.gaussianBlurred(sigma: sigma)
+        let denWide = wPlane.gaussianBlurred(sigma: sigma * 4)
+        // Where no background is nearby (under the middle of a large item), fall back to a wider
+        // neighbourhood, then to the photo's overall background colour. Never to black.
         func bgEstimate(_ c: Plane) -> Plane {
-            let num = (c * wPlane).gaussianBlurred(sigma: sigma)
-            return Plane.combine(num, den) { a, d in d > 1e-4 ? a / d : 0 }
+            let cw = c * wPlane
+            let near = cw.gaussianBlurred(sigma: sigma), wide = cw.gaussianBlurred(sigma: sigma * 4)
+            var total: Float = 0
+            for i in 0..<n where bgW[i] == 1 { total += c.data[i] }
+            let global = total / Float(max(1, bgCount))
+            var out = [Float](repeating: global, count: n)
+            for i in 0..<n {
+                let dn = den.data[i], dw = denWide.data[i]
+                if dn > 0.02 { out[i] = near.data[i] / dn }
+                else if dw > 0.005 { out[i] = wide.data[i] / dw }
+            }
+            return Plane(width: w, height: h, data: out)
         }
         let bR = bgEstimate(R), bG = bgEstimate(G), bB = bgEstimate(B)
 
