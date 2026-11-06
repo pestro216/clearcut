@@ -13,8 +13,13 @@ public enum BackdropSource {
 public enum Compositor {
 
     public static func render(photo: RGBAImage, alpha: [UInt8], backdrop: BackdropSource, shadow: ShadowParams) -> RGBAImage {
-        let w = photo.width, h = photo.height
-        let fg = Matting.foreground(full: photo, alpha: alpha)
+        render(foreground: Matting.foreground(full: photo, alpha: alpha), alpha: alpha, backdrop: backdrop, shadow: shadow)
+    }
+
+    /// Same, with the item's edge colours already worked out (they don't depend on the look,
+    /// so previews keep them and only redo the backdrop and shadow when the look changes).
+    public static func render(foreground fg: RGBAImage, alpha: [UInt8], backdrop: BackdropSource, shadow: ShadowParams) -> RGBAImage {
+        let w = fg.width, h = fg.height
         if case .transparent = backdrop {
             var out = fg
             for i in 0..<(w * h) { out.pixels[i * 4 + 3] = alpha[i] }

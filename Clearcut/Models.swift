@@ -45,7 +45,7 @@ struct Look: Codable, Hashable {
     var studioLight: Bool = false
     var shadow = ShadowParams()
 
-    static let storageKey = "look.v3"
+    static let storageKey = "look.v4"
 }
 
 struct BatchItem: Identifiable, @unchecked Sendable {

@@ -238,17 +238,50 @@ if let photosDir, let files = try? fm.contentsOfDirectory(atPath: photosDir.path
     if !imgs.isEmpty {
         report += "\n## Real photos (no reference mask)\n\n| Photo | Item area | Soft edge share | Edge width | Pieces | Time | Confidence |\n|---|---|---|---|---|---|---|\n"
         for f in imgs {
-            guard let cg = loadCG(photosDir.appendingPathComponent(f)), let photo = RGBAImage(cgImage: cg),
-                  let o = try? runNew(cg, photo) else { continue }
+            guard let cg = loadCG(photosDir.appendingPathComponent(f)), let photo = RGBAImage(cgImage: cg) else { continue }
+            let tw = 600, th = Int(600.0 * Double(photo.height) / Double(photo.width))
+            guard let o = try? runNew(cg, photo) else {
+                report += "| \(f) | none | | | | | no item found |\n"
+                var sheet = RGBAImage(width: tw + 20, height: th + 20, fill: (245, 243, 238))
+                blit(&sheet, photo.resized(width: tw, height: th), 10, 10)
+                saveJPEG(sheet, outDir.appendingPathComponent("real_\(f).jpg"))
+                continue
+            }
             let b = Metrics.blind(alpha: o.alpha, width: photo.width, height: photo.height)
             report += "| \(f) | \(fmt(b.area * 100, 1))% | \(fmt(b.softEdgeShare * 100, 1))% | \(fmt(b.edgeWidthPx, 1)) px | \(b.pieces) | \(fmt(o.seconds, 2)) s | \(o.confidence) |\n"
             let finished = Compositor.render(photo: photo, alpha: o.alpha,
                                              backdrop: surfaceCG.map { .image($0) } ?? .colour(r: 0.55, g: 0.27, b: 0.15, studioLight: false),
                                              shadow: ShadowParams())
-            let tw = 900, th = Int(900.0 * Double(photo.height) / Double(photo.width))
-            var sheet = RGBAImage(width: tw * 2 + 30, height: th + 20, fill: (245, 243, 238))
+            var maskImg = RGBAImage(width: photo.width, height: photo.height, fill: (0, 0, 0))
+            for i in 0..<(photo.width * photo.height) { let v = o.alpha[i]; maskImg.pixels[i * 4] = v; maskImg.pixels[i * 4 + 1] = v; maskImg.pixels[i * 4 + 2] = v }
+            // Edge spots: tiles with the most part-transparent pixels, which is where fringes show.
+            let tile = max(32, max(photo.width, photo.height) / 24)
+            var scored: [(Int, Int, Int)] = []
+            var ty = 0
+            while ty + tile <= photo.height {
+                var tx = 0
+                while tx + tile <= photo.width {
+                    var n = 0
+                    for y in stride(from: ty, to: ty + tile, by: 2) { for x in stride(from: tx, to: tx + tile, by: 2) { let v = o.alpha[y * photo.width + x]; if v > 20 && v < 235 { n += 1 } } }
+                    scored.append((n, tx + tile / 2, ty + tile / 2))
+                    tx += tile
+                }
+                ty += tile
+            }
+            var spots: [(Int, Int)] = []
+            for c in scored.sorted(by: { $0.0 > $1.0 }) where c.0 > 0 {
+                if spots.allSatisfy({ abs($0.0 - c.1) > tile * 3 || abs($0.1 - c.2) > tile * 3 }) { spots.append((c.1, c.2)) }
+                if spots.count == 3 { break }
+            }
+            let zs = 100, zz = 2
+            var sheet = RGBAImage(width: tw * 3 + 40, height: th + 30 + zs * zz * 2 + 10, fill: (245, 243, 238))
             blit(&sheet, photo.resized(width: tw, height: th), 10, 10)
-            blit(&sheet, finished.resized(width: tw, height: th), 20 + tw, 10)
+            blit(&sheet, maskImg.resized(width: tw, height: th), 20 + tw, 10)
+            blit(&sheet, finished.resized(width: tw, height: th), 30 + tw * 2, 10)
+            for (k, sp) in spots.enumerated() {
+                blit(&sheet, crop(photo, cx: sp.0, cy: sp.1, size: zs, zoom: zz), 10 + k * (zs * zz + 10), th + 20)
+                blit(&sheet, crop(finished, cx: sp.0, cy: sp.1, size: zs, zoom: zz), 10 + k * (zs * zz + 10), th + 30 + zs * zz)
+            }
             saveJPEG(sheet, outDir.appendingPathComponent("real_\(f).jpg"))
         }
     }

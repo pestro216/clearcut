@@ -14,13 +14,13 @@ public enum ShadowKind: String, CaseIterable, Codable, Identifiable {
 }
 
 public struct ShadowParams: Codable, Hashable {
-    public var kind: ShadowKind = .flatlay
+    public var kind: ShadowKind = .lifted
     /// 0...1, default tuned for a soft overhead softbox.
     public var strength: Float = 0.7
     /// Direction the shadow falls, degrees: 0 right, 90 down, 180 left, 270 up.
     public var angle: Float = 100
 
-    public init(kind: ShadowKind = .flatlay, strength: Float = 0.7, angle: Float = 100) {
+    public init(kind: ShadowKind = .lifted, strength: Float = 0.7, angle: Float = 100) {
         self.kind = kind; self.strength = strength; self.angle = angle
     }
 }
@@ -68,10 +68,17 @@ public enum ShadowModel {
             }
             let off = (lifted ? 0.35 : 0.1) * offsetMax + level * offsetMax * (lifted ? 0.65 : 0.9)
             let blurred = band.gaussianBlurred(sigma: blurBase + level * blurMax).shifted(dx: dx * off, dy: dy * off)
-            let weight: Float = lifted ? 0.28 : 0.38
+            let weight: Float = lifted ? 0.32 : 0.38
             cast = Plane.combine(cast, blurred) { c, b in 1 - (1 - c) * (1 - weight * b) }
         }
         let ambient = aLow.gaussianBlurred(sigma: 0.022 * L * lowScale).map { $0 * (lifted ? 0.10 : 0.12) }
+        // Lifted: a closer, firmer shadow just under the edge, so the item reads as raised even on
+        // dark or busy surfaces where a wide soft shadow alone disappears.
+        if lifted {
+            let off = 0.009 * L * lowScale
+            let near = aLow.gaussianBlurred(sigma: 0.0055 * L * lowScale).shifted(dx: dx * off, dy: dy * off)
+            cast = Plane.combine(cast, near) { c, b in 1 - (1 - c) * (1 - 0.30 * b) }
+        }
 
         // Contact component: tight occlusion right at the outline, pushed slightly away from the
         // light. Worked out at up to 2400 px (it is soft, so that is exact enough) and scaled with
