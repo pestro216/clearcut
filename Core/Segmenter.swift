@@ -18,7 +18,7 @@ public struct Segmentation {
 public enum Segmenter {
     public static let workLongSide = 1536
 
-    public static func segment(_ full: CGImage) throws -> Segmentation? {
+    public static func segment(_ full: CGImage, zoom: Bool = true) throws -> Segmentation? {
         let fw = full.width, fh = full.height
         let k = Float(workLongSide) / Float(max(fw, fh))
         let ww = max(1, Int((Float(fw) * min(1, k)).rounded())), wh = max(1, Int((Float(fh) * min(1, k)).rounded()))
@@ -30,7 +30,7 @@ public enum Segmenter {
         // Bounding box of the item at working resolution.
         if let box = bbox(prob, threshold: 0.5) {
             let area = Float(box.width * box.height) / Float(ww * wh)
-            if area < 0.55 {
+            if zoom && area < 0.55 {
                 // Crop around the item with a margin, from the full-resolution photo.
                 let margin = 0.12 * Float(max(box.width, box.height))
                 let x0 = max(0, Float(box.minX) - margin), y0 = max(0, Float(box.minY) - margin)

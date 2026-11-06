@@ -3,6 +3,7 @@ name: Build Clearcut
 on:
   push:
     branches: [main]
+    paths-ignore: ['QA/**', 'tools/**', 'docs/**', 'Package.swift', '.github/workflows/quality.yml', '.github/workflows/backgrounds.yml', 'README.md']
   workflow_dispatch:
 
 jobs:

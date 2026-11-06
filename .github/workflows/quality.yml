@@ -1,0 +1,47 @@
+name: Image quality
+
+on:
+  push:
+    branches: [main]
+    paths: ['Core/**', 'QA/**', 'Package.swift', '.github/workflows/quality.yml']
+  workflow_dispatch:
+
+jobs:
+  quality:
+    runs-on: macos-15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unit tests
+        run: swift test 2>&1 | tail -40
+
+      - uses: actions/cache@v4
+        with:
+          path: QA/.texture_cache
+          key: textures-v1
+
+      - name: Build ground-truth scenes
+        run: |
+          python3 -m pip install --quiet --break-system-packages numpy pillow scipy 2>/dev/null || python3 -m pip install --quiet numpy pillow scipy
+          python3 QA/make_testset.py "$RUNNER_TEMP/testset"
+
+      - name: Benchmark
+        id: bench
+        run: |
+          swift build -c release --product cutbench 2>&1 | tail -20
+          set +e
+          .build/release/cutbench "$RUNNER_TEMP/testset" qa_out QA/photos | tee qa_out/log.txt
+          echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish report to the qa-results branch
+        if: always()
+        run: |
+          cp "$RUNNER_TEMP/testset/01_navy_shirt_on_white/photo.jpg" qa_out/scene_01_photo.jpg 2>/dev/null || true
+          QA/publish.sh qa_out "latest" "Quality run ${{ github.run_number }}"
+          QA/publish.sh qa_out "runs/${{ github.run_number }}" "Quality run ${{ github.run_number }} archive"
+
+      - name: Fail on regression
+        if: steps.bench.outputs.status != '0'
+        run: exit 1
