@@ -1,0 +1,83 @@
+{
+  "01_navy_shirt_on_white" : {
+    "bandMAE" : 0.050370714667612886,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 3.636118381465574,
+    "edgeDeltaE95" : 11.382621922280862,
+    "iou" : 0.999549062800051,
+    "keptBackground" : 4.4837706717841435e-06,
+    "missedItem" : 0.0004464554511762212
+  },
+  "02_white_on_white" : {
+    "bandMAE" : 0.21072648148998802,
+    "boundaryF" : 0.9802281160775702,
+    "edgeDeltaE" : 12.772177896891266,
+    "edgeDeltaE95" : 27.191469613649097,
+    "iou" : 0.9972023595270201,
+    "keptBackground" : 0.0025502853249526705,
+    "missedItem" : 0.00025448992946993385
+  },
+  "03_black_on_dark_wood" : {
+    "bandMAE" : 0.0890500081524556,
+    "boundaryF" : 0.9911980821135156,
+    "edgeDeltaE" : 8.31743173290465,
+    "edgeDeltaE95" : 21.700560963327547,
+    "iou" : 0.998728603825835,
+    "keptBackground" : 0.0008580383624095013,
+    "missedItem" : 0.00041444871844685343
+  },
+  "04_watch_thin_straps" : {
+    "bandMAE" : 0.0257904286078117,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 2.494724586538328,
+    "edgeDeltaE95" : 7.223199167869843,
+    "iou" : 0.999230297370899,
+    "keptBackground" : 7.814300952172571e-06,
+    "missedItem" : 0.0007618943428368257
+  },
+  "06_mug_handle_gap" : {
+    "bandMAE" : 0.037177761510045725,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 2.6032011931855643,
+    "edgeDeltaE95" : 7.085612063277187,
+    "iou" : 0.9991947738823446,
+    "keptBackground" : 0.0007997066201532232,
+    "missedItem" : 6.163442159177057e-06
+  },
+  "07_reflective_bottle" : {
+    "bandMAE" : 0.11059499310631234,
+    "boundaryF" : 0.9653442011281737,
+    "edgeDeltaE" : 5.620571742292151,
+    "edgeDeltaE95" : 16.46737855804875,
+    "iou" : 0.9952960070644804,
+    "keptBackground" : 0.004567066914597798,
+    "missedItem" : 0.0001584094714241499
+  },
+  "08_fuzzy_knit_edge" : {
+    "bandMAE" : 0.04854627483654512,
+    "boundaryF" : 0.9949060249429124,
+    "edgeDeltaE" : 3.392191053211802,
+    "edgeDeltaE95" : 12.906623464011991,
+    "iou" : 0.9984550712653555,
+    "keptBackground" : 0.001070824667558284,
+    "missedItem" : 0.00047575841488490476
+  },
+  "09_sunglasses_gaps" : {
+    "bandMAE" : 0.13583029068241564,
+    "boundaryF" : 0.786020846106683,
+    "edgeDeltaE" : 8.30229269021193,
+    "edgeDeltaE95" : 62.16529370643577,
+    "iou" : 0.9753890804834057,
+    "keptBackground" : 6.756856005522995e-05,
+    "missedItem" : 0.024545013880932446
+  },
+  "10_comb_narrow_teeth" : {
+    "bandMAE" : 0.18599571795557227,
+    "boundaryF" : 0.7914844428851607,
+    "edgeDeltaE" : 9.759848096441777,
+    "edgeDeltaE95" : 46.926036055501136,
+    "iou" : 0.8553773860408315,
+    "keptBackground" : 0.1646926046109738,
+    "missedItem" : 0.003748284326777558
+  }
+}
