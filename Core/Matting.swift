@@ -212,26 +212,25 @@ public enum Matting {
         }
         notes["surfaceSampleFraction"] = Double(bgFrac)
 
-        // Prefer the batch's surface when it is visible here; otherwise this photo's own.
-        var model: SurfaceModel?
-        var priorCoverage: Float = 0
-        if let prior {
-            priorCoverage = SurfaceAnalysis.coverage(R: Rb, G: Gb, B: Bb, model: prior)
-            notes["priorCoverage"] = Double(priorCoverage)
-            if priorCoverage >= 0.03 { model = prior }
-        }
-        // This photo's own view of the surface adapts to its lighting; use it when it agrees with
-        // the batch's (or there is none) and the item is a clear, whole subject.
+        // Prefer the batch's surface (fitted to this photo's exposure) when it is visible here.
+        // This photo's own view of the surface is used only when the model clearly found a whole
+        // item on it; when it found a sliver (just the tape measure), "background" is mostly item.
         let ownTrusted = own != nil && bgFrac >= 0.15 && visionFrac >= 0.12
+        var model: SurfaceModel?
+        if let prior {
+            let (adapted, cov) = SurfaceAnalysis.adapt(prior, R: Rb, G: Gb, B: Bb)
+            notes["priorCoverage"] = Double(cov)
+            if cov >= 0.05 { model = adapted }
+        }
         if let o = own, ownTrusted {
-            if let prior {
-                let agree = SurfaceAnalysis.coverage(R: Rb, G: Gb, B: Bb, model: o) > 0 && priorCoverage > 0.6 * bgFrac
-                if agree { model = o }
+            // With a batch surface as well, use this photo's own only if they describe the same thing.
+            if let m = model {
+                let ownCov = SurfaceAnalysis.coverage(R: Rb, G: Gb, B: Bb, model: o)
+                let priorCov = SurfaceAnalysis.coverage(R: Rb, G: Gb, B: Bb, model: m)
+                if priorCov > 0.5 * ownCov { model = o }
             } else {
                 model = o
             }
-        } else if model == nil, let o = own {
-            model = o
         }
         guard let surface = model else { notes["surfaceEvidence"] = 0; return (.unused, nil, nil, nil) }
         notes["surfaceEvidence"] = 1
@@ -245,24 +244,36 @@ public enum Matting {
             itemModel = SurfaceModel.fit(r: s.0, g: s.1, b: s.2, clusters: 6)
         }
         let maps = SurfaceAnalysis.maps(R: R, G: G, B: B, model: surface, itemModel: itemModel, longSide: longSide)
-        let other = maps.otherShare.data.map { $0 > 0.55 }
+        let coarse = maps.coarseSurface.data
+        // Decisively surface: surface close up and over the wider area, and unlike the item.
         var surf = [Bool](repeating: false, count: n)
-        for i in 0..<n where maps.surfaceShare.data[i] > 0.6 && maps.otherShare.data[i] < 0.15 && (maps.unlikeItem?[i] ?? true) {
+        for i in 0..<n where maps.surfaceShare.data[i] > 0.6 && coarse[i] > 0.5 && maps.otherShare.data[i] < 0.15
+            && (maps.unlikeItem?[i] ?? true) {
             surf[i] = true
         }
-        let surfShare = Float(surf.reduce(0) { $0 + ($1 ? 1 : 0) }) / Float(n)
-        notes["surfaceShare"] = Double(surfShare)
+        let wideSurface = coarse.reduce(0) { $0 + ($1 > 0.6 ? 1 : 0) }
+        notes["surfaceShare"] = Double(Float(wideSurface) / Float(n))
 
         // No surface to speak of: the photo is all item (a lining or label close-up).
-        if surfShare < 0.01 && (visionFrac < 0.05 || visionFrac > 0.85) {
+        if Float(wideSurface) < 0.01 * Float(n) && (visionFrac < 0.05 || visionFrac > 0.85) {
             for i in 0..<n { fg[i] = true; p.data[i] = 1 }
             return (.fillsFrame, learned, maps, nil)
         }
 
+        // Regions decided at the wide scale get their outline from the close-up decisions in a band
+        // around it, then the guided filter places the edge exactly.
+        func sharpen(_ item: inout [Bool]) {
+            let band = Plane(width: w, height: h, data: item.map { $0 ? 1 : 0 }).boxBlurred(radius: maps.coarseRadius)
+            for i in 0..<n where band.data[i] > 0.02 && band.data[i] < 0.98 {
+                item[i] = maps.surfaceShare.data[i] < 0.5
+            }
+        }
+
         if visionFrac < 0.02 {
             // Apple's model found (almost) nothing. Build the cutout from the surface: everything
-            // that clearly isn't surface, in pieces large enough to be the item.
-            var item = other
+            // that isn't surface over the wider area, in pieces large enough to be the item.
+            var item = coarse.map { $0 < 0.5 }
+            sharpen(&item)
             let (lab, sz) = Regions.label(item, width: w, height: h)
             let minPiece = Int(0.01 * Float(n))
             for i in 0..<n where item[i] && sz[Int(lab[i])] < minPiece { item[i] = false }
@@ -275,20 +286,23 @@ public enum Matting {
             return (.surfaceOnly, learned, maps, nil)
         }
 
-        // Restore: regions unlike the surface that touch the item.
-        let grown = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 }).boxBlurred(radius: 2)
+        // Restore: regions that aren't surface over the wider area and touch the item (a lining,
+        // the rest of a garment beside the tape measure the model picked out).
         var cand = [Bool](repeating: false, count: n)
-        for i in 0..<n where other[i] && !fg[i] { cand[i] = true }
+        for i in 0..<n where coarse[i] < 0.35 && !fg[i] { cand[i] = true }
+        sharpen(&cand)
+        for i in 0..<n where fg[i] { cand[i] = false }
+        let grown = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 }).boxBlurred(radius: 2)
         let (cl, cs) = Regions.label(cand, width: w, height: h)
         var touches = [Bool](repeating: false, count: cs.count)
         for i in 0..<n { let l = Int(cl[i]); if l > 0 && grown.data[i] > 0 { touches[l] = true } }
         let minRestore = max(16, Int(0.0002 * Float(n)))
+        // A restored region is part of the item, so it can't dwarf it, unless the model found only a sliver.
+        let maxRestore = visionFrac < 0.2 ? n : Int(1.5 * Float(visionArea))
         var restored = 0
         for i in 0..<n {
             let l = Int(cl[i])
-            if l > 0 && cs[l] >= minRestore && (touches[l] || (visionFrac < 0.2 && Float(cs[l]) > 0.02 * Float(n))) {
-                fg[i] = true; p.data[i] = 1; restored += 1
-            }
+            if l > 0 && touches[l] && cs[l] >= minRestore && cs[l] <= maxRestore { fg[i] = true; p.data[i] = 1; restored += 1 }
         }
         notes["surfaceRestoredPx"] = Double(restored)
 

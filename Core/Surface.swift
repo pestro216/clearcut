@@ -112,6 +112,13 @@ public struct SurfaceModel: Codable, Equatable, Sendable {
         return model
     }
 
+    /// The same surface photographed brighter or darker, or under slightly different light.
+    public func adjusted(gain: Float, tint1: Float, tint2: Float) -> SurfaceModel {
+        var m = self
+        m.means = means.map { [$0[0] * gain, $0[1] + tint1, $0[2] + tint2] }
+        return m
+    }
+
     static func invert3(_ s: [Float]) -> [Float]? {
         let c11 = s[4] * s[8] - s[5] * s[7], c12 = s[2] * s[7] - s[1] * s[8], c13 = s[1] * s[5] - s[2] * s[4]
         let c21 = s[5] * s[6] - s[3] * s[8], c22 = s[0] * s[8] - s[2] * s[6], c23 = s[2] * s[3] - s[0] * s[5]
@@ -128,6 +135,10 @@ struct SurfaceMaps {
     /// Share of nearby pixels that look like typical surface / clearly not surface.
     var surfaceShare: Plane
     var otherShare: Plane
+    /// Share of surface over a wider area (about 1% of the photo across): decides regions, so a
+    /// patterned item whose plain squares happen to match the surface is still seen as item.
+    var coarseSurface: Plane
+    var coarseRadius: Int
     /// Per-pixel: also unlike the item (only when an item model exists).
     var unlikeItem: [Bool]?
     var model: SurfaceModel
@@ -162,9 +173,36 @@ enum SurfaceAnalysis {
             if let im = itemModel { unlike![i] = im.distance(r.data[i], g.data[i], b.data[i]) > im.high }
         }
         let rad = max(2, Int(0.004 * longSide))
-        return SurfaceMaps(surfaceShare: Plane(width: w, height: h, data: surf).boxBlurred(radius: rad),
+        let coarse = max(4, Int(0.012 * longSide))
+        let surfPlane = Plane(width: w, height: h, data: surf)
+        return SurfaceMaps(surfaceShare: surfPlane.boxBlurred(radius: rad),
                            otherShare: Plane(width: w, height: h, data: other).boxBlurred(radius: rad),
+                           coarseSurface: surfPlane.boxBlurred(radius: coarse), coarseRadius: coarse,
                            unlikeItem: unlike, model: model, itemModel: itemModel)
+    }
+
+    /// Fits the batch's surface to this photo's exposure and light: tries a range of brightness
+    /// and small tint shifts and keeps the one under which most of the photo looks like surface.
+    static func adapt(_ prior: SurfaceModel, R: Plane, G: Plane, B: Plane) -> (SurfaceModel, Float) {
+        let n = R.count
+        var idx: [Int] = []
+        let step = max(1, n / 40000)
+        var i = 0
+        while i < n { idx.append(i); i += step }
+        var best = prior, bestCov: Float = -1
+        for gain: Float in [0.72, 0.8, 0.88, 0.96, 1.04, 1.12, 1.2, 1.3, 1.4] {
+            for t1: Float in [-0.05, 0, 0.05] {
+                for t2: Float in [-0.05, 0, 0.05] {
+                    let m = prior.adjusted(gain: gain, tint1: t1, tint2: t2)
+                    var c = 0
+                    for j in idx where m.distance(R.data[j], G.data[j], B.data[j]) < m.low { c += 1 }
+                    // Prefer the unshifted surface when it does as well.
+                    let cov = Float(c) / Float(idx.count) - (t1 == 0 && t2 == 0 ? 0 : 0.003) - abs(gain - 1) * 0.004
+                    if cov > bestCov { bestCov = cov; best = m }
+                }
+            }
+        }
+        return (best, max(0, bestCov))
     }
 
     /// Share of the photo that looks like the given surface.
