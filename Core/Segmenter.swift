@@ -23,7 +23,10 @@ public enum Segmenter {
         let k = Float(workLongSide) / Float(max(fw, fh))
         let ww = max(1, Int((Float(fw) * min(1, k)).rounded())), wh = max(1, Int((Float(fh) * min(1, k)).rounded()))
         guard let work = scaled(full, width: ww, height: wh) else { return nil }
-        guard let first = try mask(of: work) else { return nil }
+        // No subject found: an empty map, so the surface can still be used (close-ups).
+        guard let first = try mask(of: work) else {
+            return Segmentation(prob: Plane(width: ww, height: wh, value: 0), instanceCount: 0, zoomed: false)
+        }
         var prob = first.prob
         var zoomed = false
 

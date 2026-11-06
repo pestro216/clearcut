@@ -37,6 +37,12 @@ final class BatchStore: ObservableObject {
 
     let library: BackgroundLibrary
 
+    /// What the surface under the items looks like, learned from clear photos and kept between
+    /// launches (most batches are shot on the same surface). Close-ups and linings rely on it.
+    private(set) var surface: SurfaceModel? {
+        didSet { if let d = try? JSONEncoder().encode(surface) { UserDefaults.standard.set(d, forKey: "surface.v1") } }
+    }
+
     struct ExportResult: Identifiable {
         let id = UUID()
         let saved: Int
@@ -65,6 +71,9 @@ final class BatchStore: ObservableObject {
         }
         if case .surface(let id) = initial.backdrop, library.surface(id) == nil { initial.backdrop = Look().backdrop }
         look = initial
+        if let d = UserDefaults.standard.data(forKey: "surface.v1"), let m = try? JSONDecoder().decode(SurfaceModel?.self, from: d) {
+            surface = m
+        }
     }
 
     var busy: Bool { importing != nil || exportProgress != nil }
@@ -104,32 +113,45 @@ final class BatchStore: ObservableObject {
                     let original = dir.appendingPathComponent("\(id.uuidString)-original")
                     if (try? data.write(to: original)) != nil {
                         items.append(BatchItem(id: id, originalURL: original))
-                        let folder = dir
-                        let result = await Task.detached(priority: .userInitiated) {
-                            BatchStore.process(data: data, id: id, dir: folder)
-                        }.value
-                        if let i = items.firstIndex(where: { $0.id == id }) {
-                            if let r = result {
-                                items[i].pixelSize = r.size
-                                items[i].alphaURL = r.alphaURL
-                                items[i].previewPhotoURL = r.previewPhotoURL
-                                items[i].previewAlphaURL = r.previewAlphaURL
-                                items[i].gridPhoto = r.gridPhoto
-                                items[i].gridAlpha = r.gridAlpha
-                                items[i].status = r.status
-                                items[i].removed = r.alphaURL != nil
-                                renderGrid(items[i])
-                            } else {
-                                items[i].status = .failed("This photo couldn't be opened")
-                                items[i].removed = false
-                            }
-                        }
+                        await cutOut(id: id, data: data)
                     }
                 }
                 if let p = importing { importing = (p.done + 1, p.total) }
             }
+            // Photos that couldn't be cut out before the surface was known get a second go.
+            if surface != nil {
+                for item in items where !item.triedWithSurface {
+                    if case .failed = item.status, let data = try? Data(contentsOf: item.originalURL) {
+                        await cutOut(id: item.id, data: data)
+                    }
+                }
+            }
             importing = nil
             running = false
+        }
+    }
+
+    private func cutOut(id: UUID, data: Data) async {
+        let folder = dir, prior = surface
+        let result = await Task.detached(priority: .userInitiated) {
+            BatchStore.process(data: data, id: id, dir: folder, surface: prior)
+        }.value
+        guard let i = items.firstIndex(where: { $0.id == id }) else { return }
+        items[i].triedWithSurface = prior != nil
+        if let r = result {
+            if let l = r.learned { surface = l }
+            items[i].pixelSize = r.size
+            items[i].alphaURL = r.alphaURL
+            items[i].previewPhotoURL = r.previewPhotoURL
+            items[i].previewAlphaURL = r.previewAlphaURL
+            items[i].gridPhoto = r.gridPhoto
+            items[i].gridAlpha = r.gridAlpha
+            items[i].status = r.status
+            items[i].removed = r.alphaURL != nil
+            renderGrid(items[i])
+        } else {
+            items[i].status = .failed("This photo couldn't be opened")
+            items[i].removed = false
         }
     }
 
@@ -141,10 +163,11 @@ final class BatchStore: ObservableObject {
         let gridPhoto: RGBAImage?
         let gridAlpha: [UInt8]?
         let status: BatchItem.Status
+        var learned: SurfaceModel? = nil
     }
 
     /// Full-resolution cutout for one photo. Runs off the main thread.
-    nonisolated static func process(data: Data, id: UUID, dir: URL) -> Processed? {
+    nonisolated static func process(data: Data, id: UUID, dir: URL, surface: SurfaceModel?) -> Processed? {
         autoreleasepool {
             guard let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg) else { return nil }
             let size = CGSize(width: photo.width, height: photo.height)
@@ -158,10 +181,13 @@ final class BatchStore: ObservableObject {
                 return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
                                  gridPhoto: gridPhoto, gridAlpha: nil, status: .failed("No item found, kept as the original"))
             }
-            let matte = Matting.refine(full: photo, segmentation: seg)
+            var options = MatteOptions()
+            options.surface = surface
+            let matte = Matting.refine(full: photo, segmentation: seg, options: options)
             if case .failed(let why) = matte.confidence {
                 return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
-                                 gridPhoto: gridPhoto, gridAlpha: nil, status: .failed(why + ", kept as the original"))
+                                 gridPhoto: gridPhoto, gridAlpha: nil, status: .failed(why + ", kept as the original"),
+                                 learned: matte.learnedSurface)
             }
             let alphaURL = dir.appendingPathComponent("\(id.uuidString)-alpha.png")
             let previewAlphaURL = dir.appendingPathComponent("\(id.uuidString)-preview-alpha.png")
@@ -175,7 +201,7 @@ final class BatchStore: ObservableObject {
             default: status = .ready
             }
             return Processed(size: size, alphaURL: alphaURL, previewPhotoURL: previewURL, previewAlphaURL: previewAlphaURL,
-                             gridPhoto: gridPhoto, gridAlpha: gridAlpha, status: status)
+                             gridPhoto: gridPhoto, gridAlpha: gridAlpha, status: status, learned: matte.learnedSurface)
         }
     }
 

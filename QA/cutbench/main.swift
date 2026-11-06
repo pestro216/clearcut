@@ -73,7 +73,7 @@ struct Output { var alpha: [UInt8]; var fg: RGBAImage; var seconds: Double; var 
 func runPrevious(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
     // The app before this overhaul: one pass, mask stretched to full size and steepened.
     let (seg, t) = try time { try Segmenter.segment(cg, zoom: false) }
-    guard let seg else { return nil }
+    guard let seg, seg.instanceCount > 0 else { return nil }
     let up = seg.prob.resized(width: photo.width, height: photo.height)
     let k = min(12, max(3, Float(max(photo.width, photo.height)) / 550))
     let a = up.map { min(1, max(0, ($0 - 0.5) * k + 0.5)) }.toBytes()
@@ -81,14 +81,21 @@ func runPrevious(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
 }
 func runModelOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
     let (seg, t) = try time { try Segmenter.segment(cg, zoom: false) }
-    guard let seg else { return nil }
+    guard let seg, seg.instanceCount > 0 else { return nil }
     return Output(alpha: seg.prob.resized(width: photo.width, height: photo.height).toBytes(), fg: photo, seconds: t, confidence: "", notes: [:])
 }
-func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true, linear: Bool = true) throws -> Output? {
+/// The surface learned so far, carried from photo to photo as the app does within a batch.
+var batchSurface: SurfaceModel?
+var lastFailure = ""
+func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true, linear: Bool = true,
+            surface: Bool = true) throws -> Output? {
     let start = Date()
     guard let seg = try Segmenter.segment(cg, zoom: zoom) else { return nil }
     var o = MatteOptions(); o.colourEvidence = colour; o.guidedRefinement = guided; o.linearEdges = linear
+    o.surfaceEvidence = surface; o.surface = surface ? batchSurface : nil
     let m = Matting.refine(full: photo, segmentation: seg, options: o)
+    if surface, let l = m.learnedSurface { batchSurface = l }
+    if case .failed(let why) = m.confidence { lastFailure = why; return nil }
     let fg = Matting.foreground(full: photo, alpha: m.alpha)
     let conf: String
     switch m.confidence { case .good: conf = "good"; case .check(let s): conf = "check: \(s)"; case .failed(let s): conf = "failed: \(s)" }
@@ -102,6 +109,7 @@ let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
     ("new: no colour evidence", { try runNew($0, $1, colour: false) }),
     ("new: no edge refinement", { try runNew($0, $1, guided: false) }),
     ("new: edges solved in sRGB", { try runNew($0, $1, linear: false) }),
+    ("new: no surface model", { try runNew($0, $1, surface: false) }),
     ("new", { try runNew($0, $1) }),
 ]
 let shipping = "new"
@@ -232,7 +240,8 @@ if !failedScenes.isEmpty {
 }
 report += "\nPeak memory of the whole benchmark process: \(fmt(peakMB, 0)) MB.\n"
 
-// Real photos without reference masks.
+// Real photos without reference masks. They are one batch: the surface is learned afresh.
+batchSurface = nil
 if let photosDir, let files = try? fm.contentsOfDirectory(atPath: photosDir.path) {
     let imgs = files.filter { ["jpg", "jpeg", "heic", "png"].contains(($0 as NSString).pathExtension.lowercased()) }.sorted()
     if !imgs.isEmpty {
@@ -241,7 +250,8 @@ if let photosDir, let files = try? fm.contentsOfDirectory(atPath: photosDir.path
             guard let cg = loadCG(photosDir.appendingPathComponent(f)), let photo = RGBAImage(cgImage: cg) else { continue }
             let tw = 600, th = Int(600.0 * Double(photo.height) / Double(photo.width))
             guard let o = try? runNew(cg, photo) else {
-                report += "| \(f) | none | | | | | no item found |\n"
+                report += "| \(f) | none | | | | | \(lastFailure.isEmpty ? "no item found" : lastFailure) |\n"
+                lastFailure = ""
                 var sheet = RGBAImage(width: tw + 20, height: th + 20, fill: (245, 243, 238))
                 blit(&sheet, photo.resized(width: tw, height: th), 10, 10)
                 saveJPEG(sheet, outDir.appendingPathComponent("real_\(f).jpg"))

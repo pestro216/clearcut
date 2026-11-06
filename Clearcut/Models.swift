@@ -61,6 +61,8 @@ struct BatchItem: Identifiable, @unchecked Sendable {
     /// Use the cut-out version (false = keep the original photo untouched).
     var removed: Bool = true
     var edited: Bool = false
+    /// Whether the cutout was attempted with a known surface.
+    var triedWithSurface = false
     var originalURL: URL
     var pixelSize: CGSize = .zero
     /// Full-resolution alpha matte (greyscale PNG).

@@ -21,6 +21,8 @@ public struct Matte {
     public var confidence: Confidence
     /// Diagnostics for the quality report.
     public var notes: [String: Double]
+    /// The surface learned from this photo, when it was clear enough to reuse for the batch.
+    public var learnedSurface: SurfaceModel? = nil
 }
 
 public struct MatteOptions {
@@ -37,6 +39,11 @@ public struct MatteOptions {
     public var levelsHigh: Float = 0.97
     /// Solve edge alpha in linear light (true) or in encoded sRGB (false).
     public var linearEdges = true
+    /// Use a model of the surface (learned here or from earlier photos) to keep everything that
+    /// isn't surface and drop surface the model kept.
+    public var surfaceEvidence = true
+    /// The surface learned from earlier photos in the batch, if any.
+    public var surface: SurfaceModel?
 
     public init() {}
 }
@@ -72,7 +79,7 @@ public enum Matting {
         var fg = p.data.map { $0 > 0.5 }
         let (labels, sizes) = Regions.label(fg, width: ww, height: wh)
         let biggest = sizes.dropFirst().max() ?? 0
-        if biggest == 0 {
+        if biggest == 0 && !(options.surfaceEvidence && options.surface != nil) {
             return Matte(width: full.width, height: full.height, alpha: [UInt8](repeating: 0, count: full.width * full.height),
                          confidence: .failed("No item found"), notes: notes)
         }
@@ -88,6 +95,22 @@ public enum Matting {
         let components = sizes.dropFirst().filter { Float($0) >= Float(biggest) * 0.04 }.count
         notes["components"] = Double(components)
 
+        // 1b. Surface evidence.
+        var surfaceOutcome = SurfaceOutcome.unused
+        var learned: SurfaceModel?
+        var surfaceMaps: SurfaceMaps?
+        if options.surfaceEvidence {
+            let r = surfaceEvidence(R: R, G: G, B: B, prob: &p, fg: &fg, prior: options.surface, longSide: longW, notes: &notes)
+            surfaceOutcome = r.outcome
+            learned = r.learned
+            surfaceMaps = r.maps
+            if let w = r.warning { flags.append(w) }
+        }
+        if surfaceOutcome == .fillsFrame || fg.allSatisfy({ !$0 }) {
+            let why = surfaceOutcome == .fillsFrame ? "Nothing to remove, the item fills the photo" : "No item found"
+            return Matte(width: full.width, height: full.height, alpha: [UInt8](repeating: 0, count: full.width * full.height),
+                         confidence: .failed(why), notes: notes, learnedSurface: learned)
+        }
         var fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
 
         // 2. Colour evidence.
@@ -105,7 +128,8 @@ public enum Matting {
         let alpha: [UInt8]
         if options.guidedRefinement {
             alpha = guidedUpsample(full: full, R: R, G: G, B: B, p: p, radius: options.guidedRadius, eps: options.guidedEps,
-                                   low: options.levelsLow, high: options.levelsHigh, linear: options.linearEdges)
+                                   low: options.levelsLow, high: options.levelsHigh, linear: options.linearEdges,
+                                   surface: surfaceMaps?.model, item: surfaceMaps?.itemModel)
         } else {
             let up = p.resized(width: full.width, height: full.height)
             alpha = levels(up, low: options.levelsLow, high: options.levelsHigh)
@@ -138,14 +162,172 @@ public enum Matting {
 
         // Confidence.
         var confidence: Confidence = .good
-        if areaFrac < 0.002 {
+        if surfaceOutcome == .fillsFrame {
+            confidence = .failed("Nothing to remove, the item fills the photo")
+        } else if areaFrac < 0.002 {
             confidence = .failed("The item is too small to cut out reliably")
         } else if areaFrac > 0.92 {
             confidence = .check("The item fills almost the whole frame")
         } else if let f = flags.first {
             confidence = .check(f)
+        } else if surfaceOutcome == .surfaceOnly {
+            confidence = .check("Cut out from the surface colour, worth checking the edges")
         }
-        return Matte(width: full.width, height: full.height, alpha: alpha, confidence: confidence, notes: notes)
+        return Matte(width: full.width, height: full.height, alpha: alpha, confidence: confidence, notes: notes,
+                     learnedSurface: confidence == .good ? learned : nil)
+    }
+
+    // MARK: Surface evidence
+
+    enum SurfaceOutcome { case unused, used, surfaceOnly, fillsFrame }
+
+    /// Keeps everything that clearly isn't the surface and drops surface the model kept.
+    /// - Restores parts the model left out that are unlike the surface and touch the item
+    ///   (a vest's lining, a zip pull), and, when the model found little or nothing (close-ups),
+    ///   builds the cutout from the surface alone.
+    /// - Removes surface the model kept (carpet in gaps and along the hem), unless the item itself
+    ///   looks like the surface, in which case it leaves the model's outline alone.
+    private static func surfaceEvidence(R: Plane, G: Plane, B: Plane, prob p: inout Plane, fg: inout [Bool], prior: SurfaceModel?,
+                                        longSide: Float, notes: inout [String: Double])
+        -> (outcome: SurfaceOutcome, learned: SurfaceModel?, maps: SurfaceMaps?, warning: String?) {
+        let w = p.width, h = p.height, n = w * h
+        let Rb = R.gaussianBlurred(sigma: 1.0), Gb = G.gaussianBlurred(sigma: 1.0), Bb = B.gaussianBlurred(sigma: 1.0)
+        let visionArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
+        let visionFrac = Float(visionArea) / Float(n)
+        notes["visionArea"] = Double(visionFrac)
+
+        // The surface as Apple's model sees it: confident background well away from the item.
+        var own: SurfaceModel?
+        var bgFrac: Float = 0
+        if visionArea > 0 {
+            let near = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 }).boxBlurred(radius: max(2, Int(0.015 * longSide)))
+            var bg = [Bool](repeating: false, count: n)
+            var c = 0
+            for i in 0..<n where p.data[i] < 0.03 && near.data[i] == 0 { bg[i] = true; c += 1 }
+            bgFrac = Float(c) / Float(n)
+            if bgFrac > 0.05 {
+                let s = SurfaceAnalysis.samples(Rb, Gb, Bb, where: bg)
+                own = SurfaceModel.fit(r: s.0, g: s.1, b: s.2)
+            }
+        }
+        notes["surfaceSampleFraction"] = Double(bgFrac)
+
+        // Prefer the batch's surface when it is visible here; otherwise this photo's own.
+        var model: SurfaceModel?
+        var priorCoverage: Float = 0
+        if let prior {
+            priorCoverage = SurfaceAnalysis.coverage(R: Rb, G: Gb, B: Bb, model: prior)
+            notes["priorCoverage"] = Double(priorCoverage)
+            if priorCoverage >= 0.03 { model = prior }
+        }
+        // This photo's own view of the surface adapts to its lighting; use it when it agrees with
+        // the batch's (or there is none) and the item is a clear, whole subject.
+        let ownTrusted = own != nil && bgFrac >= 0.15 && visionFrac >= 0.12
+        if let o = own, ownTrusted {
+            if let prior {
+                let agree = SurfaceAnalysis.coverage(R: Rb, G: Gb, B: Bb, model: o) > 0 && priorCoverage > 0.6 * bgFrac
+                if agree { model = o }
+            } else {
+                model = o
+            }
+        } else if model == nil, let o = own {
+            model = o
+        }
+        guard let surface = model else { notes["surfaceEvidence"] = 0; return (.unused, nil, nil, nil) }
+        notes["surfaceEvidence"] = 1
+        let learned = ownTrusted ? own : nil
+
+        // The item's own colours, from the middle of what the model is sure about.
+        var itemModel: SurfaceModel?
+        if visionArea > 400 {
+            let core = Plane(width: w, height: h, data: p.data.map { $0 > 0.97 ? 1 : 0 }).boxBlurred(radius: 3)
+            let s = SurfaceAnalysis.samples(Rb, Gb, Bb, where: core.data.map { $0 >= 0.999 })
+            itemModel = SurfaceModel.fit(r: s.0, g: s.1, b: s.2, clusters: 6)
+        }
+        let maps = SurfaceAnalysis.maps(R: R, G: G, B: B, model: surface, itemModel: itemModel, longSide: longSide)
+        let other = maps.otherShare.data.map { $0 > 0.55 }
+        var surf = [Bool](repeating: false, count: n)
+        for i in 0..<n where maps.surfaceShare.data[i] > 0.6 && maps.otherShare.data[i] < 0.15 && (maps.unlikeItem?[i] ?? true) {
+            surf[i] = true
+        }
+        let surfShare = Float(surf.reduce(0) { $0 + ($1 ? 1 : 0) }) / Float(n)
+        notes["surfaceShare"] = Double(surfShare)
+
+        // No surface to speak of: the photo is all item (a lining or label close-up).
+        if surfShare < 0.01 && (visionFrac < 0.05 || visionFrac > 0.85) {
+            for i in 0..<n { fg[i] = true; p.data[i] = 1 }
+            return (.fillsFrame, learned, maps, nil)
+        }
+
+        if visionFrac < 0.02 {
+            // Apple's model found (almost) nothing. Build the cutout from the surface: everything
+            // that clearly isn't surface, in pieces large enough to be the item.
+            var item = other
+            let (lab, sz) = Regions.label(item, width: w, height: h)
+            let minPiece = Int(0.01 * Float(n))
+            for i in 0..<n where item[i] && sz[Int(lab[i])] < minPiece { item[i] = false }
+            fillHoles(&item, surface: surf, width: w, height: h)
+            let area = Float(item.reduce(0) { $0 + ($1 ? 1 : 0) }) / Float(n)
+            notes["surfaceOnlyArea"] = Double(area)
+            guard area > 0.02 else { return (.unused, learned, maps, nil) }
+            for i in 0..<n { fg[i] = item[i]; p.data[i] = item[i] ? 1 : 0 }
+            p = p.gaussianBlurred(sigma: 0.8)
+            return (.surfaceOnly, learned, maps, nil)
+        }
+
+        // Restore: regions unlike the surface that touch the item.
+        let grown = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 }).boxBlurred(radius: 2)
+        var cand = [Bool](repeating: false, count: n)
+        for i in 0..<n where other[i] && !fg[i] { cand[i] = true }
+        let (cl, cs) = Regions.label(cand, width: w, height: h)
+        var touches = [Bool](repeating: false, count: cs.count)
+        for i in 0..<n { let l = Int(cl[i]); if l > 0 && grown.data[i] > 0 { touches[l] = true } }
+        let minRestore = max(16, Int(0.0002 * Float(n)))
+        var restored = 0
+        for i in 0..<n {
+            let l = Int(cl[i])
+            if l > 0 && cs[l] >= minRestore && (touches[l] || (visionFrac < 0.2 && Float(cs[l]) > 0.02 * Float(n))) {
+                fg[i] = true; p.data[i] = 1; restored += 1
+            }
+        }
+        notes["surfaceRestoredPx"] = Double(restored)
+
+        // Remove surface the model kept.
+        var carve = 0
+        for i in 0..<n where fg[i] && surf[i] { carve += 1 }
+        let fgNow = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
+        var warning: String?
+        if Float(carve) > 0.3 * Float(fgNow) {
+            notes["surfaceCarveRejected"] = 1
+            warning = "Parts of the item look like the surface, worth checking"
+            carve = 0
+        } else if carve > 0 {
+            for i in 0..<n where fg[i] && surf[i] { fg[i] = false; p.data[i] = 0 }
+        }
+        notes["surfaceCarvedPx"] = Double(carve)
+        if restored > 0 || carve > 0 {
+            var item = fg
+            fillHoles(&item, surface: surf, width: w, height: h)
+            for i in 0..<n where item[i] && !fg[i] { fg[i] = true; p.data[i] = 1 }
+            p = p.gaussianBlurred(sigma: 0.8)
+        }
+        return (.used, learned, maps, warning)
+    }
+
+    /// Fills enclosed gaps in the item that aren't surface (a shaded crease, a dark seam).
+    private static func fillHoles(_ item: inout [Bool], surface: [Bool], width w: Int, height h: Int) {
+        let n = w * h
+        let gaps = item.map { !$0 }
+        let (lab, sz) = Regions.label(gaps, width: w, height: h)
+        var border = [Bool](repeating: false, count: sz.count)
+        for x in 0..<w { border[Int(lab[x])] = true; border[Int(lab[(h - 1) * w + x])] = true }
+        for y in 0..<h { border[Int(lab[y * w])] = true; border[Int(lab[y * w + w - 1])] = true }
+        var surfCount = [Int](repeating: 0, count: sz.count)
+        for i in 0..<n where surface[i] { surfCount[Int(lab[i])] += 1 }
+        for i in 0..<n {
+            let l = Int(lab[i])
+            if l > 0 && !border[l] && Float(surfCount[l]) < 0.3 * Float(sz[l]) { item[i] = true }
+        }
     }
 
     // MARK: Colour evidence
@@ -325,7 +507,8 @@ public enum Matting {
     /// Colour guided filter at working resolution; coefficients bilinearly upsampled and
     /// applied to every full-resolution pixel (He & Sun, "Fast Guided Filter").
     static func guidedUpsample(full: RGBAImage, R: Plane, G: Plane, B: Plane, p: Plane,
-                               radius r: Int, eps: Float, low: Float, high: Float, linear: Bool = true) -> [UInt8] {
+                               radius r: Int, eps: Float, low: Float, high: Float, linear: Bool = true,
+                               surface: SurfaceModel? = nil, item: SurfaceModel? = nil) -> [UInt8] {
         let w = p.width, h = p.height, n = w * h
         func mean(_ x: Plane) -> Plane { x.boxBlurred(radius: r) }
         let mR = mean(R), mG = mean(G), mB = mean(B), mP = mean(p)
@@ -419,6 +602,14 @@ public enum Matting {
                         }
                         var a = (q - low) / span
                         a = a < 0 ? 0 : (a > 1 ? 1 : a)
+                        // Surface fibres caught along the edge (carpet pile, fabric fuzz of the
+                        // surface): a pixel that looks exactly like the surface and nothing like
+                        // the item is surface, whatever the smooth matte said.
+                        if let surface, a > 0, a < 1, bandRaw.sample(fx, fy) > 0.001,
+                           surface.distance(r0, g0, b0) < surface.low * 2,
+                           (item.map { $0.distance(r0, g0, b0) > $0.high } ?? false) {
+                            a *= 0.15
+                        }
                         o[i] = UInt8(a * 255 + 0.5)
                     }
                 }
