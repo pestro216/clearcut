@@ -26,6 +26,7 @@ jobs:
         run: |
           python3 -m pip install --quiet --break-system-packages numpy pillow scipy 2>/dev/null || python3 -m pip install --quiet numpy pillow scipy
           python3 QA/make_testset.py "$RUNNER_TEMP/testset"
+          python3 QA/real_scenes.py "$RUNNER_TEMP/testset"
 
       - name: Benchmark
         id: bench
