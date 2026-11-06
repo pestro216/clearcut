@@ -134,7 +134,10 @@ for name in cases {
         results[name, default: [:]][mname] = s
         timings[name, default: [:]][mname] = o.seconds
         peakMB = max(peakMB, memoryMB())
-        if mname == shipping { confidences[name] = o.confidence }
+        if mname == shipping {
+            confidences[name] = o.confidence
+            print("NOTES \(name): " + o.notes.sorted { $0.key < $1.key }.map { "\($0.key)=\(String(format: "%.3g", $0.value))" }.joined(separator: " "))
+        }
         print(String(format: "%@ | %@ | IoU %.4f BF %.3f bandMAE %.3f missed %.4f kept %.4f dE %.2f dE95 %.2f | %.2fs",
                      name, mname, s.iou, s.boundaryF, s.bandMAE, s.missedItem, s.keptBackground, s.edgeDeltaE, s.edgeDeltaE95, o.seconds))
     }

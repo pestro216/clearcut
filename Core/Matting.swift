@@ -295,13 +295,17 @@ public enum Matting {
         // photo has it, keeps genuinely mixed pixels partial, and is trusted only where F and B
         // differ clearly; elsewhere the guided-filter result stands.
         let fW = p.map { $0 >= 0.97 ? 1 : 0 }, bW = p.map { $0 <= 0.03 ? 1 : 0 }
-        let rm = max(4, r * 3)
-        let dF = fW.boxBlurred(radius: rm), dB = bW.boxBlurred(radius: rm)
-        func localMean(_ c: Plane, _ wt: Plane, _ d: Plane) -> Plane {
-            Plane.combine((c * wt).boxBlurred(radius: rm), d) { a, dd in dd > 0.01 ? a / dd : -1 }
+        // Local colour means at two reaches: near (preferred) and wide (when the model's edge is
+        // so soft that no confident pixels are near).
+        func means(_ rm: Int) -> [Plane] {
+            let dF = fW.boxBlurred(radius: rm), dB = bW.boxBlurred(radius: rm)
+            func localMean(_ c: Plane, _ wt: Plane, _ d: Plane) -> Plane {
+                Plane.combine((c * wt).boxBlurred(radius: rm), d) { a, dd in dd > 0.01 ? a / dd : -1 }
+            }
+            return [localMean(R, fW, dF), localMean(G, fW, dF), localMean(B, fW, dF),
+                    localMean(R, bW, dB), localMean(G, bW, dB), localMean(B, bW, dB)]
         }
-        let FR = localMean(R, fW, dF), FG = localMean(G, fW, dF), FB = localMean(B, fW, dF)
-        let BR = localMean(R, bW, dB), BG = localMean(G, bW, dB), BB = localMean(B, bW, dB)
+        let near = means(max(4, r * 3)), wide = means(max(8, r * 8))
         let bandRaw = p.map { $0 > 0.03 && $0 < 0.97 ? 1 : 0 }.boxBlurred(radius: r)
 
         let fw = full.width, fh = full.height
@@ -319,8 +323,10 @@ public enum Matting {
                         let r0 = Float(px[i * 4]) * inv255, g0 = Float(px[i * 4 + 1]) * inv255, b0 = Float(px[i * 4 + 2]) * inv255
                         var q = maR.sample(fx, fy) * r0 + maG.sample(fx, fy) * g0 + maB.sample(fx, fy) * b0 + mb.sample(fx, fy)
                         if bandRaw.sample(fx, fy) > 0.001 {
-                            let fr = FR.sample(fx, fy), fgc = FG.sample(fx, fy), fb = FB.sample(fx, fy)
-                            let br = BR.sample(fx, fy), bg = BG.sample(fx, fy), bbc = BB.sample(fx, fy)
+                            var set = near
+                            if near[0].sample(fx, fy) < 0 || near[3].sample(fx, fy) < 0 { set = wide }
+                            let fr = set[0].sample(fx, fy), fgc = set[1].sample(fx, fy), fb = set[2].sample(fx, fy)
+                            let br = set[3].sample(fx, fy), bg = set[4].sample(fx, fy), bbc = set[5].sample(fx, fy)
                             if fr >= 0 && br >= 0 {
                                 let er = fr - br, eg = fgc - bg, eb = fb - bbc
                                 let c2 = er * er + eg * eg + eb * eb
