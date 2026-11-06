@@ -186,53 +186,66 @@ public enum Matting {
         var fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
         var warning: String?
 
-        // Recover: clearly-not-background pixels connected to the item, within reach of it.
-        let reach = fgPlane.boxBlurred(radius: max(4, Int(0.12 * longSide)))
-        var visited = [Bool](repeating: false, count: n)
-        var stack: [Int32] = []
-        stack.reserveCapacity(4096)
-        for i in 0..<n where fg[i] { visited[i] = true; stack.append(Int32(i)) }
-        var recovered: [Int32] = []
-        while let top = stack.popLast() {
-            let i = Int(top)
+        // Recover parts the model missed: regions that are clearly not background, touch the
+        // item, and are made of the same material as the part of the item they touch
+        // (a strap continuing from a watch). Background texture, other objects and shadows fail
+        // the material test and are left out.
+        let reach = fgPlane.boxBlurred(radius: max(4, Int(0.10 * longSide)))
+        var cand = [Bool](repeating: false, count: n)
+        for i in 0..<n where !fg[i] && !shadowLike[i] && reach.data[i] > 0 && D[i] / noise > 12 { cand[i] = true }
+        let (cl, cs) = Regions.label(cand, width: w, height: h)
+        // Mean colour per candidate region, and the mean colour of the item pixels it touches.
+        let nc = cs.count
+        var sumC = [Float](repeating: 0, count: nc * 3), sumT = [Float](repeating: 0, count: nc * 3), cntT = [Int](repeating: 0, count: nc)
+        for i in 0..<n {
+            let l = Int(cl[i]); if l == 0 { continue }
+            sumC[l * 3] += R.data[i]; sumC[l * 3 + 1] += G.data[i]; sumC[l * 3 + 2] += B.data[i]
             let x = i % w, y = i / w
-            for (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] {
-                if nx < 0 || ny < 0 || nx >= w || ny >= h { continue }
+            for (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] where nx >= 0 && ny >= 0 && nx < w && ny < h {
                 let j = ny * w + nx
-                if visited[j] { continue }
-                visited[j] = true
-                if !fg[j] && !shadowLike[j] && reach.data[j] > 0 && D[j] / noise > 8 {
-                    recovered.append(Int32(j))
-                    stack.append(Int32(j))
+                if fg[j] && p.data[j] > 0.8 {
+                    sumT[l * 3] += R.data[j]; sumT[l * 3 + 1] += G.data[j]; sumT[l * 3 + 2] += B.data[j]; cntT[l] += 1
                 }
             }
         }
-        notes["recoveredPx"] = Double(recovered.count)
-        if Float(recovered.count) > 0.5 * Float(fgArea) {
-            warning = "The background may contain other objects"
-            notes["recoveryRejected"] = 1
-        } else if !recovered.isEmpty {
-            for j in recovered { fg[Int(j)] = true; p.data[Int(j)] = 1 }
-            fgArea += recovered.count
+        var accept = [Bool](repeating: false, count: nc)
+        var recoveredCount = 0
+        let maxRegion = max(20, Int(0.15 * Float(fgArea)))
+        for l in 1..<nc where cntT[l] >= 3 && cs[l] <= maxRegion {
+            let cr = sumC[l * 3] / Float(cs[l]), cg = sumC[l * 3 + 1] / Float(cs[l]), cb = sumC[l * 3 + 2] / Float(cs[l])
+            let tr = sumT[l * 3] / Float(cntT[l]), tg = sumT[l * 3 + 1] / Float(cntT[l]), tb = sumT[l * 3 + 2] / Float(cntT[l])
+            let d = sqrt((cr - tr) * (cr - tr) + (cg - tg) * (cg - tg) + (cb - tb) * (cb - tb))
+            if d < 0.10 { accept[l] = true; recoveredCount += cs[l] }
+        }
+        notes["recoveredPx"] = Double(recoveredCount)
+        if recoveredCount > 0 {
+            for i in 0..<n where accept[Int(cl[i])] { fg[i] = true; p.data[i] = 1 }
+            fgArea += recoveredCount
         }
 
-        // Carve: regions inside the item that look exactly like the background.
-        var hole = [Bool](repeating: false, count: n)
-        for i in 0..<n where fg[i] && D[i] / noise < 2.0 { hole[i] = true }
-        let (hl, hs) = Regions.label(hole, width: w, height: h)
-        let minHole = max(12, Int(0.0003 * Float(n)))
-        var carve = [Bool](repeating: false, count: hs.count)
+        // Carve gaps the model filled in (between comb teeth, inside a handle): small regions
+        // inside the item whose colour is indistinguishable from the background around it.
+        // Large look-alike areas are part of the product (white on white) and are kept.
         var carved = 0
-        for c in 1..<hs.count where hs[c] >= minHole { carve[c] = true; carved += hs[c] }
-        notes["carvedPx"] = Double(carved)
-        if Float(carved) > 0.25 * Float(fgArea) {
-            warning = warning ?? "Parts of the item look like the background"
-            notes["carveRejected"] = 1
-        } else if carved > 0 {
-            for i in 0..<n where hole[i] && carve[Int(hl[i])] { fg[i] = false; p.data[i] = 0 }
+        if separation >= 10 {
+            var hole = [Bool](repeating: false, count: n)
+            for i in 0..<n where fg[i] && D[i] / noise < 1.5 { hole[i] = true }
+            let (hl, hs) = Regions.label(hole, width: w, height: h)
+            let minHole = max(12, Int(0.0002 * Float(n)))
+            let maxHole = Int(0.05 * Float(fgArea))
+            var carve = [Bool](repeating: false, count: hs.count)
+            for c in 1..<hs.count where hs[c] >= minHole && hs[c] <= maxHole { carve[c] = true; carved += hs[c] }
+            if Float(carved) > 0.12 * Float(fgArea) {
+                warning = "Parts of the item look like the background"
+                notes["carveRejected"] = 1
+                carved = 0
+            } else if carved > 0 {
+                for i in 0..<n where hole[i] && carve[Int(hl[i])] { fg[i] = false; p.data[i] = 0 }
+            }
         }
+        notes["carvedPx"] = Double(carved)
 
-        if !recovered.isEmpty || carved > 0 {
+        if recoveredCount > 0 || carved > 0 {
             // The edits are hard-edged at working resolution; soften by a pixel so the
             // guided filter can place the edge precisely.
             p = p.gaussianBlurred(sigma: 0.8)
@@ -276,6 +289,21 @@ public enum Matting {
         let maB = mean(Plane(width: w, height: h, data: aB))
         let mb = mean(Plane(width: w, height: h, data: bb))
 
+        // Edge-band matting. Near the outline, estimate the item's colour (F) and the background's
+        // colour (B) locally from confident pixels on each side, then solve each full-resolution
+        // pixel's alpha as how far its colour lies from B towards F. This puts the edge where the
+        // photo has it, keeps genuinely mixed pixels partial, and is trusted only where F and B
+        // differ clearly; elsewhere the guided-filter result stands.
+        let fW = p.map { $0 >= 0.97 ? 1 : 0 }, bW = p.map { $0 <= 0.03 ? 1 : 0 }
+        let rm = max(4, r * 3)
+        let dF = fW.boxBlurred(radius: rm), dB = bW.boxBlurred(radius: rm)
+        func localMean(_ c: Plane, _ wt: Plane, _ d: Plane) -> Plane {
+            Plane.combine((c * wt).boxBlurred(radius: rm), d) { a, dd in dd > 0.01 ? a / dd : -1 }
+        }
+        let FR = localMean(R, fW, dF), FG = localMean(G, fW, dF), FB = localMean(B, fW, dF)
+        let BR = localMean(R, bW, dB), BG = localMean(G, bW, dB), BB = localMean(B, bW, dB)
+        let bandRaw = p.map { $0 > 0.03 && $0 < 0.97 ? 1 : 0 }.boxBlurred(radius: r)
+
         let fw = full.width, fh = full.height
         let sx = Float(w) / Float(fw), sy = Float(h) / Float(fh)
         let inv255: Float = 1.0 / 255.0
@@ -288,8 +316,28 @@ public enum Matting {
                     for x in 0..<fw {
                         let fx = (Float(x) + 0.5) * sx
                         let i = y * fw + x
-                        let r = Float(px[i * 4]) * inv255, g = Float(px[i * 4 + 1]) * inv255, b = Float(px[i * 4 + 2]) * inv255
-                        let q = maR.sample(fx, fy) * r + maG.sample(fx, fy) * g + maB.sample(fx, fy) * b + mb.sample(fx, fy)
+                        let r0 = Float(px[i * 4]) * inv255, g0 = Float(px[i * 4 + 1]) * inv255, b0 = Float(px[i * 4 + 2]) * inv255
+                        var q = maR.sample(fx, fy) * r0 + maG.sample(fx, fy) * g0 + maB.sample(fx, fy) * b0 + mb.sample(fx, fy)
+                        if bandRaw.sample(fx, fy) > 0.001 {
+                            let fr = FR.sample(fx, fy), fgc = FG.sample(fx, fy), fb = FB.sample(fx, fy)
+                            let br = BR.sample(fx, fy), bg = BG.sample(fx, fy), bbc = BB.sample(fx, fy)
+                            if fr >= 0 && br >= 0 {
+                                let er = fr - br, eg = fgc - bg, eb = fb - bbc
+                                let c2 = er * er + eg * eg + eb * eb
+                                let c = sqrt(c2)
+                                if c > 0.06 {
+                                    var ap = ((r0 - br) * er + (g0 - bg) * eg + (b0 - bbc) * eb) / c2
+                                    ap = ap < 0 ? 0 : (ap > 1 ? 1 : ap)
+                                    let t = min(1, (c - 0.06) / 0.12)
+                                    let trustContrast = t * t * (3 - 2 * t)
+                                    let pc = p.sample(fx, fy)
+                                    let m = 2 * pc - 1
+                                    let trustBand = 1 - m * m
+                                    let wgt = trustContrast * trustBand
+                                    q = q * (1 - wgt) + ap * wgt
+                                }
+                            }
+                        }
                         var a = (q - low) / span
                         a = a < 0 ? 0 : (a > 1 ? 1 : a)
                         o[i] = UInt8(a * 255 + 0.5)

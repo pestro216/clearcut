@@ -100,7 +100,7 @@ let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
     ("previous app", runPrevious),
     ("new: no zoom pass", { try runNew($0, $1, zoom: false) }),
     ("new: no colour evidence", { try runNew($0, $1, colour: false) }),
-    ("new: no guided refinement", { try runNew($0, $1, guided: false) }),
+    ("new: no edge refinement", { try runNew($0, $1, guided: false) }),
     ("new", { try runNew($0, $1) }),
 ]
 let shipping = "new"
