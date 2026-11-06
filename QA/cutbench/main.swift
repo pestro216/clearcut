@@ -114,6 +114,7 @@ report += "Generated \(ISO8601DateFormatter().string(from: Date())). Lower is be
 
 // The app's default photographic surface, for realistic finished renders.
 let surfaceCG = loadCG(URL(fileURLWithPath: "Clearcut/Backdrops/dark_wood.jpg"))
+let lightSurfaceCG = loadCG(URL(fileURLWithPath: "Clearcut/Backdrops/white_stucco.jpg"))
 var failedScenes: [String] = []
 let cases = ((try? fm.contentsOfDirectory(atPath: testset.path)) ?? []).filter { !$0.hasPrefix(".") }.sorted()
 let testBackdrop: (Float, Float, Float) = (0.36, 0.55, 0.30)   // green: makes halos obvious
@@ -184,6 +185,11 @@ for name in cases {
                                      shadow: ShadowParams())
     saveJPEG(finished.resized(width: 1200, height: Int(1200.0 * Double(photo.height) / Double(photo.width))),
              outDir.appendingPathComponent("finished_\(name).jpg"))
+    if let light = lightSurfaceCG {
+        let onLight = Compositor.render(photo: photo, alpha: new.alpha, backdrop: .image(light), shadow: ShadowParams())
+        saveJPEG(onLight.resized(width: 1200, height: Int(1200.0 * Double(photo.height) / Double(photo.width))),
+                 outDir.appendingPathComponent("finished_light_\(name).jpg"))
+    }
 }
 
 // Full export path on the largest scene: time and memory.

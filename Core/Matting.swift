@@ -89,8 +89,9 @@ public enum Matting {
         var fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
 
         // 2. Colour evidence.
+        var zPlane: Plane?
         if options.colourEvidence {
-            let ev = colourEvidence(R: R, G: G, B: B, prob: &p, fg: &fg, longSide: longW, notes: &notes)
+            let ev = colourEvidence(R: R, G: G, B: B, prob: &p, fg: &fg, longSide: longW, notes: &notes, zOut: &zPlane)
             if let warning = ev { flags.append(warning) }
             fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
         }
@@ -106,6 +107,31 @@ public enum Matting {
         } else {
             let up = p.resized(width: full.width, height: full.height)
             alpha = levels(up, low: options.levelsLow, high: options.levelsHigh)
+        }
+
+        // Background left between parts of the item: patches in the final cutout that look exactly
+        // like the background and are surrounded by product that does not (comb teeth, a handle).
+        if let z = zPlane {
+            let aw = Plane(bytes: alpha, width: full.width, height: full.height).resized(width: ww, height: wh)
+            var inside = [Bool](repeating: false, count: n)
+            let solid = aw.map { $0 > 0.5 ? 1 : 0 }.boxBlurred(radius: 2)
+            for i in 0..<n where solid.data[i] >= 0.999 && z.data[i] < 1.6 { inside[i] = true }
+            let (lab, sz) = Regions.label(inside, width: ww, height: wh)
+            var ring = [[Float]](repeating: [], count: sz.count)
+            for i in 0..<n {
+                let l = Int(lab[i]); if l == 0 || sz[l] < 6 { continue }
+                let x = i % ww, y = i / ww
+                for (nx, ny) in [(x - 3, y), (x + 3, y), (x, y - 3), (x, y + 3)] where nx >= 0 && ny >= 0 && nx < ww && ny < wh {
+                    let j = ny * ww + nx
+                    if aw.data[j] > 0.5 && !inside[j] && ring[l].count < 300 { ring[l].append(z.data[j]) }
+                }
+            }
+            var left = 0
+            for l in 1..<sz.count where sz[l] >= 6 && ring[l].count >= 6 && median(ring[l]) >= 8 { left += sz[l] }
+            let solidArea = max(1, aw.data.reduce(0) { $0 + ($1 > 0.5 ? 1 : 0) })
+            let share = Float(left) / Float(solidArea)
+            notes["backgroundLeftInside"] = Double(share)
+            if share > 0.01 && flags.isEmpty { flags.append("Some background may be left between parts of the item") }
         }
 
         // Confidence.
@@ -124,7 +150,7 @@ public enum Matting {
 
     /// Returns a warning when the photo's colours disagree strongly with the model.
     private static func colourEvidence(R: Plane, G: Plane, B: Plane, prob p: inout Plane, fg: inout [Bool],
-                                       longSide: Float, notes: inout [String: Double]) -> String? {
+                                       longSide: Float, notes: inout [String: Double], zOut: inout Plane?) -> String? {
         let w = p.width, h = p.height, n = w * h
         let fgPlane = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 })
 
@@ -182,6 +208,7 @@ public enum Matting {
         for i in stride(from: 0, to: n, by: 3) where core.data[i] >= 0.999 { coreZ.append(D[i] / noise) }
         let separation = coreZ.isEmpty ? 0 : median(coreZ)
         notes["separation"] = Double(separation)
+        if separation >= 8 { zOut = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1) }
         guard separation >= 6 else {
             notes["colourEvidence"] = 0
             return "Item and background are similar in colour, so edges may be soft"
@@ -261,18 +288,6 @@ public enum Matting {
             }
         }
         notes["carvedPx"] = Double(carved)
-
-        // What is still inside the cutout but looks exactly like the background? (Gaps the
-        // carving step could not safely remove.) Worth a check when it is more than a sliver.
-        var bgLike = 0
-        let zs = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1)
-        let inner = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 }).boxBlurred(radius: 2)
-        for i in 0..<n where fg[i] && inner.data[i] >= 0.999 && zs.data[i] < 1.6 { bgLike += 1 }
-        let bgLikeShare = Float(bgLike) / Float(max(1, fgArea))
-        notes["backgroundLikeInside"] = Double(bgLikeShare)
-        if separation >= 8 && bgLikeShare > 0.02 && warning == nil {
-            warning = "Some background may be left inside the cutout"
-        }
 
         if recoveredCount > 0 || carved > 0 {
             // The edits are hard-edged at working resolution; soften by a pixel so the
