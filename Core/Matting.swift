@@ -53,6 +53,8 @@ public struct MatteOptions {
 ///    filter (He et al.), computed at working resolution and applied at full resolution.
 ///    Soft, genuine transitions survive; nothing is artificially steepened or choked.
 public enum Matting {
+    /// Optional hook for the quality bench to inspect intermediate maps (never set in the app).
+    nonisolated(unsafe) public static var debugHook: ((String, Plane) -> Void)?
 
     public static func refine(full: RGBAImage, segmentation seg: Segmentation, options: MatteOptions = MatteOptions()) -> Matte {
         let ww = seg.prob.width, wh = seg.prob.height, n = ww * wh
@@ -265,6 +267,9 @@ public enum Matting {
             var hole = [Bool](repeating: false, count: n)
             for i in 0..<n where fg[i] && z.data[i] < 2.5 { hole[i] = true }
             let (hl, hs) = Regions.label(hole, width: w, height: h)
+            debugHook?("z", z.map { min(1, $0 / 10) })
+            debugHook?("prob_before_carve", p)
+            debugHook?("holes", Plane(width: w, height: h, data: hole.map { $0 ? 1 : 0 }))
             let minHole = max(12, Int(0.0001 * Float(n)))
             var ring = [[Float]](repeating: [], count: hs.count)
             for i in 0..<n {
@@ -278,6 +283,11 @@ public enum Matting {
             var carve = [Bool](repeating: false, count: hs.count)
             for c in 1..<hs.count where hs[c] >= minHole && hs[c] < fgArea / 2 && ring[c].count >= 8 {
                 if median(ring[c]) >= 8 { carve[c] = true; carved += hs[c] }
+            }
+            if debugHook != nil {
+                for c in 1..<hs.count where hs[c] >= minHole {
+                    print("HOLE size=\(hs[c]) ring=\(ring[c].count) median=\(ring[c].isEmpty ? -1 : median(ring[c])) carve=\(carve[c]) fgArea=\(fgArea)")
+                }
             }
             if Float(carved) > 0.6 * Float(fgArea) {
                 warning = "Parts of the item look like the background"

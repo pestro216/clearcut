@@ -131,6 +131,15 @@ for name in cases {
     let backdrop = Compositor.backdropImage(.colour(r: testBackdrop.0, g: testBackdrop.1, b: testBackdrop.2, studioLight: false),
                                             width: photo.width, height: photo.height)
     var outputs: [String: Output] = [:]
+    if name.hasPrefix("10_") {
+        let dbg = outDir
+        Matting.debugHook = { label, plane in
+            let img = ImageIOHelpers.grayImage(plane.toBytes(), width: plane.width, height: plane.height)
+            if let img, let d = ImageIOHelpers.encode(img, type: .png) { try? d.write(to: dbg.appendingPathComponent("debug_\(name)_\(label).png")) }
+        }
+        _ = try? runNew(cg, photo)
+        Matting.debugHook = nil
+    }
     for (mname, run) in methods {
         guard let o = try? run(cg, photo) else {
             print("\(name) \(mname): no result")
