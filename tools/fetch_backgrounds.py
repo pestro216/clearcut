@@ -21,27 +21,19 @@ CANDIDATES = [
     ("dark_wood", "Red-brown timber", "Wood"),
     ("wood_floor", "Floorboards", "Wood"),
     ("oak_veneer_01", "Oak", "Wood"),
-    ("wood_table_001", "Wenge", "Wood"),
-    ("herringbone_parquet", "Parquet", "Wood"),
-    ("rosewood_veneer1", "Rosewood", "Wood"),
-    ("plywood", "Plywood", "Wood"),
-    ("wood_planks_grey", "Grey planks", "Wood"),
     ("laminate_floor_02", "Pale boards", "Wood"),
-    ("wood_table", "Table top", "Wood"),
+    ("plywood", "Plywood", "Wood"),
+    ("herringbone_parquet", "Parquet", "Wood"),
+    ("wood_table_001", "Wenge", "Wood"),
     ("brushed_concrete", "Brushed concrete", "Stone"),
-    ("concrete", "Light concrete", "Stone"),
-    ("painted_concrete_02", "Painted concrete", "Stone"),
+    ("white_stucco", "White stucco", "Stone"),
+    ("plastered_wall_05", "Charcoal plaster", "Stone"),
+    ("beige_wall_001", "Taupe plaster", "Stone"),
     ("granite_tile", "Slate tiles", "Stone"),
     ("marble_01", "Limestone tiles", "Stone"),
-    ("white_stucco", "White stucco", "Plaster"),
-    ("white_plaster_02", "White plaster", "Plaster"),
-    ("grey_plaster", "Grey plaster", "Plaster"),
-    ("plastered_wall_05", "Charcoal plaster", "Plaster"),
-    ("beige_wall_001", "Taupe plaster", "Plaster"),
-    ("rough_linen", "Blue linen", "Fabric"),
     ("hessian_230", "Hessian", "Fabric"),
-    ("jersey_melange", "Grey jersey", "Fabric"),
-    ("poly_wool_herringbone", "Herringbone wool", "Fabric"),
+    ("rough_linen", "Blue linen", "Fabric"),
+    ("poly_wool_herringbone", "Grey wool", "Fabric"),
 ]
 
 def get_json(u):
@@ -99,7 +91,7 @@ def main(mode):
                 t = img.resize((300, 300), Image.LANCZOS)
                 thumbs.append((pid, t))
             else:
-                img.save(f"{OUT}/{pid}.jpg", quality=92, optimize=True)
+                img.save(f"{OUT}/{pid}.jpg", quality=88, optimize=True)
                 img.resize((240, 240), Image.LANCZOS).save(f"{OUT}/thumb-{pid}.jpg", quality=88)
                 library.append({"id": pid, "title": title, "group": group, "source": f"https://polyhaven.com/a/{pid}",
                                 "licence": "CC0", "metres": TARGET_M, "pixels": img.size[0]})
