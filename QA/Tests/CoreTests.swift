@@ -133,7 +133,7 @@ final class CoreTests: XCTestCase {
             let s = try XCTUnwrap(ShadowModel.density(alpha: alpha, width: w, height: h, params: ShadowParams(kind: .flatlay, strength: 0.6, angle: 90)))
             // Distance below the item at which the shadow drops under 2%.
             var y = 200 + boxW / 2
-            while y < h - 1 && s.data[y * w + 300] > 0.02 { y += 1 }
+            while y < h - 1 && s[y * w + 300] > 5 { y += 1 }
             return y - (200 + boxW / 2)
         }
         let thin = try reach(10), thick = try reach(160)

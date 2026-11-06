@@ -303,8 +303,8 @@ struct ShadowControls: View {
     /// The shadow falls away from the light, so name the light's side.
     private var lightName: String {
         let lightDeg = (Double(store.look.shadow.angle) + 180).truncatingRemainder(dividingBy: 360)
-        let names = ["right", "bottom right", "below", "bottom left", "left", "top left", "above", "top right"]
-        return names[Int(((lightDeg + 22.5).truncatingRemainder(dividingBy: 360)) / 45) % 8].capitalized
+        let names = ["Right", "Bottom right", "Bottom", "Bottom left", "Left", "Top left", "Top", "Top right"]
+        return names[Int(((lightDeg + 22.5).truncatingRemainder(dividingBy: 360)) / 45) % 8]
     }
 
     private func row(_ title: String, _ slider: Slider<EmptyView, EmptyView>, _ value: String) -> some View {

@@ -65,6 +65,18 @@ public struct RGBAImage {
         return r
     }
 
+    /// One channel in linear light (0...1), for physically meaningful mixing.
+    public func linearChannel(_ c: Int) -> Plane {
+        var out = [Float](repeating: 0, count: width * height)
+        let lut = Linear.toLinear
+        pixels.withUnsafeBufferPointer { src in
+            out.withUnsafeMutableBufferPointer { dst in
+                for i in 0..<(width * height) { dst[i] = lut[Int(src[i * 4 + c])] }
+            }
+        }
+        return Plane(width: width, height: height, data: out)
+    }
+
     /// One channel (0 red, 1 green, 2 blue) as floats 0...1.
     public func channel(_ c: Int) -> Plane {
         var out = [Float](repeating: 0, count: width * height)
@@ -186,12 +198,13 @@ public struct Plane {
 
     /// Bilinear sample at continuous coordinates (pixel centres at integer + 0.5).
     @inline(__always) public func sample(_ fx: Float, _ fy: Float) -> Float {
-        let x = max(0, min(Float(width) - 1.001, fx - 0.5))
-        let y = max(0, min(Float(height) - 1.001, fy - 0.5))
+        let x = max(0, min(max(0, Float(width) - 1.001), fx - 0.5))
+        let y = max(0, min(max(0, Float(height) - 1.001), fy - 0.5))
         let x0 = Int(x), y0 = Int(y)
         let tx = x - Float(x0), ty = y - Float(y0)
         let i = y0 * width + x0
-        let a = data[i], b = data[i + 1], c = data[i + width], d = data[i + width + 1]
+        let dx = x0 + 1 < width ? 1 : 0, dy = y0 + 1 < height ? width : 0
+        let a = data[i], b = data[i + dx], c = data[i + dy], d = data[i + dy + dx]
         return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty
     }
 

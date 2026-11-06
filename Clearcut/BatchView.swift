@@ -93,7 +93,8 @@ struct BatchView: View {
                     if let p = store.exportProgress {
                         Text("Saving \(p.done) of \(p.total)")
                     } else {
-                        Text(store.items.count == 1 ? "Export 1 photo" : "Export \(store.items.count) photos")
+                        let n = store.exportable.count
+                        Text(n == 0 ? "Nothing to export" : n == 1 ? "Export 1 photo" : "Export \(n) photos")
                     }
                 }
                 .font(.system(size: 17, weight: .semibold))
@@ -103,7 +104,7 @@ struct BatchView: View {
                 .foregroundStyle(.white)
                 .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
-            .disabled(store.busy || store.items.isEmpty)
+            .disabled(store.busy || store.exportable.isEmpty)
             .opacity(store.importing != nil ? 0.45 : 1)
 
             HStack(spacing: 0) {
@@ -200,8 +201,9 @@ struct ExportDoneView: View {
         VStack(alignment: .leading, spacing: 14) {
             Text(result.saved == 1 ? "1 photo saved" : "\(result.saved) photos saved")
                 .font(.system(size: 22, weight: .bold))
-            Text(result.failures.isEmpty ? "Saved to your camera roll at full resolution."
-                 : "Saved to your camera roll. \(result.failures.count) couldn't be saved:")
+            Text((result.failures.isEmpty ? "Saved to your camera roll at full resolution."
+                  : "Saved to your camera roll. \(result.failures.count) couldn't be saved:")
+                 + (result.skipped > 0 ? " \(result.skipped) kept as originals weren't saved again; they're already in your library." : ""))
                 .foregroundStyle(Theme.muted)
             if !result.failures.isEmpty {
                 ForEach(result.failures, id: \.self) { Text($0).font(.system(size: 14)).foregroundStyle(Theme.warning) }

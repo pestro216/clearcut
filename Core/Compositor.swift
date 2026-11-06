@@ -24,7 +24,8 @@ public enum Compositor {
         if let s = ShadowModel.density(alpha: alpha, width: w, height: h, params: shadow) {
             applyShadow(&bg, density: s)
         }
-        return over(fg: fg, alpha: alpha, bg: bg)
+        overInPlace(fg: fg, alpha: alpha, bg: &bg)
+        return bg
     }
 
     /// The backdrop at exactly w x h: images fill the frame (centred crop), never distorted.
@@ -61,22 +62,25 @@ public enum Compositor {
                 let d = sqrt((Float(x) - cx) * (Float(x) - cx) + (Float(y) - cy) * (Float(y) - cy)) / r
                 let gain = 1.04 - 0.12 * min(1, d * d)
                 let i = (y * w + x) * 4
+                // Ordered dither so the gentle falloff doesn't band in 8-bit output.
+                let dither = (Float((x * 7 + y * 13) & 15) / 16 - 0.5) / 255
                 for c in 0..<3 {
                     let lin = Linear.toLinear[Int(img.pixels[i + c])] * gain
-                    img.pixels[i + c] = Linear.toSRGB(lin)
+                    let enc = (lin <= 0.0031308 ? lin * 12.92 : 1.055 * pow(lin, 1 / 2.4) - 0.055) + dither
+                    img.pixels[i + c] = UInt8(max(0, min(255, enc * 255 + 0.5)))
                 }
             }
         }
     }
 
     /// Multiplies the surface by the light that reaches it.
-    static func applyShadow(_ bg: inout RGBAImage, density s: Plane) {
+    static func applyShadow(_ bg: inout RGBAImage, density s: [UInt8]) {
         let n = bg.width * bg.height
         bg.pixels.withUnsafeMutableBufferPointer { p in
             for i in 0..<n {
-                let d = s.data[i]
-                if d <= 0.001 { continue }
-                let keep = 1 - d
+                let d = s[i]
+                if d == 0 { continue }
+                let keep = 1 - Float(d) / 255
                 for c in 0..<3 {
                     p[i * 4 + c] = Linear.toSRGB(Linear.toLinear[Int(p[i * 4 + c])] * keep)
                 }
@@ -85,10 +89,9 @@ public enum Compositor {
     }
 
     /// Item over backdrop, blended in linear light.
-    static func over(fg: RGBAImage, alpha: [UInt8], bg: RGBAImage) -> RGBAImage {
-        var out = bg
+    static func overInPlace(fg: RGBAImage, alpha: [UInt8], bg: inout RGBAImage) {
         let n = bg.width * bg.height
-        out.pixels.withUnsafeMutableBufferPointer { o in
+        bg.pixels.withUnsafeMutableBufferPointer { o in
             fg.pixels.withUnsafeBufferPointer { f in
                 for i in 0..<n {
                     let a = alpha[i]
@@ -105,7 +108,6 @@ public enum Compositor {
                 }
             }
         }
-        return out
     }
 }
 

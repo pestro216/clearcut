@@ -230,5 +230,16 @@ def main(out):
     save_case(out, "10_comb_narrow_teeth", img, at, fg, {"what": "24 narrow teeth with gaps"})
 
 
+def big_scene(out):
+    # 11. A 24-megapixel photo (iPhone 15 and later default): garment on linen, for export size and memory.
+    W, H = 5712, 4284
+    a = mask_from_drawing(W, H, lambda d, s: shirt(d, s, W, H))
+    fg = tint(tile(texture("cotton_jersey"), W, H, 0.8), (0.55, 0.12, 0.14)) * shading(a, 0.25)
+    bg = tile(texture("rough_linen"), W, H, 0.7)
+    img, at = photograph(fg, a, bg, 11)
+    save_case(out, "11_red_shirt_24mp", img, at, fg, {"what": "24 MP export check"})
+
+
 if __name__ == "__main__":
+    big_scene(sys.argv[1] if len(sys.argv) > 1 else "QA/testset")
     main(sys.argv[1] if len(sys.argv) > 1 else "QA/testset")

@@ -35,7 +35,7 @@ func memoryMB() -> Double {
     let kr = withUnsafeMutablePointer(to: &info) {
         $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count) }
     }
-    return kr == KERN_SUCCESS ? Double(info.phys_footprint) / 1_048_576 : 0
+    return kr == KERN_SUCCESS ? Double(info.ledger_phys_footprint_peak) / 1_048_576 : 0
 }
 func time<T>(_ f: () throws -> T) rethrows -> (T, Double) {
     let t = Date(); let r = try f(); return (r, Date().timeIntervalSince(t))
@@ -111,6 +111,9 @@ var confidences: [String: String] = [:]
 var report = "# Cutout quality report\n\n"
 report += "Generated \(ISO8601DateFormatter().string(from: Date())). Lower is better for errors; higher for IoU and boundary F.\n\n"
 
+// The app's default photographic surface, for realistic finished renders.
+let surfaceCG = loadCG(URL(fileURLWithPath: "Clearcut/Backdrops/dark_wood.jpg"))
+var failedScenes: [String] = []
 let cases = ((try? fm.contentsOfDirectory(atPath: testset.path)) ?? []).filter { !$0.hasPrefix(".") }.sorted()
 let testBackdrop: (Float, Float, Float) = (0.36, 0.55, 0.30)   // green: makes halos obvious
 var peakMB = 0.0
@@ -127,7 +130,11 @@ for name in cases {
                                             width: photo.width, height: photo.height)
     var outputs: [String: Output] = [:]
     for (mname, run) in methods {
-        guard let o = try? run(cg, photo) else { print("\(name) \(mname): no result"); continue }
+        guard let o = try? run(cg, photo) else {
+            print("\(name) \(mname): no result")
+            if mname == shipping { failedScenes.append(name) }
+            continue
+        }
         outputs[mname] = o
         let s = Metrics.score(alpha: o.alpha, reference: ref, width: photo.width, height: photo.height, photo: photo,
                               foreground: o.fg, referenceForeground: refFG, testBackdrop: backdrop)
@@ -171,10 +178,23 @@ for name in cases {
     saveJPEG(sheet, outDir.appendingPathComponent("sheet_\(name).jpg"))
 
     // A finished look: new cutout on a timber-coloured surface with the flatlay shadow.
-    let finished = Compositor.render(photo: photo, alpha: new.alpha, backdrop: .colour(r: 0.55, g: 0.27, b: 0.15, studioLight: true),
+    let finished = Compositor.render(photo: photo, alpha: new.alpha,
+                                     backdrop: surfaceCG.map { .image($0) } ?? .colour(r: 0.55, g: 0.27, b: 0.15, studioLight: false),
                                      shadow: ShadowParams())
     saveJPEG(finished.resized(width: 1200, height: Int(1200.0 * Double(photo.height) / Double(photo.width))),
              outDir.appendingPathComponent("finished_\(name).jpg"))
+}
+
+// Full export path on the largest scene: time and memory.
+if let big = cases.last(where: { $0.hasPrefix("11_") }), let cg = loadCG(testset.appendingPathComponent(big).appendingPathComponent("photo.jpg")),
+   let photo = RGBAImage(cgImage: cg), let o = try? runNew(cg, photo) {
+    let before = memoryMB()
+    let t0 = Date()
+    let out = Compositor.render(photo: photo, alpha: o.alpha, backdrop: surfaceCG.map { .image($0) } ?? .transparent, shadow: ShadowParams())
+    let jpg = out.makeOpaqueCGImage().flatMap { ImageIOHelpers.encode($0, type: .jpeg, quality: 0.95) }
+    let dt = Date().timeIntervalSince(t0)
+    report += "\n## Full-resolution export check\n\n\(big): \(photo.width) x \(photo.height) in, \(out.width) x \(out.height) out (same size), cutout \(fmt(o.seconds, 2)) s, compositing and JPEG \(fmt(dt, 2)) s, JPEG \(fmt(Double(jpg?.count ?? 0) / 1_048_576, 1)) MB, peak memory so far \(fmt(max(before, memoryMB()), 0)) MB.\n"
+    peakMB = max(peakMB, memoryMB())
 }
 
 // Report tables
@@ -191,7 +211,10 @@ for (mname, _) in methods {
     func avg(_ f: (MatteScores) -> Double) -> Double { all.map(f).reduce(0, +) / Double(all.count) }
     report += "| \(mname) | \(fmt(avg { $0.iou }, 4)) | \(fmt(avg { $0.boundaryF }, 3)) | \(fmt(avg { $0.bandMAE }, 3)) | \(fmt(avg { $0.missedItem } * 100, 2))% | \(fmt(avg { $0.keptBackground } * 100, 2))% | \(fmt(avg { $0.edgeDeltaE }, 2)) | \(fmt(avg { $0.edgeDeltaE95 }, 2)) |\n"
 }
-report += "\nPeak memory during the run: \(fmt(peakMB, 0)) MB.\n"
+if !failedScenes.isEmpty {
+    report += "\n**No cutout produced** (Apple's model found no subject; the app keeps these as originals and flags them): " + failedScenes.joined(separator: ", ") + ". Not included in the means above.\n"
+}
+report += "\nPeak memory of the whole benchmark process: \(fmt(peakMB, 0)) MB.\n"
 
 // Real photos without reference masks.
 if let photosDir, let files = try? fm.contentsOfDirectory(atPath: photosDir.path) {
@@ -203,7 +226,9 @@ if let photosDir, let files = try? fm.contentsOfDirectory(atPath: photosDir.path
                   let o = try? runNew(cg, photo) else { continue }
             let b = Metrics.blind(alpha: o.alpha, width: photo.width, height: photo.height)
             report += "| \(f) | \(fmt(b.area * 100, 1))% | \(fmt(b.softEdgeShare * 100, 1))% | \(fmt(b.edgeWidthPx, 1)) px | \(b.pieces) | \(fmt(o.seconds, 2)) s | \(o.confidence) |\n"
-            let finished = Compositor.render(photo: photo, alpha: o.alpha, backdrop: .colour(r: 0.55, g: 0.27, b: 0.15, studioLight: true), shadow: ShadowParams())
+            let finished = Compositor.render(photo: photo, alpha: o.alpha,
+                                             backdrop: surfaceCG.map { .image($0) } ?? .colour(r: 0.55, g: 0.27, b: 0.15, studioLight: false),
+                                             shadow: ShadowParams())
             let tw = 900, th = Int(900.0 * Double(photo.height) / Double(photo.width))
             var sheet = RGBAImage(width: tw * 2 + 30, height: th + 20, fill: (245, 243, 238))
             blit(&sheet, photo.resized(width: tw, height: th), 10, 10)

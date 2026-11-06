@@ -180,7 +180,10 @@ public enum Matting {
         for i in stride(from: 0, to: n, by: 3) where core.data[i] >= 0.999 { coreZ.append(D[i] / noise) }
         let separation = coreZ.isEmpty ? 0 : median(coreZ)
         notes["separation"] = Double(separation)
-        guard separation >= 6 else { notes["colourEvidence"] = 0; return nil }
+        guard separation >= 6 else {
+            notes["colourEvidence"] = 0
+            return "Item and background are similar in colour, so edges may be soft"
+        }
         notes["colourEvidence"] = 1
 
         var fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
@@ -257,6 +260,18 @@ public enum Matting {
         }
         notes["carvedPx"] = Double(carved)
 
+        // What is still inside the cutout but looks exactly like the background? (Gaps the
+        // carving step could not safely remove.) Worth a check when it is more than a sliver.
+        var bgLike = 0
+        let zs = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1)
+        let inner = Plane(width: w, height: h, data: fg.map { $0 ? 1 : 0 }).boxBlurred(radius: 2)
+        for i in 0..<n where fg[i] && inner.data[i] >= 0.999 && zs.data[i] < 1.6 { bgLike += 1 }
+        let bgLikeShare = Float(bgLike) / Float(max(1, fgArea))
+        notes["backgroundLikeInside"] = Double(bgLikeShare)
+        if separation >= 8 && bgLikeShare > 0.02 && warning == nil {
+            warning = "Some background may be left inside the cutout"
+        }
+
         if recoveredCount > 0 || carved > 0 {
             // The edits are hard-edged at working resolution; soften by a pixel so the
             // guided filter can place the edge precisely.
@@ -307,6 +322,10 @@ public enum Matting {
         // photo has it, keeps genuinely mixed pixels partial, and is trusted only where F and B
         // differ clearly; elsewhere the guided-filter result stands.
         let fW = p.map { $0 >= 0.97 ? 1 : 0 }, bW = p.map { $0 <= 0.03 ? 1 : 0 }
+        // Colours mix in linear light (lens blur and partial coverage add light), so the
+        // projection works on linear values.
+        let lin = Linear.toLinear
+        let RL = R.map { lin[Int($0 * 255 + 0.5)] }, GL = G.map { lin[Int($0 * 255 + 0.5)] }, BL = B.map { lin[Int($0 * 255 + 0.5)] }
         // Local colour means at two reaches: near (preferred) and wide (when the model's edge is
         // so soft that no confident pixels are near).
         func means(_ rm: Int) -> [Plane] {
@@ -314,8 +333,8 @@ public enum Matting {
             func localMean(_ c: Plane, _ wt: Plane, _ d: Plane) -> Plane {
                 Plane.combine((c * wt).boxBlurred(radius: rm), d) { a, dd in dd > 0.01 ? a / dd : -1 }
             }
-            return [localMean(R, fW, dF), localMean(G, fW, dF), localMean(B, fW, dF),
-                    localMean(R, bW, dB), localMean(G, bW, dB), localMean(B, bW, dB)]
+            return [localMean(RL, fW, dF), localMean(GL, fW, dF), localMean(BL, fW, dF),
+                    localMean(RL, bW, dB), localMean(GL, bW, dB), localMean(BL, bW, dB)]
         }
         let near = means(max(4, r * 3)), wide = means(max(8, r * 8))
         let bandRaw = p.map { $0 > 0.03 && $0 < 0.97 ? 1 : 0 }.boxBlurred(radius: r)
@@ -343,10 +362,11 @@ public enum Matting {
                                 let er = fr - br, eg = fgc - bg, eb = fb - bbc
                                 let c2 = er * er + eg * eg + eb * eb
                                 let c = sqrt(c2)
-                                if c > 0.06 {
-                                    var ap = ((r0 - br) * er + (g0 - bg) * eg + (b0 - bbc) * eb) / c2
+                                if c > 0.03 {
+                                    let lr = lin[Int(px[i * 4])], lg = lin[Int(px[i * 4 + 1])], lb = lin[Int(px[i * 4 + 2])]
+                                    var ap = ((lr - br) * er + (lg - bg) * eg + (lb - bbc) * eb) / c2
                                     ap = ap < 0 ? 0 : (ap > 1 ? 1 : ap)
-                                    let t = min(1, (c - 0.06) / 0.12)
+                                    let t = min(1, (c - 0.03) / 0.08)
                                     let trustContrast = t * t * (3 - 2 * t)
                                     let pc = p.sample(fx, fy)
                                     let m = 2 * pc - 1
@@ -391,7 +411,7 @@ public enum Matting {
         let ww = max(1, Int(Float(fw) * k)), wh = max(1, Int(Float(fh) * k))
         let small = full.resized(width: ww, height: wh)
         let aSmall = Plane(bytes: alpha, width: fw, height: fh).resized(width: ww, height: wh)
-        let I = [small.channel(0), small.channel(1), small.channel(2)]
+        let I = [small.linearChannel(0), small.linearChannel(1), small.linearChannel(2)]
         let r1 = max(2, Int(0.04 * Float(max(ww, wh))))
         let (F1, B1) = blurFusion(I: I, F: I, B: I, alpha: aSmall, radius: r1)
 
@@ -421,7 +441,7 @@ public enum Matting {
                     a[j] = Float(alpha[i]) / 255
                     let fx = (Float(x) + 0.5) * sx
                     for c in 0..<3 {
-                        Ic[c][j] = Float(full.pixels[i * 4 + c]) / 255
+                        Ic[c][j] = Linear.toLinear[Int(full.pixels[i * 4 + c])]
                         Fc[c][j] = F1[c].sample(fx, fy)
                         Bc[c][j] = B1[c].sample(fx, fy)
                     }
@@ -439,10 +459,7 @@ public enum Matting {
                     let av = alpha[i]
                     if av == 0 || av == 255 { continue }
                     let j = yy * fw + x
-                    for c in 0..<3 {
-                        let v = F2[c].data[j] * 255 + 0.5
-                        out.pixels[i * 4 + c] = v <= 0 ? 0 : (v >= 255 ? 255 : UInt8(v))
-                    }
+                    for c in 0..<3 { out.pixels[i * 4 + c] = Linear.toSRGB(F2[c].data[j]) }
                 }
             }
             y0 = y1

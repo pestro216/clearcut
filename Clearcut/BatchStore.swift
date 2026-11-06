@@ -32,6 +32,7 @@ final class BatchStore: ObservableObject {
     struct ExportResult: Identifiable {
         let id = UUID()
         let saved: Int
+        let skipped: Int
         let failures: [String]
         let thumbs: [UIImage]
     }
@@ -61,6 +62,8 @@ final class BatchStore: ObservableObject {
     var busy: Bool { importing != nil || exportProgress != nil }
     var transparent: Bool { if case .transparent = look.backdrop { return true }; return false }
     var attentionCount: Int { items.filter { $0.needsAttention }.count }
+    /// Photos that will be saved: those using a cutout. Originals are already in Photos.
+    var exportable: [BatchItem] { items.filter { $0.removed && $0.canRemove } }
     var anyRemoved: Bool { items.contains { $0.removed && $0.canRemove } }
 
     // MARK: Import
@@ -326,14 +329,15 @@ final class BatchStore: ObservableObject {
     // MARK: Export
 
     func exportAll() {
-        guard !items.isEmpty, exportProgress == nil else { return }
+        guard !exportable.isEmpty, exportProgress == nil else { return }
         Task {
             let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
             guard status == .authorized || status == .limited else {
                 message = "Clearcut needs permission to add photos. Open Settings, then Clearcut, then Photos, and allow Add Photos Only."
                 return
             }
-            let list = items.filter { $0.status != .processing }
+            let list = exportable
+            let skipped = items.count - list.count
             let look = self.look, url = surfaceURL(look)
             exportProgress = (0, list.count)
             var saved = 0
@@ -360,7 +364,7 @@ final class BatchStore: ObservableObject {
                 exportProgress = (n + 1, list.count)
             }
             exportProgress = nil
-            exportResult = ExportResult(saved: saved, failures: failures, thumbs: thumbs)
+            exportResult = ExportResult(saved: saved, skipped: skipped, failures: failures, thumbs: thumbs)
         }
     }
 
@@ -370,10 +374,7 @@ final class BatchStore: ObservableObject {
     nonisolated static func exportData(item: BatchItem, look: Look, surfaceURL: URL?) -> Exported? {
         autoreleasepool {
             guard let data = try? Data(contentsOf: item.originalURL) else { return nil }
-            if !item.removed || item.alphaURL == nil {
-                return Exported(data: data)    // untouched original, byte for byte
-            }
-            guard let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg),
+            guard item.removed, item.alphaURL != nil, let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg),
                   let au = item.alphaURL, let alpha = readAlpha(au, width: photo.width, height: photo.height) else { return nil }
             let source = backdropSource(look, surfaceURL: surfaceURL, maxPixel: nil)
             let out = Compositor.render(photo: photo, alpha: alpha, backdrop: source, shadow: look.shadow)
