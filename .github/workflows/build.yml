@@ -3,7 +3,7 @@ name: Build Clearcut
 on:
   push:
     branches: [main]
-    paths-ignore: ['QA/**', 'tools/**', 'docs/**', 'Package.swift', '.github/workflows/quality.yml', '.github/workflows/backgrounds.yml', 'README.md']
+    paths-ignore: ['QA/**', 'tools/make_icon.py', 'tools/fetch_backgrounds.py', 'docs/**', 'Package.swift', '.github/workflows/quality.yml', '.github/workflows/backgrounds.yml', 'README.md']
   workflow_dispatch:
 
 jobs:
@@ -13,6 +13,16 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cutout model cache
+        uses: actions/cache@v4
+        with:
+          path: Clearcut/Model
+          key: birefnet-lite-fp16-r1-db2e2a42
+
+      - name: Fetch cutout model (verified)
+        run: tools/fetch_model.sh Clearcut/Model/BiRefNetLite.mlpackage
+
 
       - name: Install XcodeGen
         run: brew install xcodegen
@@ -57,4 +67,4 @@ jobs:
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest Clearcut.ipa \
             --title "Clearcut build ${{ github.run_number }}" \
-            --notes "Open this page on your iPhone, download Clearcut.ipa and open it with SideStore to install or update."
+            --notes "Download Clearcut.ipa and install it with iLoader (Install IPA)."

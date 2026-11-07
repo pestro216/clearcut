@@ -87,10 +87,22 @@ func runModelOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
 /// The surface learned so far, carried from photo to photo as the app does within a batch.
 var batchSurface: SurfaceModel?
 var lastFailure = ""
+/// The cutout network (BiRefNet Lite), from CLEARCUT_MODEL. Without it "new" falls back to Apple's model.
+let networkLoadStart = Date()
+let network = CutoutNetwork.bundled()
+let networkLoadSeconds = Date().timeIntervalSince(networkLoadStart)
+print(network == nil ? "Cutout network: not available, using Apple's model" : "Cutout network loaded in \(fmt(networkLoadSeconds, 1)) s")
+
+func runNetworkOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
+    guard let network else { return nil }
+    let (seg, t) = try time { try Segmenter.segment(cg, zoom: false, network: network) }
+    guard let seg, seg.instanceCount > 0 else { return nil }
+    return Output(alpha: seg.prob.resized(width: photo.width, height: photo.height).toBytes(), fg: photo, seconds: t, confidence: "", notes: [:])
+}
 func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true, linear: Bool = true,
-            surface: Bool = true) throws -> Output? {
+            surface: Bool = false, useNetwork: Bool = true) throws -> Output? {
     let start = Date()
-    guard let seg = try Segmenter.segment(cg, zoom: zoom) else { return nil }
+    guard let seg = try Segmenter.segment(cg, zoom: zoom, network: useNetwork ? network : nil) else { return nil }
     var o = MatteOptions(); o.colourEvidence = colour; o.guidedRefinement = guided; o.linearEdges = linear
     o.surfaceEvidence = surface; o.surface = surface ? batchSurface : nil
     let m = Matting.refine(full: photo, segmentation: seg, options: o)
@@ -103,13 +115,13 @@ func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool =
 }
 
 let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
-    ("model only", runModelOnly),
-    ("previous app", runPrevious),
+    ("Apple model only", runModelOnly),
+    ("previous app", { try runNew($0, $1, useNetwork: false) }),
+    ("previous app + surface model", { try runNew($0, $1, surface: true, useNetwork: false) }),
+    ("BiRefNet only", runNetworkOnly),
     ("new: no zoom pass", { try runNew($0, $1, zoom: false) }),
     ("new: no colour evidence", { try runNew($0, $1, colour: false) }),
     ("new: no edge refinement", { try runNew($0, $1, guided: false) }),
-    ("new: edges solved in sRGB", { try runNew($0, $1, linear: false) }),
-    ("new: no surface model", { try runNew($0, $1, surface: false) }),
     ("new", { try runNew($0, $1) }),
 ]
 let shipping = "new"
@@ -117,7 +129,7 @@ let shipping = "new"
 var results: [String: [String: MatteScores]] = [:]
 var timings: [String: [String: Double]] = [:]
 var confidences: [String: String] = [:]
-var report = "# Cutout quality report\n\n"
+var report = "# Cutout quality report\n\n" + (network == nil ? "Cutout network not loaded: \"new\" is Apple's model with refinement.\n\n" : "Cutout network: BiRefNet Lite 1024 (Core ML, CPU), loaded in \(fmt(networkLoadSeconds, 1)) s.\n\n")
 report += "Generated \(ISO8601DateFormatter().string(from: Date())). Lower is better for errors; higher for IoU and boundary F.\n\n"
 
 // The app's default photographic surface, for realistic finished renders.

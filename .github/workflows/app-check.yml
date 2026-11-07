@@ -13,6 +13,16 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Cutout model cache
+        uses: actions/cache@v4
+        with:
+          path: Clearcut/Model
+          key: birefnet-lite-fp16-r1-db2e2a42
+
+      - name: Fetch cutout model (verified)
+        run: tools/fetch_model.sh Clearcut/Model/BiRefNetLite.mlpackage
+
       - name: Build for the simulator
         run: |
           brew install xcodegen >/dev/null

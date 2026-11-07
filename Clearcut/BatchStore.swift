@@ -167,6 +167,9 @@ final class BatchStore: ObservableObject {
     }
 
     /// Full-resolution cutout for one photo. Runs off the main thread.
+    /// The cutout network bundled with the app (BiRefNet Lite), loaded once.
+    nonisolated static let network: CutoutNetwork? = CutoutNetwork.bundled()
+
     nonisolated static func process(data: Data, id: UUID, dir: URL, surface: SurfaceModel?) -> Processed? {
         autoreleasepool {
             guard let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg) else { return nil }
@@ -177,7 +180,7 @@ final class BatchStore: ObservableObject {
             if let pcg = preview.makeOpaqueCGImage(), let d = ImageIOHelpers.encode(pcg, type: .jpeg, quality: 0.9) { try? d.write(to: previewURL) }
             let gridPhoto = preview.resized(width: gw.0, height: gw.1)
 
-            guard let seg = try? Segmenter.segment(cg) else {
+            guard let seg = try? Segmenter.segment(cg, network: BatchStore.network) else {
                 return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
                                  gridPhoto: gridPhoto, gridAlpha: nil, status: .failed("No item found, kept as the original"))
             }

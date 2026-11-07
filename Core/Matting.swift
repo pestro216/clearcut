@@ -41,7 +41,8 @@ public struct MatteOptions {
     public var linearEdges = true
     /// Use a model of the surface (learned here or from earlier photos) to keep everything that
     /// isn't surface and drop surface the model kept.
-    public var surfaceEvidence = true
+    /// Off by default: the cutout network does this job generally; kept for comparison in the bench.
+    public var surfaceEvidence = false
     /// The surface learned from earlier photos in the batch, if any.
     public var surface: SurfaceModel?
 

@@ -14,6 +14,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cutout model cache
+        uses: actions/cache@v4
+        with:
+          path: Clearcut/Model
+          key: birefnet-lite-fp16-r1-db2e2a42
+
+      - name: Fetch cutout model (verified)
+        run: tools/fetch_model.sh Clearcut/Model/BiRefNetLite.mlpackage
+
+
       - name: Unit tests
         run: swift test 2>&1 | tail -40
 
@@ -33,7 +43,7 @@ jobs:
         run: |
           swift build -c release --product cutbench 2>&1 | tail -20
           set +e
-          .build/release/cutbench "$RUNNER_TEMP/testset" qa_out QA/photos | tee qa_out/log.txt
+          CLEARCUT_MODEL="$GITHUB_WORKSPACE/Clearcut/Model/BiRefNetLite.mlpackage" .build/release/cutbench "$RUNNER_TEMP/testset" qa_out QA/photos | tee qa_out/log.txt
           echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
 
       - name: Publish report to the qa-results branch
