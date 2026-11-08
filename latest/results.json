@@ -19,6 +19,42 @@
         "keptBackground" : 0.00016589951485601332,
         "missedItem" : 0.002035311615656302
       },
+      "edges: radius 3" : {
+        "bandMAE" : 0.06109733518262189,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 4.654210973813803,
+        "edgeDeltaE95" : 12.282803764668332,
+        "iou" : 0.9993150908528783,
+        "keptBackground" : 0.0006821736807785876,
+        "missedItem" : 3.202693336988674e-06
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.03595765860471258,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.4953121157323688,
+        "edgeDeltaE95" : 9.57803736359541,
+        "iou" : 0.9993150908528783,
+        "keptBackground" : 0.0006821736807785876,
+        "missedItem" : 3.202693336988674e-06
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.06642228988340557,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 3.7763165575963384,
+        "edgeDeltaE95" : 8.846757770311262,
+        "iou" : 0.9988697655075338,
+        "keptBackground" : 0.0011299102092896041,
+        "missedItem" : 1.601346668494337e-06
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.04034222632857406,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.6708618516044886,
+        "edgeDeltaE95" : 10.129170064028449,
+        "iou" : 0.9991494465322507,
+        "keptBackground" : 0.0008493542729693963,
+        "missedItem" : 1.9216160021932046e-06
+      },
       "new" : {
         "bandMAE" : 0.06289439257455003,
         "boundaryF" : 1,
@@ -56,6 +92,42 @@
         "iou" : 0.9983087578915669,
         "keptBackground" : 0.0015754138490995905,
         "missedItem" : 0.00011849266557330253
+      },
+      "edges: radius 3" : {
+        "bandMAE" : 0.11355722149132666,
+        "boundaryF" : 0.9990706319702602,
+        "edgeDeltaE" : 8.198187657167994,
+        "edgeDeltaE95" : 19.275118516335276,
+        "iou" : 0.9983223035337997,
+        "keptBackground" : 3.0969673956658616e-05,
+        "missedItem" : 0.0016467787499562386
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.07890521592454545,
+        "boundaryF" : 0.9990706319702602,
+        "edgeDeltaE" : 6.166228469657693,
+        "edgeDeltaE95" : 18.558920577926038,
+        "iou" : 0.9983223035337997,
+        "keptBackground" : 3.0969673956658616e-05,
+        "missedItem" : 0.0016467787499562386
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.17940159239249306,
+        "boundaryF" : 0.9895165547929707,
+        "edgeDeltaE" : 10.60364883164154,
+        "edgeDeltaE95" : 20.480001982390906,
+        "iou" : 0.9973285289943473,
+        "keptBackground" : 0,
+        "missedItem" : 0.002671471005652639
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.13123994420216278,
+        "boundaryF" : 0.9971658368441211,
+        "edgeDeltaE" : 8.855917504926024,
+        "edgeDeltaE95" : 19.494855726117322,
+        "iou" : 0.9978307792363428,
+        "keptBackground" : 1.3465075633329832e-06,
+        "missedItem" : 0.002167877176966103
       },
       "new" : {
         "bandMAE" : 0.17092769065783323,
@@ -95,6 +167,42 @@
         "keptBackground" : 0.0011996347670668688,
         "missedItem" : 0.002412221056585202
       },
+      "edges: radius 3" : {
+        "bandMAE" : 0.05866226165113275,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 6.191787306541682,
+        "edgeDeltaE95" : 22.610452022234163,
+        "iou" : 0.9995160833501922,
+        "keptBackground" : 0.000302741837302975,
+        "missedItem" : 0.00018132131432049836
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.03016660474340761,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.704078159953733,
+        "edgeDeltaE95" : 14.456201497195885,
+        "iou" : 0.9995160833501922,
+        "keptBackground" : 0.000302741837302975,
+        "missedItem" : 0.00018132131432049836
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.06782681446275642,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 6.946468879379142,
+        "edgeDeltaE95" : 21.550896830858143,
+        "iou" : 0.9993381266556948,
+        "keptBackground" : 0.0004128297781404204,
+        "missedItem" : 0.00024931680719068525
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.044281008627374344,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 3.960240281655131,
+        "edgeDeltaE95" : 18.32593031644312,
+        "iou" : 0.9993995889369002,
+        "keptBackground" : 0.0003594047480281307,
+        "missedItem" : 0.00024122210565852016
+      },
       "new" : {
         "bandMAE" : 0.08296584776498339,
         "boundaryF" : 1,
@@ -132,6 +240,42 @@
         "iou" : 0.9976076555023924,
         "keptBackground" : 0.0011447950894932816,
         "missedItem" : 0.0012502881523476113
+      },
+      "edges: radius 3" : {
+        "bandMAE" : 0.012919159914971909,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.199852417819591,
+        "edgeDeltaE95" : 6.6749950673426826,
+        "iou" : 0.9986850217342105,
+        "keptBackground" : 0.0013167097104410783,
+        "missedItem" : 0
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.013385335901434729,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.468553824073969,
+        "edgeDeltaE95" : 9.268242022945989,
+        "iou" : 0.9986850217342105,
+        "keptBackground" : 0.0013167097104410783,
+        "missedItem" : 0
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.020412832762062346,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.4239608175710896,
+        "edgeDeltaE95" : 7.035685278675993,
+        "iou" : 0.998299379429512,
+        "keptBackground" : 0.0017035176075736204,
+        "missedItem" : 0
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.015516681488366902,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.579014253429653,
+        "edgeDeltaE95" : 9.907933695749222,
+        "iou" : 0.9984551586388231,
+        "keptBackground" : 0.001547231588530169,
+        "missedItem" : 0
       },
       "new" : {
         "bandMAE" : 0.01730154190370032,
@@ -182,6 +326,42 @@
         "keptBackground" : 0.0016240670089431545,
         "missedItem" : 0.00025270112852625933
       },
+      "edges: radius 3" : {
+        "bandMAE" : 0.02522898422253049,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 1.8362614449496273,
+        "edgeDeltaE95" : 6.637094406792933,
+        "iou" : 0.9991731312303869,
+        "keptBackground" : 0.000693387242907419,
+        "missedItem" : 0.000134054866962101
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.017929402561134324,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 1.5219749868163999,
+        "edgeDeltaE95" : 6.675821263120477,
+        "iou" : 0.9991731312303869,
+        "keptBackground" : 0.000693387242907419,
+        "missedItem" : 0.000134054866962101
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.02746623894284115,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 1.9567441208839262,
+        "edgeDeltaE95" : 7.219332194955969,
+        "iou" : 0.9994608333975198,
+        "keptBackground" : 0.00024961940744667083,
+        "missedItem" : 0.0002896817814813217
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.018254615560207556,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 1.50672741494379,
+        "edgeDeltaE95" : 6.090356793197776,
+        "iou" : 0.9993546737637151,
+        "keptBackground" : 0.00045609471977910225,
+        "missedItem" : 0.0001895258463946945
+      },
       "new" : {
         "bandMAE" : 0.028161774545216813,
         "boundaryF" : 1,
@@ -219,6 +399,42 @@
         "iou" : 0.994401248691201,
         "keptBackground" : 0.005515086674351557,
         "missedItem" : 0.00011454223318361607
+      },
+      "edges: radius 3" : {
+        "bandMAE" : 0.09184656370338674,
+        "boundaryF" : 0.9811317112917107,
+        "edgeDeltaE" : 4.861423889235085,
+        "edgeDeltaE95" : 16.014695034551607,
+        "iou" : 0.9957428941038841,
+        "keptBackground" : 0.004113772119445616,
+        "missedItem" : 0.00016084654021529066
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.06585021088447973,
+        "boundaryF" : 0.9811317112917107,
+        "edgeDeltaE" : 3.531871189058239,
+        "edgeDeltaE95" : 15.451507929090672,
+        "iou" : 0.9957428941038841,
+        "keptBackground" : 0.004113772119445616,
+        "missedItem" : 0.00016084654021529066
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.10504730468560854,
+        "boundaryF" : 0.9724648095583129,
+        "edgeDeltaE" : 5.589089475454094,
+        "edgeDeltaE95" : 18.697816928552523,
+        "iou" : 0.9953167742641427,
+        "keptBackground" : 0.0022567257005963507,
+        "missedItem" : 0.0024370687911407676
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.08123637400923185,
+        "boundaryF" : 0.975170413360194,
+        "edgeDeltaE" : 4.30888370724577,
+        "edgeDeltaE95" : 16.462937756793636,
+        "iou" : 0.995567789040351,
+        "keptBackground" : 0.004033348849337971,
+        "missedItem" : 0.00041673876328507126
       },
       "new" : {
         "bandMAE" : 0.10700316496529112,
@@ -258,6 +474,42 @@
         "keptBackground" : 0.0029267243664901107,
         "missedItem" : 0.00019590052377613725
       },
+      "edges: radius 3" : {
+        "bandMAE" : 0.04150470726717466,
+        "boundaryF" : 0.9990008175129439,
+        "edgeDeltaE" : 3.266592888385442,
+        "edgeDeltaE95" : 11.299364955954442,
+        "iou" : 0.9987233365826651,
+        "keptBackground" : 0.00029164138126071563,
+        "missedItem" : 0.0009853943639566603
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.036557972790348725,
+        "boundaryF" : 0.9990008175129439,
+        "edgeDeltaE" : 2.7905004902041277,
+        "edgeDeltaE95" : 12.244672517355223,
+        "iou" : 0.9987233365826651,
+        "keptBackground" : 0.00029164138126071563,
+        "missedItem" : 0.0009853943639566603
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.04472242255628167,
+        "boundaryF" : 0.9992687385740402,
+        "edgeDeltaE" : 3.3719037986172484,
+        "edgeDeltaE95" : 12.906490731139401,
+        "iou" : 0.9982975865786203,
+        "keptBackground" : 0.00017675235227922157,
+        "missedItem" : 0.0015259619746772796
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.039797627577788104,
+        "boundaryF" : 0.9980969642048029,
+        "edgeDeltaE" : 3.104497114234166,
+        "edgeDeltaE95" : 13.564202819406178,
+        "iou" : 0.998525951210605,
+        "keptBackground" : 0.0002445074206529232,
+        "missedItem" : 0.0012299017846095835
+      },
       "new" : {
         "bandMAE" : 0.0468594230534189,
         "boundaryF" : 0.9980969642048029,
@@ -295,6 +547,42 @@
         "iou" : 0.9928975354242394,
         "keptBackground" : 0.0005611128248064749,
         "missedItem" : 0.006545337034915319
+      },
+      "edges: radius 3" : {
+        "bandMAE" : 0.13662600806838546,
+        "boundaryF" : 0.7857726901062959,
+        "edgeDeltaE" : 8.688231667087232,
+        "edgeDeltaE95" : 62.16529370643577,
+        "iou" : 0.9746422154942745,
+        "keptBackground" : 0.002356086311491062,
+        "missedItem" : 0.02306144332319805
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.12425457032376921,
+        "boundaryF" : 0.7857726901062959,
+        "edgeDeltaE" : 7.361064686175229,
+        "edgeDeltaE95" : 62.16529370643577,
+        "iou" : 0.9746422154942745,
+        "keptBackground" : 0.002356086311491062,
+        "missedItem" : 0.02306144332319805
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.1391203736762929,
+        "boundaryF" : 0.786020846106683,
+        "edgeDeltaE" : 8.196919631875721,
+        "edgeDeltaE95" : 62.16529370643577,
+        "iou" : 0.9738974582748835,
+        "keptBackground" : 0.003131655870385875,
+        "missedItem" : 0.023052630032756063
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.12647817833404595,
+        "boundaryF" : 0.786020846106683,
+        "edgeDeltaE" : 7.449191920449931,
+        "edgeDeltaE95" : 62.16529370643577,
+        "iou" : 0.9742912138941706,
+        "keptBackground" : 0.0027262445100544957,
+        "missedItem" : 0.023052630032756063
       },
       "new" : {
         "bandMAE" : 0.13887807233721955,
@@ -334,6 +622,42 @@
         "keptBackground" : 0.1014561964362096,
         "missedItem" : 0.2261854249802021
       },
+      "edges: radius 3" : {
+        "bandMAE" : 0.12352962438905403,
+        "boundaryF" : 0.8803872328392244,
+        "edgeDeltaE" : 7.961223465921686,
+        "edgeDeltaE95" : 38.728861113160114,
+        "iou" : 0.8856940816861891,
+        "keptBackground" : 0.05429343466183845,
+        "missedItem" : 0.0662185445594048
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.1050008855021478,
+        "boundaryF" : 0.8803872328392244,
+        "edgeDeltaE" : 6.5605696774519595,
+        "edgeDeltaE95" : 40.13165388698868,
+        "iou" : 0.8856940816861891,
+        "keptBackground" : 0.05429343466183845,
+        "missedItem" : 0.0662185445594048
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.09967761499937183,
+        "boundaryF" : 0.9036284183143563,
+        "edgeDeltaE" : 6.52262461055041,
+        "edgeDeltaE95" : 31.077993429007375,
+        "iou" : 0.9138311381121929,
+        "keptBackground" : 0.034892369956693745,
+        "missedItem" : 0.05428312773885006
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.08784308539538091,
+        "boundaryF" : 0.9025612024718853,
+        "edgeDeltaE" : 5.660540607883146,
+        "edgeDeltaE95" : 34.90466380769625,
+        "iou" : 0.9020899852004503,
+        "keptBackground" : 0.04697380151958401,
+        "missedItem" : 0.05553541888193935
+      },
       "new" : {
         "bandMAE" : 0.10529507445620719,
         "boundaryF" : 0.9025612024718853,
@@ -371,6 +695,42 @@
         "iou" : 0.9977705712534328,
         "keptBackground" : 0.00035087887259219544,
         "missedItem" : 0.0018793321334201357
+      },
+      "edges: radius 3" : {
+        "bandMAE" : 0.042970293679247734,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 3.4743984717531196,
+        "edgeDeltaE95" : 10.38423842996132,
+        "iou" : 0.999392432377596,
+        "keptBackground" : 0.0003416242229285541,
+        "missedItem" : 0.0002661509592923065
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.028313104076956374,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.5832810899448275,
+        "edgeDeltaE95" : 10.410459116917739,
+        "iou" : 0.999392432377596,
+        "keptBackground" : 0.0003416242229285541,
+        "missedItem" : 0.0002661509592923065
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.04846169977028266,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 3.3438596518785717,
+        "edgeDeltaE95" : 9.872603382030738,
+        "iou" : 0.9995432069012761,
+        "keptBackground" : 0.00042714995085461904,
+        "missedItem" : 2.9838267018981607e-05
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.030013848491029775,
+        "boundaryF" : 1,
+        "edgeDeltaE" : 2.5980268267923567,
+        "edgeDeltaE95" : 10.533048244272829,
+        "iou" : 0.9995546695024053,
+        "keptBackground" : 0.0003799193249850011,
+        "missedItem" : 6.558036227166546e-05
       },
       "new" : {
         "bandMAE" : 0.04607932862763165,
@@ -410,6 +770,42 @@
         "keptBackground" : 0.001191383408271819,
         "missedItem" : 0.0015974394440047503
       },
+      "edges: radius 3" : {
+        "bandMAE" : 0.09509165662963424,
+        "boundaryF" : 0.9351396990440938,
+        "edgeDeltaE" : 8.20611721338948,
+        "edgeDeltaE95" : 27.49319849404456,
+        "iou" : 0.9979585589921716,
+        "keptBackground" : 0.0010556232485676692,
+        "missedItem" : 0.0009879727518492538
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.07199684368413026,
+        "boundaryF" : 0.9351396990440938,
+        "edgeDeltaE" : 6.633573438122571,
+        "edgeDeltaE95" : 27.62466663910919,
+        "iou" : 0.9979585589921716,
+        "keptBackground" : 0.0010556232485676692,
+        "missedItem" : 0.0009879727518492538
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.10442851338970989,
+        "boundaryF" : 0.8915134749886373,
+        "edgeDeltaE" : 8.795381220579106,
+        "edgeDeltaE95" : 33.78122138146627,
+        "iou" : 0.9972698481033868,
+        "keptBackground" : 0.0011398037309095885,
+        "missedItem" : 0.001593460003021314
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.08144431200961307,
+        "boundaryF" : 0.9192590518074454,
+        "edgeDeltaE" : 7.225388958026871,
+        "edgeDeltaE95" : 30.111262324481377,
+        "iou" : 0.997658090724752,
+        "keptBackground" : 0.0011075090367747794,
+        "missedItem" : 0.0012369939241588955
+      },
       "new" : {
         "bandMAE" : 0.10229336638546686,
         "boundaryF" : 0.9192590518074454,
@@ -447,6 +843,42 @@
         "iou" : 0.7967371540897907,
         "keptBackground" : 0.25274336348277604,
         "missedItem" : 0.001892817773860683
+      },
+      "edges: radius 3" : {
+        "bandMAE" : 0.371793502642238,
+        "boundaryF" : 0.3438819985415966,
+        "edgeDeltaE" : 17.19709147293507,
+        "edgeDeltaE95" : 42.84924987528658,
+        "iou" : 0.7965696966141295,
+        "keptBackground" : 0.25371405590535023,
+        "missedItem" : 0.0013293748466053942
+      },
+      "edges: radius 3, tight levels" : {
+        "bandMAE" : 0.36683488485957266,
+        "boundaryF" : 0.3438819985415966,
+        "edgeDeltaE" : 16.859813541459307,
+        "edgeDeltaE95" : 42.89302791489513,
+        "iou" : 0.7965696966141295,
+        "keptBackground" : 0.25371405590535023,
+        "missedItem" : 0.0013293748466053942
+      },
+      "edges: radius 8, finer eps" : {
+        "bandMAE" : 0.3711047784433485,
+        "boundaryF" : 0.3409816329399966,
+        "edgeDeltaE" : 17.005357587493876,
+        "edgeDeltaE95" : 42.84335161080193,
+        "iou" : 0.7965306811013804,
+        "keptBackground" : 0.25352043662337925,
+        "missedItem" : 0.001532512841880002
+      },
+      "edges: tight levels" : {
+        "bandMAE" : 0.36836959432034955,
+        "boundaryF" : 0.33769013623061034,
+        "edgeDeltaE" : 16.897136078116162,
+        "edgeDeltaE95" : 42.89302791489513,
+        "iou" : 0.7965957681096035,
+        "keptBackground" : 0.2534275210014725,
+        "missedItem" : 0.0015249411381157729
       },
       "new" : {
         "bandMAE" : 0.3728991058339258,
@@ -539,92 +971,140 @@
   },
   "timings" : {
     "01_navy_shirt_on_white" : {
-      "Apple model only" : 2.5079020261764526,
-      "BiRefNet only" : 4.9778430461883545,
-      "new" : 11.371656060218811,
-      "previous app" : 4.351464033126831
+      "Apple model only" : 2.0032039880752563,
+      "BiRefNet only" : 5.208312034606934,
+      "edges: radius 3" : 13.140038967132568,
+      "edges: radius 3, tight levels" : 13.103502988815308,
+      "edges: radius 8, finer eps" : 13.348831057548523,
+      "edges: tight levels" : 13.704246997833252,
+      "new" : 13.287172079086304,
+      "previous app" : 5.035258054733276
     },
     "02_white_on_white" : {
-      "Apple model only" : 0.5178200006484985,
-      "BiRefNet only" : 4.26370108127594,
-      "new" : 8.999909043312073,
-      "previous app" : 1.8690639734268188
+      "Apple model only" : 0.8857539892196655,
+      "BiRefNet only" : 5.152027010917664,
+      "edges: radius 3" : 11.515998005867004,
+      "edges: radius 3, tight levels" : 11.616788029670715,
+      "edges: radius 8, finer eps" : 11.886926054954529,
+      "edges: tight levels" : 11.273116946220398,
+      "new" : 11.693609952926636,
+      "previous app" : 2.612555980682373
     },
     "03_black_on_dark_wood" : {
-      "Apple model only" : 0.6098829507827759,
-      "BiRefNet only" : 8.382996916770935,
-      "new" : 15.826413035392761,
-      "previous app" : 1.8216469287872314
+      "Apple model only" : 0.8687160015106201,
+      "BiRefNet only" : 10.86677896976471,
+      "edges: radius 3" : 17.000750064849854,
+      "edges: radius 3, tight levels" : 16.623784065246582,
+      "edges: radius 8, finer eps" : 16.139822006225586,
+      "edges: tight levels" : 16.527865052223206,
+      "new" : 13.901077032089233,
+      "previous app" : 2.5650429725646973
     },
     "04_watch_thin_straps" : {
-      "Apple model only" : 0.7278249263763428,
-      "BiRefNet only" : 9.944243907928467,
-      "new" : 15.7203049659729,
-      "previous app" : 2.4926739931106567
+      "Apple model only" : 0.813878059387207,
+      "BiRefNet only" : 11.514713048934937,
+      "edges: radius 3" : 15.529085993766785,
+      "edges: radius 3, tight levels" : 13.884883046150208,
+      "edges: radius 8, finer eps" : 16.20073103904724,
+      "edges: tight levels" : 19.97712206840515,
+      "new" : 14.106626033782959,
+      "previous app" : 2.9971739053726196
     },
     "05_fine_chain_on_marble" : {
-      "BiRefNet only" : 9.50920295715332
+      "BiRefNet only" : 9.699694991111755
     },
     "06_mug_handle_gap" : {
-      "Apple model only" : 0.7344338893890381,
-      "BiRefNet only" : 5.0610469579696655,
-      "new" : 10.955201029777527,
-      "previous app" : 2.376236081123352
+      "Apple model only" : 0.6171849966049194,
+      "BiRefNet only" : 4.553765058517456,
+      "edges: radius 3" : 8.778581023216248,
+      "edges: radius 3, tight levels" : 9.294626951217651,
+      "edges: radius 8, finer eps" : 9.398705005645752,
+      "edges: tight levels" : 9.176135063171387,
+      "new" : 9.04112994670868,
+      "previous app" : 2.2334649562835693
     },
     "07_reflective_bottle" : {
-      "Apple model only" : 0.7567790746688843,
-      "BiRefNet only" : 9.59279203414917,
-      "new" : 14.766098976135254,
-      "previous app" : 2.5350979566574097
+      "Apple model only" : 0.6374529600143433,
+      "BiRefNet only" : 7.910995006561279,
+      "edges: radius 3" : 12.697282075881958,
+      "edges: radius 3, tight levels" : 13.48836898803711,
+      "edges: radius 8, finer eps" : 13.062991976737976,
+      "edges: tight levels" : 13.408981084823608,
+      "new" : 13.09801697731018,
+      "previous app" : 1.9238040447235107
     },
     "08_fuzzy_knit_edge" : {
-      "Apple model only" : 0.7790729999542236,
-      "BiRefNet only" : 5.139685034751892,
-      "new" : 10.297047972679138,
-      "previous app" : 2.51295006275177
+      "Apple model only" : 0.6713629961013794,
+      "BiRefNet only" : 4.85480809211731,
+      "edges: radius 3" : 12.031085014343262,
+      "edges: radius 3, tight levels" : 10.611600041389465,
+      "edges: radius 8, finer eps" : 10.528380036354065,
+      "edges: tight levels" : 11.319378018379211,
+      "new" : 10.316609025001526,
+      "previous app" : 2.026271104812622
     },
     "09_sunglasses_gaps" : {
-      "Apple model only" : 0.5294020175933838,
-      "BiRefNet only" : 8.54226803779602,
-      "new" : 15.416501998901367,
-      "previous app" : 1.7666330337524414
+      "Apple model only" : 0.6383030414581299,
+      "BiRefNet only" : 9.071552991867065,
+      "edges: radius 3" : 15.346630096435547,
+      "edges: radius 3, tight levels" : 14.461135983467102,
+      "edges: radius 8, finer eps" : 15.946907043457031,
+      "edges: tight levels" : 15.818916916847229,
+      "new" : 14.315011024475098,
+      "previous app" : 1.9543850421905518
     },
     "10_comb_narrow_teeth" : {
-      "Apple model only" : 0.6956889629364014,
-      "BiRefNet only" : 7.844475030899048,
-      "new" : 12.66522204875946,
-      "previous app" : 1.9724830389022827
+      "Apple model only" : 0.7887240648269653,
+      "BiRefNet only" : 9.826913952827454,
+      "edges: radius 3" : 12.52725899219513,
+      "edges: radius 3, tight levels" : 13.018103003501892,
+      "edges: radius 8, finer eps" : 12.567201018333435,
+      "edges: tight levels" : 13.680086016654968,
+      "new" : 12.181620001792908,
+      "previous app" : 2.2769099473953247
     },
     "11_red_shirt_24mp" : {
-      "Apple model only" : 0.6911090612411499,
-      "BiRefNet only" : 3.8947900533676147,
-      "new" : 11.066359043121338,
-      "previous app" : 4.519601941108704
+      "Apple model only" : 0.662411093711853,
+      "BiRefNet only" : 4.067192077636719,
+      "edges: radius 3" : 12.236026048660278,
+      "edges: radius 3, tight levels" : 11.47240698337555,
+      "edges: radius 8, finer eps" : 12.0419260263443,
+      "edges: tight levels" : 11.76963198184967,
+      "new" : 14.434316992759705,
+      "previous app" : 4.527094006538391
     },
     "12_striped_shirt_on_carpet" : {
-      "Apple model only" : 0.4861210584640503,
-      "BiRefNet only" : 3.9310749769210815,
-      "new" : 6.026381969451904,
-      "previous app" : 2.547018051147461
+      "Apple model only" : 0.6022229194641113,
+      "BiRefNet only" : 4.5043909549713135,
+      "edges: radius 3" : 6.2111639976501465,
+      "edges: radius 3, tight levels" : 6.0011759996414185,
+      "edges: radius 8, finer eps" : 6.004828929901123,
+      "edges: tight levels" : 6.667102098464966,
+      "new" : 6.262987971305847,
+      "previous app" : 2.664590001106262
     },
     "13_leather_vest_cropped_lining" : {
-      "Apple model only" : 0.5860980749130249,
-      "BiRefNet only" : 7.668179035186768,
-      "new" : 10.140707015991211,
-      "previous app" : 2.7105050086975098
+      "Apple model only" : 0.5646159648895264,
+      "BiRefNet only" : 8.369964003562927,
+      "edges: radius 3" : 11.107908010482788,
+      "edges: radius 3, tight levels" : 10.37889301776886,
+      "edges: radius 8, finer eps" : 10.880083918571472,
+      "edges: tight levels" : 10.300688982009888,
+      "new" : 10.414566993713379,
+      "previous app" : 2.8471120595932007
     },
     "14_shirt_closeup_fills_frame" : {
-      "BiRefNet only" : 8.617179036140442
+      "BiRefNet only" : 8.307868003845215
     },
     "15_shirt_cut_off_by_frame" : {
-      "Apple model only" : 0.569072961807251,
-      "BiRefNet only" : 7.741618037223816,
-      "previous app" : 2.7003649473190308
+      "Apple model only" : 0.49398791790008545,
+      "BiRefNet only" : 7.761957049369812,
+      "previous app" : 2.851155996322632
     },
     "16_vest_closeup_corners" : {
-      "Apple model only" : 0.5337059497833252,
-      "BiRefNet only" : 7.920060038566589,
-      "previous app" : 2.7976030111312866
+      "Apple model only" : 0.5464240312576294,
+      "BiRefNet only" : 8.8923499584198,
+      "previous app" : 3.258479952812195
     }
   }
 }
