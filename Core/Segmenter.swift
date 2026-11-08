@@ -76,37 +76,47 @@ public enum Segmenter {
 
     // MARK: Cutout network
 
-    /// Two passes of the cutout network.
+    /// The cutout network, in up to three passes.
     ///
-    /// 1. Context: the whole photo on a larger neutral grey canvas. A cutout network picks out
-    ///    "the object"; on a close-up where the garment runs off the frame it would otherwise pick
-    ///    the most distinct thing inside it (a tape measure, a label). With room around it, the
-    ///    garment itself is the object.
-    /// 2. Detail: a tighter crop around the item, grey added only on sides where the item runs off
-    ///    the frame, so the network spends its 1024 pixels on the item. Used where it agrees
-    ///    with the context pass; if it doesn't (it picked out a part), the context pass stands.
+    /// 1. The whole photo, as is. Right for nearly every shot of a whole item.
+    /// 2. Only when that result looks doubtful (it runs off the frame, or it is small): the photo
+    ///    on a larger neutral canvas. On a close-up where the garment fills the frame, a cutout
+    ///    network picks the most distinct thing inside it (a tape measure, a label); with room
+    ///    around it, the garment is the object. The canvas version is accepted only when what it
+    ///    adds looks clearly unlike the background that remains, because on a plain backdrop the
+    ///    backdrop itself can become "an object" against the canvas.
+    /// 3. A tighter crop around the item, so the network spends its 1024 pixels on the item's
+    ///    edges. Used where it agrees with the result so far.
     static func networkSegment(_ full: CGImage, ww: Int, wh: Int, zoom: Bool, network: CutoutNetwork) throws -> Segmentation? {
         let fw = CGFloat(full.width), fh = CGFloat(full.height)
-        let m = 0.35 * max(fw, fh)
         let whole = CGRect(x: 0, y: 0, width: fw, height: fh)
-        guard var prob = try pass(full, region: whole, pads: (m, m, m, m), outW: ww, outH: wh, network: network) else { return nil }
+        guard var prob = try pass(full, region: whole, pads: (0, 0, 0, 0), outW: ww, outH: wh, network: network) else { return nil }
+        var canvasUsed = false
+        if doubtful(prob) {
+            let m = 0.35 * max(fw, fh)
+            if let wide = try pass(full, region: whole, pads: (m, m, m, m), outW: ww, outH: wh, network: network),
+               let small = RGBAImage(cgImage: full, width: ww, height: wh), preferWide(plain: prob, wide: wide, image: small) {
+                prob = wide
+                canvasUsed = true
+            }
+        }
         guard prob.data.contains(where: { $0 > 0.5 }) else { return nil }
         var zoomed = false
         if zoom, let box = bbox(prob, threshold: 0.5) {
             let s = fw / CGFloat(ww)
             let margin = 0.08 * CGFloat(max(box.width, box.height)) * s
-            var r = CGRect(x: CGFloat(box.minX) * s - margin, y: CGFloat(box.minY) * s - margin,
-                           width: CGFloat(box.width) * s + 2 * margin, height: CGFloat(box.height) * s + 2 * margin).intersection(whole).integral
-            r = r.intersection(whole)
+            let r = CGRect(x: CGFloat(box.minX) * s - margin, y: CGFloat(box.minY) * s - margin,
+                           width: CGFloat(box.width) * s + 2 * margin, height: CGFloat(box.height) * s + 2 * margin).intersection(whole).integral.intersection(whole)
             // Only worth it when the crop is clearly smaller than the photo.
             if r.width * r.height < 0.8 * fw * fh {
-                let pad = 0.12 * max(r.width, r.height)
+                // Canvas only on sides where the item runs off the frame, and only if the canvas
+                // was needed for the whole photo too.
+                let pad = canvasUsed ? 0.12 * max(r.width, r.height) : 0
                 let touch = (l: r.minX <= 1, t: r.minY <= 1, r: r.maxX >= fw - 1, b: r.maxY >= fh - 1)
                 let pads = (touch.l ? pad : 0, touch.t ? pad : 0, touch.r ? pad : 0, touch.b ? pad : 0)
                 let rx = Int((r.minX / s).rounded()), ry = Int((r.minY / s).rounded())
                 let rw = max(1, min(ww - rx, Int((r.width / s).rounded()))), rh = max(1, min(wh - ry, Int((r.height / s).rounded())))
                 if let detail = try pass(full, region: r, pads: pads, outW: rw, outH: rh, network: network) {
-                    // Agreement inside the crop.
                     var inter = 0, uni = 0
                     for y in 0..<rh { for x in 0..<rw {
                         let a = prob.data[(ry + y) * ww + rx + x] > 0.5, b = detail.data[y * rw + x] > 0.5
@@ -131,31 +141,121 @@ public enum Segmenter {
         return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed)
     }
 
-    /// Runs the network on a region of the photo set on a neutral grey canvas with the given
-    /// padding (left, top, right, bottom, in photo pixels). Returns the region's probability
-    /// at outW x outH.
+    /// A first result is doubtful when it runs off the frame (more than 3% of the border) or is small.
+    static func doubtful(_ p: Plane) -> Bool {
+        let w = p.width, h = p.height
+        var on = 0, total = 0
+        for x in 0..<w { on += (p.data[x] > 0.5 ? 1 : 0) + (p.data[(h - 1) * w + x] > 0.5 ? 1 : 0); total += 2 }
+        for y in 0..<h { on += (p.data[y * w] > 0.5 ? 1 : 0) + (p.data[y * w + w - 1] > 0.5 ? 1 : 0); total += 2 }
+        let area = Float(p.data.filter { $0 > 0.5 }.count) / Float(p.count)
+        return Float(on) / Float(total) > 0.03 || area < 0.15
+    }
+
+    /// Whether the canvas result should replace the plain one: they disagree, and what the canvas
+    /// version adds looks clearly unlike the background that remains (or nearly nothing remains).
+    static func preferWide(plain: Plane, wide: Plane, image: RGBAImage) -> Bool {
+        let n = plain.count
+        var inter = 0, uni = 0, added = 0, rest = 0
+        for i in 0..<n {
+            let a = plain.data[i] > 0.5, b = wide.data[i] > 0.5
+            if a && b { inter += 1 }
+            if a || b { uni += 1 }
+            if b && !a { added += 1 }
+            if !a && !b { rest += 1 }
+        }
+        if uni > 0 && Float(inter) / Float(uni) >= 0.9 { return false }
+        if Float(added) < 0.01 * Float(n) { return false }
+        if Float(rest) < 0.02 * Float(n) { return true }
+        var ma: (Float, Float, Float) = (0, 0, 0), mr: (Float, Float, Float) = (0, 0, 0)
+        var labs = [(Float, Float, Float)](repeating: (0, 0, 0), count: n)
+        for i in 0..<n {
+            let l = lab(image.pixels[i * 4], image.pixels[i * 4 + 1], image.pixels[i * 4 + 2])
+            labs[i] = l
+            let a = plain.data[i] > 0.5, b = wide.data[i] > 0.5
+            if b && !a { ma.0 += l.0; ma.1 += l.1; ma.2 += l.2 }
+            if !a && !b { mr.0 += l.0; mr.1 += l.1; mr.2 += l.2 }
+        }
+        let fa = Float(added), fr = Float(rest)
+        ma = (ma.0 / fa, ma.1 / fa, ma.2 / fa); mr = (mr.0 / fr, mr.1 / fr, mr.2 / fr)
+        var sp: (Float, Float, Float) = (0, 0, 0)
+        for i in 0..<n where plain.data[i] <= 0.5 && wide.data[i] <= 0.5 {
+            sp.0 += abs(labs[i].0 - mr.0); sp.1 += abs(labs[i].1 - mr.1); sp.2 += abs(labs[i].2 - mr.2)
+        }
+        sp = (sp.0 / fr, sp.1 / fr, sp.2 / fr)
+        let d = sqrt((ma.0 - mr.0) * (ma.0 - mr.0) + (ma.1 - mr.1) * (ma.1 - mr.1) + (ma.2 - mr.2) * (ma.2 - mr.2))
+        let spread = sqrt(sp.0 * sp.0 + sp.1 * sp.1 + sp.2 * sp.2)
+        return d > 12 && d > 1.5 * spread
+    }
+
+    /// CIE Lab (D65) from 8-bit sRGB.
+    static func lab(_ r8: UInt8, _ g8: UInt8, _ b8: UInt8) -> (Float, Float, Float) {
+        func lin(_ v: UInt8) -> Float { let c = Float(v) / 255; return c > 0.04045 ? powf((c + 0.055) / 1.055, 2.4) : c / 12.92 }
+        let r = lin(r8), g = lin(g8), b = lin(b8)
+        let x = (0.4124 * r + 0.3576 * g + 0.1805 * b) / 0.9505
+        let y = 0.2126 * r + 0.7152 * g + 0.0722 * b
+        let z = (0.0193 * r + 0.1192 * g + 0.9505 * b) / 1.089
+        func f(_ t: Float) -> Float { t > 0.008856 ? cbrtf(t) : 7.787 * t + 16 / 116 }
+        let fx = f(x), fy = f(y), fz = f(z)
+        return (116 * fy - 16, 500 * (fx - fy), 200 * (fy - fz))
+    }
+
+    /// Runs the network on a region of the photo extended by the given padding (left, top, right,
+    /// bottom, in photo pixels). The padding continues the photo's own edges, mirrored and
+    /// blurred, so there is no frame for the network to pick out: on a flat grey canvas a photo
+    /// with a small item on a plain surface reads as "a rectangle", and the whole frame is kept.
+    /// Returns the region's probability at outW x outH.
     private static func pass(_ full: CGImage, region: CGRect, pads: (CGFloat, CGFloat, CGFloat, CGFloat),
                              outW: Int, outH: Int, network: CutoutNetwork) throws -> Plane? {
         let side = CutoutNetwork.side
         let cw = region.width + pads.0 + pads.2, ch = region.height + pads.1 + pads.3
         let sx = CGFloat(side) / cw, sy = CGFloat(side) / ch
-        guard let crop = region == CGRect(x: 0, y: 0, width: full.width, height: full.height) ? full : full.cropping(to: region),
-              let ctx = CGContext(data: nil, width: side, height: side, bitsPerComponent: 8, bytesPerRow: 0,
-                                  space: ColourSpaces.sRGB, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue) else { return nil }
-        ctx.setFillColor(CGColor(srgbRed: 0.5, green: 0.5, blue: 0.5, alpha: 1))
-        ctx.fill(CGRect(x: 0, y: 0, width: side, height: side))
-        ctx.interpolationQuality = .high
-        // Core Graphics draws from the bottom left, so the bottom pad comes first.
-        ctx.draw(crop, in: CGRect(x: pads.0 * sx, y: pads.3 * sy, width: region.width * sx, height: region.height * sy))
-        guard let canvas = ctx.makeImage(), let p = try network.probability(of: canvas) else { return nil }
-        // The region inside the canvas, in the probability map's top-left coordinates.
-        let x0 = Float(pads.0 * sx), y0 = Float(pads.1 * sy), w = Float(region.width * sx), h = Float(region.height * sy)
+        let whole = CGRect(x: 0, y: 0, width: full.width, height: full.height)
+        guard let crop = region == whole ? full : full.cropping(to: region) else { return nil }
+        let ox = Int((pads.0 * sx).rounded()), oy = Int((pads.1 * sy).rounded())
+        let iw = max(1, min(side - ox, Int((region.width * sx).rounded()))), ih = max(1, min(side - oy, Int((region.height * sy).rounded())))
+        guard let img = RGBAImage(cgImage: crop, width: iw, height: ih) else { return nil }
+        let n = side * side
+        let padded = ox > 0 || oy > 0 || iw < side || ih < side
+        var canvas = RGBAImage(width: side, height: side, fill: (128, 128, 128))
+        if padded {
+            @inline(__always) func reflect(_ u: Int, _ len: Int) -> Int {
+                if len == 1 { return 0 }
+                let period = 2 * len
+                var m = u % period
+                if m < 0 { m += period }
+                return m < len ? m : period - 1 - m
+            }
+            var planes = [[Float]](repeating: [Float](repeating: 0, count: n), count: 3)
+            for y in 0..<side {
+                let v = reflect(y - oy, ih)
+                for x in 0..<side {
+                    let u = reflect(x - ox, iw)
+                    let si = (v * iw + u) * 4
+                    for c in 0..<3 { planes[c][y * side + x] = Float(img.pixels[si + c]) }
+                }
+            }
+            let sigma = Float(0.02 * max(region.width * sx, region.height * sy))
+            for c in 0..<3 {
+                let blurred = Plane(width: side, height: side, data: planes[c]).gaussianBlurred(sigma: max(1, sigma))
+                for i in 0..<n { canvas.pixels[i * 4 + c] = UInt8(max(0, min(255, blurred.data[i] + 0.5))) }
+            }
+        }
+        // The photo itself, sharp, in the middle.
+        for y in 0..<ih {
+            let row = (oy + y) * side + ox
+            for x in 0..<iw {
+                let d = (row + x) * 4, si = (y * iw + x) * 4
+                canvas.pixels[d] = img.pixels[si]; canvas.pixels[d + 1] = img.pixels[si + 1]; canvas.pixels[d + 2] = img.pixels[si + 2]
+                canvas.pixels[d + 3] = 255
+            }
+        }
+        guard let cg = canvas.makeOpaqueCGImage(), let p = try network.probability(of: cg) else { return nil }
+        let x0 = Float(ox), y0 = Float(oy), w = Float(iw), h = Float(ih)
         var out = [Float](repeating: 0, count: outW * outH)
         for y in 0..<outH {
-            let fy = y0 + (Float(y) + 0.5) / Float(outH) * h - 0.5
+            let fy = y0 + (Float(y) + 0.5) / Float(outH) * h
             for x in 0..<outW {
-                let fx = x0 + (Float(x) + 0.5) / Float(outW) * w - 0.5
-                out[y * outW + x] = p.sample(fx, fy)
+                out[y * outW + x] = p.sample(x0 + (Float(x) + 0.5) / Float(outW) * w, fy)
             }
         }
         return Plane(width: outW, height: outH, data: out)
