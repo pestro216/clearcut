@@ -16,6 +16,8 @@ public final class CutoutNetwork: @unchecked Sendable {
     private let inputName: String
     private let outputName: String
     private let lock = NSLock()
+    /// Range and mean of the last raw output, for the quality report.
+    public private(set) var lastOutputRange: (min: Float, max: Float, mean: Float) = (0, 0, 0)
 
     /// Loads a compiled model (.mlmodelc), or compiles an .mlpackage first (used by the test bench).
     public init(url: URL) throws {
@@ -64,12 +66,22 @@ public final class CutoutNetwork: @unchecked Sendable {
         do { result = try model.prediction(from: provider) } catch { lock.unlock(); throw error }
         lock.unlock()
         guard let out = result.featureValue(for: outputName)?.multiArrayValue, out.count == plane else { return nil }
-        var data = [Float](repeating: 0, count: plane)
+        var raw = [Float](repeating: 0, count: plane)
         if out.dataType == .float32 {
             let src = out.dataPointer.assumingMemoryBound(to: Float.self)
-            for i in 0..<plane { data[i] = 1 / (1 + expf(-max(-80, min(80, src[i])))) }
+            for i in 0..<plane { raw[i] = src[i] }
         } else {
-            for i in 0..<plane { data[i] = 1 / (1 + expf(-max(-80, min(80, out[i].floatValue)))) }
+            for i in 0..<plane { raw[i] = out[i].floatValue }
+        }
+        var lo = Float.greatestFiniteMagnitude, hi = -Float.greatestFiniteMagnitude, sum: Float = 0
+        for v in raw { lo = min(lo, v); hi = max(hi, v); sum += v }
+        lastOutputRange = (lo, hi, sum / Float(plane))
+        // The output is documented as logits, but if every value already lies in 0...1 it is a
+        // probability; applying the sigmoid again would push everything over one half.
+        let isProbability = lo >= 0 && hi <= 1
+        var data = raw
+        if !isProbability {
+            for i in 0..<plane { data[i] = 1 / (1 + expf(-max(-80, min(80, raw[i])))) }
         }
         let p = Plane(width: s, height: s, data: data)
         return p.resized(width: image.width, height: image.height)

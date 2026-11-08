@@ -92,6 +92,17 @@ let networkLoadStart = Date()
 let network = CutoutNetwork.bundled()
 let networkLoadSeconds = Date().timeIntervalSince(networkLoadStart)
 print(network == nil ? "Cutout network: not available, using Apple's model" : "Cutout network loaded in \(fmt(networkLoadSeconds, 1)) s")
+var networkProbe = ""
+if let network, let probeDir = try? FileManager.default.contentsOfDirectory(atPath: CommandLine.arguments[1]).sorted().first,
+   let cg = loadCG(URL(fileURLWithPath: CommandLine.arguments[1]).appendingPathComponent(probeDir).appendingPathComponent("photo.jpg")) {
+    let t0 = Date()
+    if let p = try? network.probability(of: cg) {
+        let r = network.lastOutputRange
+        let area = Float(p.data.filter { $0 > 0.5 }.count) / Float(p.count)
+        networkProbe = "Network probe on \(probeDir): raw output \(fmt(Double(r.min), 3)) to \(fmt(Double(r.max), 3)), mean \(fmt(Double(r.mean), 3)); item area \(fmt(Double(area) * 100, 1))%; one pass \(fmt(Date().timeIntervalSince(t0), 2)) s.\n\n"
+        print(networkProbe)
+    }
+}
 
 func runNetworkOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
     guard let network else { return nil }
@@ -129,7 +140,7 @@ let shipping = "new"
 var results: [String: [String: MatteScores]] = [:]
 var timings: [String: [String: Double]] = [:]
 var confidences: [String: String] = [:]
-var report = "# Cutout quality report\n\n" + (network == nil ? "Cutout network not loaded: \"new\" is Apple's model with refinement.\n\n" : "Cutout network: BiRefNet Lite 1024 (Core ML, CPU), loaded in \(fmt(networkLoadSeconds, 1)) s.\n\n")
+var report = "# Cutout quality report\n\n" + (network == nil ? "Cutout network not loaded: \"new\" is Apple's model with refinement.\n\n" : "Cutout network: BiRefNet Lite 1024 (Core ML, CPU), loaded in \(fmt(networkLoadSeconds, 1)) s.\n\n") + networkProbe
 report += "Generated \(ISO8601DateFormatter().string(from: Date())). Lower is better for errors; higher for IoU and boundary F.\n\n"
 
 // The app's default photographic surface, for realistic finished renders.
