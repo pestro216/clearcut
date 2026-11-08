@@ -38,13 +38,23 @@ jobs:
           python3 QA/make_testset.py "$RUNNER_TEMP/testset"
           python3 QA/real_scenes.py "$RUNNER_TEMP/testset"
 
+      - uses: actions/cache@v4
+        with:
+          path: QA/.webset
+          key: webset-v1-${{ hashFiles('QA/fetch_webset.py') }}
+          restore-keys: webset-v1-
+
+      - name: Fetch varied web test photos (openly licensed)
+        run: python3 QA/fetch_webset.py QA/.webset 2 || true
+
       - name: Benchmark
         id: bench
         run: |
           swift build -c release --product cutbench 2>&1 | tail -20
           set +e
-          CLEARCUT_MODEL="$GITHUB_WORKSPACE/Clearcut/Model/BiRefNetLite.mlpackage" .build/release/cutbench "$RUNNER_TEMP/testset" qa_out QA/photos | tee qa_out/log.txt
+          CLEARCUT_MODEL="$GITHUB_WORKSPACE/Clearcut/Model/BiRefNetLite.mlpackage" .build/release/cutbench "$RUNNER_TEMP/testset" qa_out QA/.webset | tee qa_out/log.txt
           echo "status=${PIPESTATUS[0]}" >> "$GITHUB_OUTPUT"
+          cp QA/.webset/manifest.json qa_out/web_credits.json 2>/dev/null || true
 
       - name: Publish report to the qa-results branch
         if: always()
