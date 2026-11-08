@@ -1,0 +1,40 @@
+2026-11-08 00:27:50.151 Df Clearcut[12553:99d9] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x10460c600; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
+2026-11-08 00:27:50.236 Df Clearcut[12553:99d9] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:27:50.261 Df Clearcut[12553:99d9] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:27:50.274 Df Clearcut[12553:99d9] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:27:50.274 Df Clearcut[12553:99d9] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:27:50.274 Df Clearcut[12553:99d9] [PrototypeTools:domain] Not observing PTDefaults on customer install.
+2026-11-08 00:27:50.283 Df Clearcut[12553:99d9] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:27:50.329 Df Clearcut[12553:99d9] [com.apple.network:activity] <nw_activity 50:1 [3E40E1D6-C7C4-4521-993E-DA35F80675B9] (global parent) (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 1067ms
+2026-11-08 00:27:50.329 Df Clearcut[12553:99d9] [com.apple.network:activity] <nw_activity 50:2 [52117038-BA2A-40B6-B5BA-601BF26AB4F0] (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 1067ms
+2026-11-08 00:27:50.329 Df Clearcut[12553:99d9] [com.apple.network:activity] Unsetting the global parent activity <nw_activity 50:1 [3E40E1D6-C7C4-4521-993E-DA35F80675B9] (global parent) (reporting strategy default) complete (reason success)>
+2026-11-08 00:28:36.756 Df Clearcut[12553:99d9] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:28:36.756 Df Clearcut[12553:99d9] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:29:29.205 Df Clearcut[17857:cad0] [com.apple.dt.xctest:Default] Registering for test daemon availability notify post.
+2026-11-08 00:29:29.205 Df Clearcut[17857:cad0] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-11-08 00:29:29.205 Df Clearcut[17857:cad0] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-11-08 00:29:29.205 Df Clearcut[17857:cad0] [com.apple.dt.xctest:Default] notify_get_state check indicated test daemon not ready.
+2026-11-08 00:29:29.249 Df Clearcut[17857:cad0] [com.apple.BacklightServices:scenes] 0x600000c14000 setDelegate:<0x600000c12df0 _UIBacklightEnvironment> hasDelegate:YES for environment:sceneID:app.clearcut.photos-default
+2026-11-08 00:29:29.252 Df Clearcut[17857:cad0] [com.apple.UIKit:KeyWindow] Setting default evaluation strategy for UIUserInterfaceIdiomPhone to LastOneWins
+2026-11-08 00:29:29.252 Df Clearcut[17857:cad0] [com.apple.UIKit:KeyWindow] Scene target of keyboard event deferring environment did change: 1; scene: UIWindowScene: 0x104e06440; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
+2026-11-08 00:29:29.252 Df Clearcut[17857:cad0] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x104e06440; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
+2026-11-08 00:29:29.252 Df Clearcut[17857:cad0] [com.apple.UIKit:KeyWindow] Setting default evaluation strategy for UIUserInterfaceIdiomPhone to SystemShellManaged
+2026-11-08 00:29:29.407 Df Clearcut[17857:cad0] [com.apple.UIKit:KeyWindow] Window did become application key: UIWindow: 0x104f06720; contextId: 0xF47E2F0F; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
+2026-11-08 00:29:29.412 Df Clearcut[17857:cb26] [com.apple.BackBoard:EventDelivery] policyStatus:<BKSHIDEventDeliveryPolicyObserver: 0x60000210bc50; token: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default; status: ancestor> was:target
+2026-11-08 00:29:29.421 Df Clearcut[17857:cad0] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:29:29.797 Df Clearcut[17857:cad0] [com.apple.network:activity] Create activity from XPC object <nw_activity 50:1 [48CDB028-A425-4780-B3D2-73D5073C69F8] (reporting strategy default)>
+2026-11-08 00:29:29.797 Df Clearcut[17857:cad0] [com.apple.network:activity] Create activity from XPC object <nw_activity 50:2 [3F316868-E3A6-4CD4-BA86-E348645B1132] (reporting strategy default)>
+2026-11-08 00:29:29.797 Df Clearcut[17857:cad0] [com.apple.network:activity] Set activity <nw_activity 50:1 [48CDB028-A425-4780-B3D2-73D5073C69F8] (reporting strategy default)> as the global parent
+2026-11-08 00:29:29.810 Df Clearcut[17857:cad0] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x104e06440; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
+2026-11-08 00:29:30.103 Df Clearcut[17857:cad0] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:29:30.107 Df Clearcut[17857:cad0] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:29:30.161 Df Clearcut[17857:cad0] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:29:30.161 Df Clearcut[17857:cad0] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:29:30.162 Df Clearcut[17857:cad0] [PrototypeTools:domain] Not observing PTDefaults on customer install.
+2026-11-08 00:29:30.193 Df Clearcut[17857:cad0] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:29:30.193 Df Clearcut[17857:cad0] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: BEBD4D1C-39F6-4279-B960-034D1DC86772
+2026-11-08 00:29:30.238 Df Clearcut[17857:cad0] [com.apple.network:activity] <nw_activity 50:1 [48CDB028-A425-4780-B3D2-73D5073C69F8] (global parent) (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 1796ms
+2026-11-08 00:29:30.238 Df Clearcut[17857:cad0] [com.apple.network:activity] <nw_activity 50:2 [3F316868-E3A6-4CD4-BA86-E348645B1132] (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 1797ms
+2026-11-08 00:29:30.238 Df Clearcut[17857:cad0] [com.apple.network:activity] Unsetting the global parent activity <nw_activity 50:1 [48CDB028-A425-4780-B3D2-73D5073C69F8] (global parent) (reporting strategy default) complete (reason success)>
+2026-11-08 00:30:12.314 Df Clearcut[17857:cad0] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-08 00:30:12.314 Df Clearcut[17857:cad0] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
