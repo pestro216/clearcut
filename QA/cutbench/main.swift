@@ -111,11 +111,12 @@ func runNetworkOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
     return Output(alpha: seg.prob.resized(width: photo.width, height: photo.height).toBytes(), fg: photo, seconds: t, confidence: "", notes: [:])
 }
 func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true, linear: Bool = true,
-            surface: Bool = false, useNetwork: Bool = true) throws -> Output? {
+            surface: Bool = false, useNetwork: Bool = true, tweak: (inout MatteOptions) -> Void = { _ in }) throws -> Output? {
     let start = Date()
     guard let seg = try Segmenter.segment(cg, zoom: zoom, network: useNetwork ? network : nil) else { return nil }
     var o = MatteOptions(); o.colourEvidence = colour; o.guidedRefinement = guided; o.linearEdges = linear
     o.surfaceEvidence = surface; o.surface = surface ? batchSurface : nil
+    tweak(&o)
     let m = Matting.refine(full: photo, segmentation: seg, options: o)
     if surface, let l = m.learnedSurface { batchSurface = l }
     if case .failed(let why) = m.confidence { lastFailure = why; return nil }
@@ -129,6 +130,10 @@ let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
     ("Apple model only", runModelOnly),
     ("previous app", { try runNew($0, $1, useNetwork: false) }),
     ("BiRefNet only", runNetworkOnly),
+    ("edges: tight levels", { try runNew($0, $1, tweak: { $0.levelsLow = 0.10; $0.levelsHigh = 0.90 }) }),
+    ("edges: radius 3", { try runNew($0, $1, tweak: { $0.guidedRadius = 3 }) }),
+    ("edges: radius 3, tight levels", { try runNew($0, $1, tweak: { $0.guidedRadius = 3; $0.levelsLow = 0.10; $0.levelsHigh = 0.90 }) }),
+    ("edges: radius 8, finer eps", { try runNew($0, $1, tweak: { $0.guidedRadius = 8; $0.guidedEps = 0.0008 }) }),
     ("new", { try runNew($0, $1) }),
 ]
 let shipping = "new"
