@@ -163,7 +163,7 @@ public enum Matting {
 
         // Confidence.
         var confidence: Confidence = .good
-        if surfaceOutcome == .fillsFrame || areaFrac > 0.97 {
+        if surfaceOutcome == .fillsFrame || areaFrac > 0.995 {
             confidence = .failed("Nothing to remove, the item fills the photo")
         } else if areaFrac < 0.002 {
             confidence = .failed("The item is too small to cut out reliably")

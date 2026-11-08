@@ -128,11 +128,7 @@ func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool =
 let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
     ("Apple model only", runModelOnly),
     ("previous app", { try runNew($0, $1, useNetwork: false) }),
-    ("previous app + surface model", { try runNew($0, $1, surface: true, useNetwork: false) }),
     ("BiRefNet only", runNetworkOnly),
-    ("new: no zoom pass", { try runNew($0, $1, zoom: false) }),
-    ("new: no colour evidence", { try runNew($0, $1, colour: false) }),
-    ("new: no edge refinement", { try runNew($0, $1, guided: false) }),
     ("new", { try runNew($0, $1) }),
 ]
 let shipping = "new"
