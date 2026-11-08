@@ -998,143 +998,143 @@
   },
   "timings" : {
     "01_navy_shirt_on_white" : {
-      "Apple model only" : 1.9154670238494873,
-      "BiRefNet only" : 6.4042229652404785,
-      "new" : 15.098686933517456,
-      "new: no colour evidence" : 14.220314025878906,
-      "new: no edge refinement" : 14.071941018104553,
-      "new: no zoom pass" : 9.647880911827087,
-      "previous app" : 4.885991096496582,
-      "previous app + surface model" : 5.3962990045547485
+      "Apple model only" : 1.2732419967651367,
+      "BiRefNet only" : 4.6005460023880005,
+      "new" : 10.863124012947083,
+      "new: no colour evidence" : 11.15372097492218,
+      "new: no edge refinement" : 9.827583909034729,
+      "new: no zoom pass" : 6.356701016426086,
+      "previous app" : 3.260283946990967,
+      "previous app + surface model" : 3.414323925971985
     },
     "02_white_on_white" : {
-      "Apple model only" : 0.8125030994415283,
-      "BiRefNet only" : 5.62534499168396,
-      "new" : 12.908528089523315,
-      "new: no colour evidence" : 12.481077909469604,
-      "new: no edge refinement" : 12.745972990989685,
-      "new: no zoom pass" : 6.775520086288452,
-      "previous app" : 2.530371904373169,
-      "previous app + surface model" : 3.194550037384033
+      "Apple model only" : 0.6304160356521606,
+      "BiRefNet only" : 4.400267004966736,
+      "new" : 9.4255690574646,
+      "new: no colour evidence" : 9.08814001083374,
+      "new: no edge refinement" : 9.458847999572754,
+      "new: no zoom pass" : 5.015433073043823,
+      "previous app" : 2.062053084373474,
+      "previous app + surface model" : 2.3231139183044434
     },
     "03_black_on_dark_wood" : {
-      "Apple model only" : 0.8809709548950195,
-      "BiRefNet only" : 11.868463039398193,
-      "new" : 16.824599027633667,
-      "new: no colour evidence" : 18.395415902137756,
-      "new: no edge refinement" : 16.875274896621704,
-      "new: no zoom pass" : 13.686971068382263,
-      "previous app" : 2.812243938446045,
-      "previous app + surface model" : 3.636546015739441
+      "Apple model only" : 0.6478298902511597,
+      "BiRefNet only" : 8.376077055931091,
+      "new" : 13.881124019622803,
+      "new: no colour evidence" : 13.278223991394043,
+      "new: no edge refinement" : 13.218389987945557,
+      "new: no zoom pass" : 9.442953944206238,
+      "previous app" : 1.920009970664978,
+      "previous app + surface model" : 2.5767860412597656
     },
     "04_watch_thin_straps" : {
-      "Apple model only" : 0.7410780191421509,
-      "BiRefNet only" : 10.674057006835938,
-      "new" : 17.15906000137329,
-      "new: no colour evidence" : 17.03337299823761,
-      "new: no edge refinement" : 16.02881908416748,
-      "new: no zoom pass" : 11.857185959815979,
-      "previous app" : 2.6308510303497314,
-      "previous app + surface model" : 2.546183943748474
+      "Apple model only" : 0.6745070219039917,
+      "BiRefNet only" : 8.368005990982056,
+      "new" : 13.854345917701721,
+      "new: no colour evidence" : 13.616822004318237,
+      "new: no edge refinement" : 13.191003918647766,
+      "new: no zoom pass" : 9.315920948982239,
+      "previous app" : 2.221466064453125,
+      "previous app + surface model" : 2.387186050415039
     },
     "05_fine_chain_on_marble" : {
-      "BiRefNet only" : 11.28933596611023
+      "BiRefNet only" : 8.30181896686554
     },
     "06_mug_handle_gap" : {
-      "Apple model only" : 0.7590659856796265,
-      "BiRefNet only" : 5.544993042945862,
-      "new" : 11.433236956596375,
-      "new: no colour evidence" : 11.545038938522339,
-      "new: no edge refinement" : 10.893247961997986,
-      "new: no zoom pass" : 6.797149896621704,
-      "previous app" : 2.321540951728821,
-      "previous app + surface model" : 2.8550950288772583
+      "Apple model only" : 0.6385819911956787,
+      "BiRefNet only" : 4.122250080108643,
+      "new" : 9.390147089958191,
+      "new: no colour evidence" : 9.169471025466919,
+      "new: no edge refinement" : 8.916507005691528,
+      "new: no zoom pass" : 5.358743071556091,
+      "previous app" : 2.1529300212860107,
+      "previous app + surface model" : 2.311661958694458
     },
     "07_reflective_bottle" : {
-      "Apple model only" : 0.8075209856033325,
-      "BiRefNet only" : 10.585078954696655,
-      "new" : 16.67104709148407,
-      "new: no colour evidence" : 16.18491804599762,
-      "new: no edge refinement" : 16.070855021476746,
-      "new: no zoom pass" : 12.291844010353088,
-      "previous app" : 2.5932600498199463,
-      "previous app + surface model" : 2.63126003742218
+      "Apple model only" : 0.739698052406311,
+      "BiRefNet only" : 8.803303003311157,
+      "new" : 13.903710007667542,
+      "new: no colour evidence" : 13.300256967544556,
+      "new: no edge refinement" : 13.453662037849426,
+      "new: no zoom pass" : 9.809841990470886,
+      "previous app" : 2.1404190063476562,
+      "previous app + surface model" : 2.221811056137085
     },
     "08_fuzzy_knit_edge" : {
-      "Apple model only" : 0.7634910345077515,
-      "BiRefNet only" : 5.185760021209717,
-      "new" : 11.58144998550415,
-      "new: no colour evidence" : 11.7100510597229,
-      "new: no edge refinement" : 10.851561069488525,
-      "new: no zoom pass" : 7.0006409883499146,
-      "previous app" : 2.47814404964447,
-      "previous app + surface model" : 2.702807068824768
+      "Apple model only" : 0.6479780673980713,
+      "BiRefNet only" : 4.37222695350647,
+      "new" : 9.637225031852722,
+      "new: no colour evidence" : 9.197983980178833,
+      "new: no edge refinement" : 8.99354100227356,
+      "new: no zoom pass" : 5.421811938285828,
+      "previous app" : 1.9818919897079468,
+      "previous app + surface model" : 2.3070900440216064
     },
     "09_sunglasses_gaps" : {
-      "Apple model only" : 0.7783349752426147,
-      "BiRefNet only" : 10.291684985160828,
-      "new" : 16.196323037147522,
-      "new: no colour evidence" : 15.883288025856018,
-      "new: no edge refinement" : 15.99938702583313,
-      "new: no zoom pass" : 11.229856967926025,
-      "previous app" : 2.4450490474700928,
-      "previous app + surface model" : 2.278417944908142
+      "Apple model only" : 0.6363750696182251,
+      "BiRefNet only" : 8.423385977745056,
+      "new" : 13.75365400314331,
+      "new: no colour evidence" : 13.228718996047974,
+      "new: no edge refinement" : 13.246194005012512,
+      "new: no zoom pass" : 9.351026058197021,
+      "previous app" : 1.9492559432983398,
+      "previous app + surface model" : 2.272840976715088
     },
     "10_comb_narrow_teeth" : {
-      "Apple model only" : 0.7869900465011597,
-      "BiRefNet only" : 10.41202199459076,
-      "new" : 16.908767104148865,
-      "new: no colour evidence" : 16.42058002948761,
-      "new: no edge refinement" : 15.605433940887451,
-      "new: no zoom pass" : 11.619423031806946,
-      "previous app" : 2.2399970293045044,
-      "previous app + surface model" : 3.1674129962921143
+      "Apple model only" : 0.6869509220123291,
+      "BiRefNet only" : 8.67542290687561,
+      "new" : 14.111897945404053,
+      "new: no colour evidence" : 13.735087990760803,
+      "new: no edge refinement" : 13.45975399017334,
+      "new: no zoom pass" : 9.563665986061096,
+      "previous app" : 2.2447890043258667,
+      "previous app + surface model" : 2.632833957672119
     },
     "11_red_shirt_24mp" : {
-      "Apple model only" : 0.8328900337219238,
-      "BiRefNet only" : 5.646339058876038,
-      "new" : 15.282003045082092,
-      "new: no colour evidence" : 14.230906963348389,
-      "new: no edge refinement" : 13.600236058235168,
-      "new: no zoom pass" : 9.864683032035828,
-      "previous app" : 5.607473969459534,
-      "previous app + surface model" : 6.139057040214539
+      "Apple model only" : 0.8688949346542358,
+      "BiRefNet only" : 7.635653018951416,
+      "new" : 13.805917024612427,
+      "new: no colour evidence" : 13.963566899299622,
+      "new: no edge refinement" : 10.892184019088745,
+      "new: no zoom pass" : 11.047773957252502,
+      "previous app" : 5.865525960922241,
+      "previous app + surface model" : 7.6523730754852295
     },
     "12_striped_shirt_on_carpet" : {
-      "Apple model only" : 0.7694889307022095,
-      "BiRefNet only" : 5.482102036476135,
-      "new" : 7.368349075317383,
-      "new: no colour evidence" : 7.248719930648804,
-      "new: no edge refinement" : 6.677623987197876,
-      "new: no zoom pass" : 7.279257893562317,
-      "previous app" : 3.1716209650039673,
-      "previous app + surface model" : 3.6965529918670654
+      "Apple model only" : 0.6695280075073242,
+      "BiRefNet only" : 5.505496025085449,
+      "new" : 7.155285954475403,
+      "new: no colour evidence" : 6.800404906272888,
+      "new: no edge refinement" : 6.797309041023254,
+      "new: no zoom pass" : 7.776749968528748,
+      "previous app" : 3.1729400157928467,
+      "previous app + surface model" : 4.031038045883179
     },
     "13_leather_vest_cropped_lining" : {
-      "Apple model only" : 0.7209459543228149,
-      "BiRefNet only" : 10.600018978118896,
-      "new" : 12.944061994552612,
-      "new: no colour evidence" : 12.602527976036072,
-      "new: no edge refinement" : 11.756054997444153,
-      "new: no zoom pass" : 12.59463095664978,
-      "previous app" : 3.286687970161438,
-      "previous app + surface model" : 3.660979986190796
+      "Apple model only" : 0.9004260301589966,
+      "BiRefNet only" : 9.427175998687744,
+      "new" : 12.918421030044556,
+      "new: no colour evidence" : 11.45324695110321,
+      "new: no edge refinement" : 10.726312041282654,
+      "new: no zoom pass" : 11.028849959373474,
+      "previous app" : 3.0639740228652954,
+      "previous app + surface model" : 3.440348982810974
     },
     "14_shirt_closeup_fills_frame" : {
-      "BiRefNet only" : 10.40123999118805,
-      "previous app + surface model" : 3.6274800300598145
+      "BiRefNet only" : 10.283149003982544,
+      "previous app + surface model" : 3.802156925201416
     },
     "15_shirt_cut_off_by_frame" : {
-      "Apple model only" : 0.8745499849319458,
-      "BiRefNet only" : 10.488749027252197,
-      "previous app" : 3.1375290155410767,
-      "previous app + surface model" : 3.634585976600647
+      "Apple model only" : 0.7198389768600464,
+      "BiRefNet only" : 8.38050901889801,
+      "previous app" : 3.5859090089797974,
+      "previous app + surface model" : 3.2936090230941772
     },
     "16_vest_closeup_corners" : {
-      "Apple model only" : 0.8286809921264648,
-      "BiRefNet only" : 10.414686918258667,
-      "previous app" : 3.591004967689514,
-      "previous app + surface model" : 4.016414999961853
+      "Apple model only" : 0.9614861011505127,
+      "BiRefNet only" : 12.216710925102234,
+      "previous app" : 4.514546036720276,
+      "previous app + surface model" : 5.583334922790527
     }
   }
 }
