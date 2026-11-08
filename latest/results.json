@@ -28,33 +28,6 @@
         "keptBackground" : 0.0008493542729693963,
         "missedItem" : 1.9216160021932046e-06
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.03855638928140924,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 4.39078264915808,
-        "edgeDeltaE95" : 25.542088104200584,
-        "iou" : 0.9994577015187879,
-        "keptBackground" : 0.00043844871783374945,
-        "missedItem" : 0.00010408753345213191
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.16334947057280017,
-        "boundaryF" : 0.9515012921397353,
-        "edgeDeltaE" : 20.00715316330569,
-        "edgeDeltaE95" : 57.487555100468825,
-        "iou" : 0.9964668732964882,
-        "keptBackground" : 0.0006584737500848714,
-        "missedItem" : 0.002876979424616926
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.07112527122495231,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 4.323871617206967,
-        "edgeDeltaE95" : 8.723556168158252,
-        "iou" : 0.9987953171553107,
-        "keptBackground" : 0.0012048532333751392,
-        "missedItem" : 1.2810773347954697e-06
-      },
       "previous app" : {
         "bandMAE" : 0.08590261060508549,
         "boundaryF" : 1,
@@ -63,15 +36,6 @@
         "iou" : 0.9987799830208439,
         "keptBackground" : 0.0012215072387274802,
         "missedItem" : 0
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.036469201679716574,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 3.0180575353007533,
-        "edgeDeltaE95" : 9.287441332990788,
-        "iou" : 0.9987006531281248,
-        "keptBackground" : 0.0012215072387274802,
-        "missedItem" : 7.942679475731911e-05
       }
     },
     "02_white_on_white" : {
@@ -102,43 +66,7 @@
         "keptBackground" : 1.3465075633329832e-06,
         "missedItem" : 0.002167877176966103
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.17092769065783323,
-        "boundaryF" : 0.9971658368441211,
-        "edgeDeltaE" : 10.682697358379565,
-        "edgeDeltaE95" : 21.079851159371717,
-        "iou" : 0.9978307792363428,
-        "keptBackground" : 1.3465075633329832e-06,
-        "missedItem" : 0.002167877176966103
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.055833760894708324,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 3.5435374265392108,
-        "edgeDeltaE95" : 17.968065454103275,
-        "iou" : 0.9960882163554411,
-        "keptBackground" : 0.0037405980109390274,
-        "missedItem" : 0.00018581804373995169
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.17709032933161772,
-        "boundaryF" : 0.9974242424242423,
-        "edgeDeltaE" : 10.860897410367556,
-        "edgeDeltaE95" : 22.586307264054003,
-        "iou" : 0.9971063552463975,
-        "keptBackground" : 0,
-        "missedItem" : 0.002893644753602581
-      },
       "previous app" : {
-        "bandMAE" : 0.1524205647699961,
-        "boundaryF" : 0.9987651824061177,
-        "edgeDeltaE" : 9.389840860711509,
-        "edgeDeltaE95" : 20.860615381780608,
-        "iou" : 0.997888903549281,
-        "keptBackground" : 0.00010772060506663866,
-        "missedItem" : 0.002003603254239479
-      },
-      "previous app + surface model" : {
         "bandMAE" : 0.1524205647699961,
         "boundaryF" : 0.9987651824061177,
         "edgeDeltaE" : 9.389840860711509,
@@ -176,33 +104,6 @@
         "keptBackground" : 0.0003594047480281307,
         "missedItem" : 0.00024122210565852016
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.08296584776498339,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 8.860710229589275,
-        "edgeDeltaE95" : 25.12467376066322,
-        "iou" : 0.9993995889369002,
-        "keptBackground" : 0.0003594047480281307,
-        "missedItem" : 0.00024122210565852016
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.0253376599424235,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 2.0763885295816236,
-        "edgeDeltaE95" : 12.377118905791699,
-        "iou" : 0.9987123199917174,
-        "keptBackground" : 0.0007738534664749841,
-        "missedItem" : 0.0005148230174457008
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.09782644916007638,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 10.382516824794983,
-        "edgeDeltaE95" : 27.752471272635017,
-        "iou" : 0.9993332729179343,
-        "keptBackground" : 0.00041444871844685343,
-        "missedItem" : 0.0002525546878035513
-      },
       "previous app" : {
         "bandMAE" : 0.09974099150266387,
         "boundaryF" : 0.9969184085761755,
@@ -211,15 +112,6 @@
         "iou" : 0.9987078745263689,
         "keptBackground" : 0.0010895468262294233,
         "missedItem" : 0.00020398647861056068
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.06874960462667255,
-        "boundaryF" : 0.9985923493058476,
-        "edgeDeltaE" : 8.471440560875859,
-        "edgeDeltaE95" : 25.19347326799618,
-        "iou" : 0.9993785321706706,
-        "keptBackground" : 0.0003302638225123363,
-        "missedItem" : 0.00029140925515794383
       }
     },
     "04_watch_thin_straps" : {
@@ -250,43 +142,7 @@
         "keptBackground" : 0.001547231588530169,
         "missedItem" : 0
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.01730154190370032,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 2.366152357657139,
-        "edgeDeltaE95" : 7.063274140982495,
-        "iou" : 0.9984551586388231,
-        "keptBackground" : 0.001547231588530169,
-        "missedItem" : 0
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.011640397251356223,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 2.028843029922405,
-        "edgeDeltaE95" : 6.692820465483198,
-        "iou" : 0.9987029578031543,
-        "keptBackground" : 0.00010158591237824343,
-        "missedItem" : 0.0011955880456824034
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.03269473405102809,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 2.9190383296262925,
-        "edgeDeltaE95" : 7.930259960003363,
-        "iou" : 0.9982409541751012,
-        "keptBackground" : 0.001750403413286656,
-        "missedItem" : 1.1721451428258856e-05
-      },
       "previous app" : {
-        "bandMAE" : 0.0384477136596438,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 3.3253639588943273,
-        "edgeDeltaE95" : 8.61469522706514,
-        "iou" : 0.997956820282068,
-        "keptBackground" : 0.002039532548517041,
-        "missedItem" : 7.814300952172571e-06
-      },
-      "previous app + surface model" : {
         "bandMAE" : 0.0384477136596438,
         "boundaryF" : 1,
         "edgeDeltaE" : 3.3253639588943273,
@@ -335,47 +191,11 @@
         "keptBackground" : 0.00045609471977910225,
         "missedItem" : 0.0001895258463946945
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.028161774545216813,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 1.9850165480581383,
-        "edgeDeltaE95" : 6.793055936216704,
-        "iou" : 0.9993546737637151,
-        "keptBackground" : 0.00045609471977910225,
-        "missedItem" : 0.0001895258463946945
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.048386680738436445,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 3.23210836954913,
-        "edgeDeltaE95" : 18.092012598030134,
-        "iou" : 0.9947214498990143,
-        "keptBackground" : 0.004753554765265305,
-        "missedItem" : 0.0005500872127065523
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.02862485944875612,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 1.9995505877430997,
-        "edgeDeltaE95" : 6.446759013448161,
-        "iou" : 0.9995685623727837,
-        "keptBackground" : 7.704302698971321e-06,
-        "missedItem" : 0.0004237366484434227
-      },
       "previous app" : {
         "bandMAE" : 0.04084150907064322,
         "boundaryF" : 1,
         "edgeDeltaE" : 2.7798355892313813,
         "edgeDeltaE95" : 7.829781496299869,
-        "iou" : 0.9995300397077925,
-        "keptBackground" : 4.622581619382793e-06,
-        "missedItem" : 0.0004653398830178678
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.0376248007154391,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 2.6094814752608686,
-        "edgeDeltaE95" : 7.782878990733284,
         "iou" : 0.9995300397077925,
         "keptBackground" : 4.622581619382793e-06,
         "missedItem" : 0.0004653398830178678
@@ -409,43 +229,7 @@
         "keptBackground" : 0.004033348849337971,
         "missedItem" : 0.00041673876328507126
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.08641212806561094,
-        "boundaryF" : 0.999132560523618,
-        "edgeDeltaE" : 4.835067318821271,
-        "edgeDeltaE95" : 14.488825058357246,
-        "iou" : 0.9973063776614107,
-        "keptBackground" : 0.0024687506854255974,
-        "missedItem" : 0.0002315215351583729
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.0805801191276459,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 4.158903717235696,
-        "edgeDeltaE95" : 15.346574725457268,
-        "iou" : 0.9975467372091157,
-        "keptBackground" : 0.002339586039495137,
-        "missedItem" : 0.00011941637076589761
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.11544627029886592,
-        "boundaryF" : 0.9242847627843234,
-        "edgeDeltaE" : 5.897784050921481,
-        "edgeDeltaE95" : 19.314550126937142,
-        "iou" : 0.9940463642113068,
-        "keptBackground" : 0.005751482347092211,
-        "missedItem" : 0.00023639567274065445
-      },
       "previous app" : {
-        "bandMAE" : 0.11247665328683859,
-        "boundaryF" : 0.9421285644121355,
-        "edgeDeltaE" : 5.800856971694417,
-        "edgeDeltaE95" : 18.35183669551754,
-        "iou" : 0.9947913509266691,
-        "keptBackground" : 0.005025235847332263,
-        "missedItem" : 0.000209587916038106
-      },
-      "previous app + surface model" : {
         "bandMAE" : 0.11247665328683859,
         "boundaryF" : 0.9421285644121355,
         "edgeDeltaE" : 5.800856971694417,
@@ -483,33 +267,6 @@
         "keptBackground" : 0.0002445074206529232,
         "missedItem" : 0.0012299017846095835
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.04325340976368863,
-        "boundaryF" : 0.9996327579875138,
-        "edgeDeltaE" : 3.3224237746413583,
-        "edgeDeltaE95" : 12.513786465913924,
-        "iou" : 0.9987987492860213,
-        "keptBackground" : 0.000553824037141561,
-        "missedItem" : 0.0006480919583571458
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.06198717395141837,
-        "boundaryF" : 0.9995349998129068,
-        "edgeDeltaE" : 3.8952519754545305,
-        "edgeDeltaE95" : 15.20040603509406,
-        "iou" : 0.9957061460643829,
-        "keptBackground" : 0.004059412357346122,
-        "missedItem" : 0.00025187210199789075
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.04723309472182375,
-        "boundaryF" : 0.9989154013015185,
-        "edgeDeltaE" : 3.4672435594055298,
-        "edgeDeltaE95" : 12.839907636564531,
-        "iou" : 0.998349181291114,
-        "keptBackground" : 0.00020768401392808536,
-        "missedItem" : 0.001443477543613643
-      },
       "previous app" : {
         "bandMAE" : 0.051227717210739286,
         "boundaryF" : 0.9977451068819337,
@@ -517,15 +274,6 @@
         "edgeDeltaE95" : 12.501780494969308,
         "iou" : 0.9982137177055477,
         "keptBackground" : 0.00021799456781103994,
-        "missedItem" : 0.0015686771264780915
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.03757948205666868,
-        "boundaryF" : 0.9982772690180434,
-        "edgeDeltaE" : 2.326375755644199,
-        "edgeDeltaE95" : 9.227105589090089,
-        "iou" : 0.9982431182662684,
-        "keptBackground" : 0.0001885358424311697,
         "missedItem" : 0.0015686771264780915
       }
     },
@@ -557,43 +305,7 @@
         "keptBackground" : 0.0027262445100544957,
         "missedItem" : 0.023052630032756063
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.12392092333693439,
-        "boundaryF" : 0.786020846106683,
-        "edgeDeltaE" : 7.649725275268336,
-        "edgeDeltaE95" : 62.16529370643577,
-        "iou" : 0.9749929598948678,
-        "keptBackground" : 0.0014953216116570455,
-        "missedItem" : 0.02354911206098797
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.16083995681848828,
-        "boundaryF" : 0.7837837837837839,
-        "edgeDeltaE" : 10.772580689207611,
-        "edgeDeltaE95" : 62.16529370643577,
-        "iou" : 0.9712597107474413,
-        "keptBackground" : 0.0006081170404970696,
-        "missedItem" : 0.02814964967170493
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.1416534567215101,
-        "boundaryF" : 0.7848619161268326,
-        "edgeDeltaE" : 8.566134982390912,
-        "edgeDeltaE95" : 62.16529370643577,
-        "iou" : 0.9738231547505747,
-        "keptBackground" : 0.0032021621939217672,
-        "missedItem" : 0.023058505559717387
-      },
       "previous app" : {
-        "bandMAE" : 0.14617001503752947,
-        "boundaryF" : 0.7857726901062959,
-        "edgeDeltaE" : 8.507113408594906,
-        "edgeDeltaE95" : 62.16529370643577,
-        "iou" : 0.973683517062673,
-        "keptBackground" : 0.003349050367954876,
-        "missedItem" : 0.023055567796236725
-      },
-      "previous app + surface model" : {
         "bandMAE" : 0.14617001503752947,
         "boundaryF" : 0.7857726901062959,
         "edgeDeltaE" : 8.507113408594906,
@@ -631,33 +343,6 @@
         "keptBackground" : 0.04697380151958401,
         "missedItem" : 0.05553541888193935
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.23817960472120073,
-        "boundaryF" : 0.8837989334422383,
-        "edgeDeltaE" : 13.695408645411305,
-        "edgeDeltaE95" : 51.51067545089275,
-        "iou" : 0.7498629684765209,
-        "keptBackground" : 0.10316371001128607,
-        "missedItem" : 0.17277838569536516
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.20387054918512035,
-        "boundaryF" : 0.8347632964211982,
-        "edgeDeltaE" : 12.977704147809465,
-        "edgeDeltaE95" : 44.370020782856606,
-        "iou" : 0.8463247943779028,
-        "keptBackground" : 0.057440481814293294,
-        "missedItem" : 0.10506190166164776
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.10529507445620719,
-        "boundaryF" : 0.9025612024718853,
-        "edgeDeltaE" : 6.909356663456035,
-        "edgeDeltaE95" : 33.84960834209596,
-        "iou" : 0.9020899852004503,
-        "keptBackground" : 0.04697380151958401,
-        "missedItem" : 0.05553541888193935
-      },
       "previous app" : {
         "bandMAE" : 0.05041623266707851,
         "boundaryF" : 1,
@@ -666,15 +351,6 @@
         "iou" : 0.9870591646446611,
         "keptBackground" : 0.013103534759238868,
         "missedItem" : 6.871281992259501e-06
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.05101302219684469,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 3.023099016286362,
-        "edgeDeltaE95" : 7.453160165913338,
-        "iou" : 0.9870557514921324,
-        "keptBackground" : 0.013101816938740803,
-        "missedItem" : 1.2024743486454126e-05
       }
     },
     "11_red_shirt_24mp" : {
@@ -705,47 +381,11 @@
         "keptBackground" : 0.0003799193249850011,
         "missedItem" : 6.558036227166546e-05
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.04607932862763165,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 3.4518869948543935,
-        "edgeDeltaE95" : 10.003229119934332,
-        "iou" : 0.9995546695024053,
-        "keptBackground" : 0.0003799193249850011,
-        "missedItem" : 6.558036227166546e-05
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.1195036077345136,
-        "boundaryF" : 0.827129778349755,
-        "edgeDeltaE" : 10.445579499964202,
-        "edgeDeltaE95" : 51.11101942020628,
-        "iou" : 0.9968518070535022,
-        "keptBackground" : 0.0006029882944638047,
-        "missedItem" : 0.0025471029755294297
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.09062633018074143,
-        "boundaryF" : 1,
-        "edgeDeltaE" : 5.451521589332635,
-        "edgeDeltaE95" : 10.550803722942467,
-        "iou" : 0.9994211216907457,
-        "keptBackground" : 0.0005788942927532902,
-        "missedItem" : 3.191258504703915e-07
-      },
       "previous app" : {
         "bandMAE" : 0.10333174903735352,
         "boundaryF" : 0.999698652546386,
         "edgeDeltaE" : 5.747165587493676,
         "edgeDeltaE95" : 11.032922211768213,
-        "iou" : 0.9993937094726596,
-        "keptBackground" : 0.000606498678818979,
-        "missedItem" : 1.5956292523519575e-07
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.034713045011932196,
-        "boundaryF" : 0.999698652546386,
-        "edgeDeltaE" : 3.000195887415504,
-        "edgeDeltaE95" : 10.420794797377138,
         "iou" : 0.9993937094726596,
         "keptBackground" : 0.000606498678818979,
         "missedItem" : 1.5956292523519575e-07
@@ -779,33 +419,6 @@
         "keptBackground" : 0.0011075090367747794,
         "missedItem" : 0.0012369939241588955
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.0764669260958028,
-        "boundaryF" : 0.9500245607388537,
-        "edgeDeltaE" : 6.844673413234378,
-        "edgeDeltaE95" : 21.717427609762503,
-        "iou" : 0.998247924830057,
-        "keptBackground" : 0.0008451720427128706,
-        "missedItem" : 0.00090838393218053
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.15023436199119047,
-        "boundaryF" : 0.9566008221748192,
-        "edgeDeltaE" : 11.732413765576354,
-        "edgeDeltaE95" : 32.03068377296195,
-        "iou" : 0.99727377740725,
-        "keptBackground" : 0.0012914816545474832,
-        "missedItem" : 0.0014382618046673028
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.10229336638546686,
-        "boundaryF" : 0.9192590518074454,
-        "edgeDeltaE" : 8.608240991123846,
-        "edgeDeltaE95" : 29.969351698484896,
-        "iou" : 0.997658090724752,
-        "keptBackground" : 0.0011075090367747794,
-        "missedItem" : 0.0012369939241588955
-      },
       "previous app" : {
         "bandMAE" : 0.11322878447772747,
         "boundaryF" : 0.8905708229033765,
@@ -813,15 +426,6 @@
         "edgeDeltaE95" : 35.35627886734338,
         "iou" : 0.9969975985372117,
         "keptBackground" : 0.0017111596228775612,
-        "missedItem" : 0.0012963794280655585
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.11293049199145157,
-        "boundaryF" : 0.8922265823842762,
-        "edgeDeltaE" : 9.074886910358375,
-        "edgeDeltaE95" : 35.330569176559536,
-        "iou" : 0.9970064340581994,
-        "keptBackground" : 0.0017022824083760498,
         "missedItem" : 0.0012963794280655585
       }
     },
@@ -853,33 +457,6 @@
         "keptBackground" : 0.2534275210014725,
         "missedItem" : 0.0015249411381157729
       },
-      "new: no colour evidence" : {
-        "bandMAE" : 0.3728991058339258,
-        "boundaryF" : 0.33769013623061034,
-        "edgeDeltaE" : 17.17448155906273,
-        "edgeDeltaE95" : 42.84335161080193,
-        "iou" : 0.7965957681096035,
-        "keptBackground" : 0.2534275210014725,
-        "missedItem" : 0.0015249411381157729
-      },
-      "new: no edge refinement" : {
-        "bandMAE" : 0.40779629425471214,
-        "boundaryF" : 0.22040201622786468,
-        "edgeDeltaE" : 19.094792201581374,
-        "edgeDeltaE95" : 42.86430159100104,
-        "iou" : 0.7966330433809548,
-        "keptBackground" : 0.252744553321939,
-        "missedItem" : 0.0020222939082290034
-      },
-      "new: no zoom pass" : {
-        "bandMAE" : 0.3728991058339258,
-        "boundaryF" : 0.33769013623061034,
-        "edgeDeltaE" : 17.17448155906273,
-        "edgeDeltaE95" : 42.84335161080193,
-        "iou" : 0.7965957681096035,
-        "keptBackground" : 0.2534275210014725,
-        "missedItem" : 0.0015249411381157729
-      },
       "previous app" : {
         "bandMAE" : 0.1779694626317573,
         "boundaryF" : 0.8528746156270348,
@@ -888,15 +465,6 @@
         "iou" : 0.9914101376162532,
         "keptBackground" : 0.008602861649720652,
         "missedItem" : 6.089813170372961e-05
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.18178325510101462,
-        "boundaryF" : 0.8373023038553304,
-        "edgeDeltaE" : 8.23814404468498,
-        "edgeDeltaE95" : 39.48903488998082,
-        "iou" : 0.9913616866620474,
-        "keptBackground" : 0.008630660619255038,
-        "missedItem" : 8.220706944020339e-05
       }
     },
     "14_shirt_closeup_fills_frame" : {
@@ -908,15 +476,6 @@
         "iou" : 0.7367748233181696,
         "keptBackground" : 0.3559054310374753,
         "missedItem" : 0.0010030156112175754
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.06690904809398956,
-        "boundaryF" : 0.9548928716578785,
-        "edgeDeltaE" : 6.9153953939278,
-        "edgeDeltaE95" : 29.97552037712178,
-        "iou" : 0.9996290512387576,
-        "keptBackground" : 0.0002852725487700347,
-        "missedItem" : 8.578203397102058e-05
       }
     },
     "15_shirt_cut_off_by_frame" : {
@@ -939,15 +498,6 @@
         "missedItem" : 0.0009959247333107017
       },
       "previous app" : {
-        "bandMAE" : 0.10897379992475806,
-        "boundaryF" : 0.8133872107475834,
-        "edgeDeltaE" : 8.506948739858977,
-        "edgeDeltaE95" : 34.27639070294011,
-        "iou" : 0.9760310953094737,
-        "keptBackground" : 0.024347278811206918,
-        "missedItem" : 0.0002052034846188381
-      },
-      "previous app + surface model" : {
         "bandMAE" : 0.10897379992475806,
         "boundaryF" : 0.8133872107475834,
         "edgeDeltaE" : 8.506948739858977,
@@ -984,157 +534,97 @@
         "iou" : 0.3520804903430867,
         "keptBackground" : 0,
         "missedItem" : 0.6479195096569134
-      },
-      "previous app + surface model" : {
-        "bandMAE" : 0.503228421386529,
-        "boundaryF" : 0,
-        "edgeDeltaE" : 19.151839233540723,
-        "edgeDeltaE95" : 46.262351802451995,
-        "iou" : 0.3520390368608027,
-        "keptBackground" : 0,
-        "missedItem" : 0.6479609631391973
       }
     }
   },
   "timings" : {
     "01_navy_shirt_on_white" : {
-      "Apple model only" : 1.2732419967651367,
-      "BiRefNet only" : 4.6005460023880005,
-      "new" : 10.863124012947083,
-      "new: no colour evidence" : 11.15372097492218,
-      "new: no edge refinement" : 9.827583909034729,
-      "new: no zoom pass" : 6.356701016426086,
-      "previous app" : 3.260283946990967,
-      "previous app + surface model" : 3.414323925971985
+      "Apple model only" : 2.5079020261764526,
+      "BiRefNet only" : 4.9778430461883545,
+      "new" : 11.371656060218811,
+      "previous app" : 4.351464033126831
     },
     "02_white_on_white" : {
-      "Apple model only" : 0.6304160356521606,
-      "BiRefNet only" : 4.400267004966736,
-      "new" : 9.4255690574646,
-      "new: no colour evidence" : 9.08814001083374,
-      "new: no edge refinement" : 9.458847999572754,
-      "new: no zoom pass" : 5.015433073043823,
-      "previous app" : 2.062053084373474,
-      "previous app + surface model" : 2.3231139183044434
+      "Apple model only" : 0.5178200006484985,
+      "BiRefNet only" : 4.26370108127594,
+      "new" : 8.999909043312073,
+      "previous app" : 1.8690639734268188
     },
     "03_black_on_dark_wood" : {
-      "Apple model only" : 0.6478298902511597,
-      "BiRefNet only" : 8.376077055931091,
-      "new" : 13.881124019622803,
-      "new: no colour evidence" : 13.278223991394043,
-      "new: no edge refinement" : 13.218389987945557,
-      "new: no zoom pass" : 9.442953944206238,
-      "previous app" : 1.920009970664978,
-      "previous app + surface model" : 2.5767860412597656
+      "Apple model only" : 0.6098829507827759,
+      "BiRefNet only" : 8.382996916770935,
+      "new" : 15.826413035392761,
+      "previous app" : 1.8216469287872314
     },
     "04_watch_thin_straps" : {
-      "Apple model only" : 0.6745070219039917,
-      "BiRefNet only" : 8.368005990982056,
-      "new" : 13.854345917701721,
-      "new: no colour evidence" : 13.616822004318237,
-      "new: no edge refinement" : 13.191003918647766,
-      "new: no zoom pass" : 9.315920948982239,
-      "previous app" : 2.221466064453125,
-      "previous app + surface model" : 2.387186050415039
+      "Apple model only" : 0.7278249263763428,
+      "BiRefNet only" : 9.944243907928467,
+      "new" : 15.7203049659729,
+      "previous app" : 2.4926739931106567
     },
     "05_fine_chain_on_marble" : {
-      "BiRefNet only" : 8.30181896686554
+      "BiRefNet only" : 9.50920295715332
     },
     "06_mug_handle_gap" : {
-      "Apple model only" : 0.6385819911956787,
-      "BiRefNet only" : 4.122250080108643,
-      "new" : 9.390147089958191,
-      "new: no colour evidence" : 9.169471025466919,
-      "new: no edge refinement" : 8.916507005691528,
-      "new: no zoom pass" : 5.358743071556091,
-      "previous app" : 2.1529300212860107,
-      "previous app + surface model" : 2.311661958694458
+      "Apple model only" : 0.7344338893890381,
+      "BiRefNet only" : 5.0610469579696655,
+      "new" : 10.955201029777527,
+      "previous app" : 2.376236081123352
     },
     "07_reflective_bottle" : {
-      "Apple model only" : 0.739698052406311,
-      "BiRefNet only" : 8.803303003311157,
-      "new" : 13.903710007667542,
-      "new: no colour evidence" : 13.300256967544556,
-      "new: no edge refinement" : 13.453662037849426,
-      "new: no zoom pass" : 9.809841990470886,
-      "previous app" : 2.1404190063476562,
-      "previous app + surface model" : 2.221811056137085
+      "Apple model only" : 0.7567790746688843,
+      "BiRefNet only" : 9.59279203414917,
+      "new" : 14.766098976135254,
+      "previous app" : 2.5350979566574097
     },
     "08_fuzzy_knit_edge" : {
-      "Apple model only" : 0.6479780673980713,
-      "BiRefNet only" : 4.37222695350647,
-      "new" : 9.637225031852722,
-      "new: no colour evidence" : 9.197983980178833,
-      "new: no edge refinement" : 8.99354100227356,
-      "new: no zoom pass" : 5.421811938285828,
-      "previous app" : 1.9818919897079468,
-      "previous app + surface model" : 2.3070900440216064
+      "Apple model only" : 0.7790729999542236,
+      "BiRefNet only" : 5.139685034751892,
+      "new" : 10.297047972679138,
+      "previous app" : 2.51295006275177
     },
     "09_sunglasses_gaps" : {
-      "Apple model only" : 0.6363750696182251,
-      "BiRefNet only" : 8.423385977745056,
-      "new" : 13.75365400314331,
-      "new: no colour evidence" : 13.228718996047974,
-      "new: no edge refinement" : 13.246194005012512,
-      "new: no zoom pass" : 9.351026058197021,
-      "previous app" : 1.9492559432983398,
-      "previous app + surface model" : 2.272840976715088
+      "Apple model only" : 0.5294020175933838,
+      "BiRefNet only" : 8.54226803779602,
+      "new" : 15.416501998901367,
+      "previous app" : 1.7666330337524414
     },
     "10_comb_narrow_teeth" : {
-      "Apple model only" : 0.6869509220123291,
-      "BiRefNet only" : 8.67542290687561,
-      "new" : 14.111897945404053,
-      "new: no colour evidence" : 13.735087990760803,
-      "new: no edge refinement" : 13.45975399017334,
-      "new: no zoom pass" : 9.563665986061096,
-      "previous app" : 2.2447890043258667,
-      "previous app + surface model" : 2.632833957672119
+      "Apple model only" : 0.6956889629364014,
+      "BiRefNet only" : 7.844475030899048,
+      "new" : 12.66522204875946,
+      "previous app" : 1.9724830389022827
     },
     "11_red_shirt_24mp" : {
-      "Apple model only" : 0.8688949346542358,
-      "BiRefNet only" : 7.635653018951416,
-      "new" : 13.805917024612427,
-      "new: no colour evidence" : 13.963566899299622,
-      "new: no edge refinement" : 10.892184019088745,
-      "new: no zoom pass" : 11.047773957252502,
-      "previous app" : 5.865525960922241,
-      "previous app + surface model" : 7.6523730754852295
+      "Apple model only" : 0.6911090612411499,
+      "BiRefNet only" : 3.8947900533676147,
+      "new" : 11.066359043121338,
+      "previous app" : 4.519601941108704
     },
     "12_striped_shirt_on_carpet" : {
-      "Apple model only" : 0.6695280075073242,
-      "BiRefNet only" : 5.505496025085449,
-      "new" : 7.155285954475403,
-      "new: no colour evidence" : 6.800404906272888,
-      "new: no edge refinement" : 6.797309041023254,
-      "new: no zoom pass" : 7.776749968528748,
-      "previous app" : 3.1729400157928467,
-      "previous app + surface model" : 4.031038045883179
+      "Apple model only" : 0.4861210584640503,
+      "BiRefNet only" : 3.9310749769210815,
+      "new" : 6.026381969451904,
+      "previous app" : 2.547018051147461
     },
     "13_leather_vest_cropped_lining" : {
-      "Apple model only" : 0.9004260301589966,
-      "BiRefNet only" : 9.427175998687744,
-      "new" : 12.918421030044556,
-      "new: no colour evidence" : 11.45324695110321,
-      "new: no edge refinement" : 10.726312041282654,
-      "new: no zoom pass" : 11.028849959373474,
-      "previous app" : 3.0639740228652954,
-      "previous app + surface model" : 3.440348982810974
+      "Apple model only" : 0.5860980749130249,
+      "BiRefNet only" : 7.668179035186768,
+      "new" : 10.140707015991211,
+      "previous app" : 2.7105050086975098
     },
     "14_shirt_closeup_fills_frame" : {
-      "BiRefNet only" : 10.283149003982544,
-      "previous app + surface model" : 3.802156925201416
+      "BiRefNet only" : 8.617179036140442
     },
     "15_shirt_cut_off_by_frame" : {
-      "Apple model only" : 0.7198389768600464,
-      "BiRefNet only" : 8.38050901889801,
-      "previous app" : 3.5859090089797974,
-      "previous app + surface model" : 3.2936090230941772
+      "Apple model only" : 0.569072961807251,
+      "BiRefNet only" : 7.741618037223816,
+      "previous app" : 2.7003649473190308
     },
     "16_vest_closeup_corners" : {
-      "Apple model only" : 0.9614861011505127,
-      "BiRefNet only" : 12.216710925102234,
-      "previous app" : 4.514546036720276,
-      "previous app + surface model" : 5.583334922790527
+      "Apple model only" : 0.5337059497833252,
+      "BiRefNet only" : 7.920060038566589,
+      "previous app" : 2.7976030111312866
     }
   }
 }
