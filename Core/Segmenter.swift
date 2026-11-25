@@ -165,7 +165,7 @@ public enum Segmenter {
             disputed[i] = !fg[i] && vision.data[i] > 0.6
         }
         guard fgCount > 0 else { return 0 }
-        let (labels, sizes) = Matting.label(disputed, width: w, height: h)
+        let (labels, sizes) = Regions.label(disputed, width: w, height: h)
         let count = sizes.count
         guard count > 1 else { return 0 }
         var minX = [Int](repeating: w, count: count), minY = [Int](repeating: h, count: count)
