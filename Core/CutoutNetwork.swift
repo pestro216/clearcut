@@ -79,6 +79,15 @@ public final class CutoutNetwork: @unchecked Sendable {
         return nil
     }
 
+    /// Frees the loaded model and the working memory it holds on to after a prediction (well over
+    /// a gigabyte for this network). It is loaded again, from the compiled cache, when next needed.
+    public func unload() {
+        lock.lock()
+        cpuModel = nil
+        gpuModel = nil
+        lock.unlock()
+    }
+
     // MARK: GPU trust
 
     private static var trustKey: String {

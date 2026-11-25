@@ -186,7 +186,9 @@ final class BatchStore: ObservableObject {
             }
             var options = MatteOptions()
             options.surface = surface
+            Diagnostics.note("matting starts")
             let matte = Matting.refine(full: photo, segmentation: seg, options: options)
+            Diagnostics.note("matting done")
             if case .failed(let why) = matte.confidence {
                 return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
                                  gridPhoto: gridPhoto, gridAlpha: nil, status: .failed(why + ", kept as the original"),

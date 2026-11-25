@@ -138,10 +138,19 @@ public enum Segmenter {
                 }
             }
         }
-        // A second opinion from Apple's subject finder, for parts the network dropped.
-        if let small = RGBAImage(cgImage: full, width: ww, height: wh), let cg = small.makeOpaqueCGImage(),
-           let vision = try? mask(of: cg, network: nil) {
+        Diagnostics.note("network done")
+        // The network keeps a lot of working memory after a prediction. Let it go before Apple's
+        // model loads: the two together went over an iPhone 11's memory limit.
+        network.unload()
+        Diagnostics.note("network unloaded")
+        // A second opinion from Apple's subject finder, for parts the network dropped. Skipped,
+        // rather than risk the app being closed, if memory is short anyway.
+        if Diagnostics.canSpare(450), let small = RGBAImage(cgImage: full, width: ww, height: wh),
+           let cg = small.makeOpaqueCGImage(), let vision = try? mask(of: cg, network: nil) {
             _ = recoverParts(&prob, vision: vision.prob, image: small)
+            Diagnostics.note("second opinion done")
+        } else {
+            Diagnostics.note("second opinion skipped")
         }
         return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed)
     }
