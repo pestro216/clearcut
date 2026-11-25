@@ -161,7 +161,7 @@ final class TouchUpCanvasView: UIView, UIGestureRecognizerDelegate {
     private let content = CALayer()
     private let ghost = CALayer()
     private let cut = CALayer()
-    private let mask = CALayer()
+    private let cutMask = CALayer()
     private let ring = CAShapeLayer()
     private let ringShade = CAShapeLayer()
 
@@ -197,9 +197,9 @@ final class TouchUpCanvasView: UIView, UIGestureRecognizerDelegate {
         }
         ghost.opacity = 0.28
         loupeGhost.opacity = 0.28
-        mask.contentsGravity = .resize
+        cutMask.contentsGravity = .resize
         loupeMask.contentsGravity = .resize
-        cut.mask = mask
+        cut.mask = cutMask
         loupeCut.mask = loupeMask
         content.addSublayer(ghost)
         content.addSublayer(cut)
@@ -288,7 +288,7 @@ final class TouchUpCanvasView: UIView, UIGestureRecognizerDelegate {
         maskDirty = false
         let img = model.maskImage()
         CATransaction.begin(); CATransaction.setDisableActions(true)
-        mask.contents = img
+        cutMask.contents = img
         loupeMask.contents = img
         CATransaction.commit()
     }
@@ -298,10 +298,10 @@ final class TouchUpCanvasView: UIView, UIGestureRecognizerDelegate {
         CATransaction.setDisableActions(!animated)
         if animated { CATransaction.setAnimationDuration(0.22) }
         let rect = CGRect(origin: .zero, size: fitSize)
-        for l in [content, ghost, cut, mask] { l.bounds = rect }
+        for l in [content, ghost, cut, cutMask] { l.bounds = rect }
         ghost.position = CGPoint(x: rect.midX, y: rect.midY)
         cut.position = ghost.position
-        mask.position = ghost.position
+        cutMask.position = ghost.position
         content.position = CGPoint(x: bounds.midX + offset.x, y: bounds.midY + offset.y)
         content.transform = CATransform3DMakeScale(scale, scale, 1)
         checker.frame = CGRect(x: content.position.x - fitSize.width * scale / 2, y: content.position.y - fitSize.height * scale / 2,
