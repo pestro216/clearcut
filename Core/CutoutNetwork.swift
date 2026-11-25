@@ -61,10 +61,16 @@ public final class CutoutNetwork: @unchecked Sendable {
         return try MLModel(contentsOf: compiledURL, configuration: config)
     }
 
-    /// The model bundled with the app, if present. Uses the GPU once it has been checked.
+    /// Whether the app tries the GPU. Off: on an iPhone 11 (2.3 GB app memory limit) holding the
+    /// GPU and CPU copies of the model for the first-photo check went over the limit and iOS closed
+    /// the app (phone log, 25 Nov 2026). Before turning it on again, measure memory on the phone
+    /// and run the check with only one copy loaded at a time.
+    public static let useGPU = false
+
+    /// The model bundled with the app, if present.
     public static func bundled() -> CutoutNetwork? {
         if let u = Bundle.main.url(forResource: "BiRefNetLite", withExtension: "mlmodelc"),
-           let n = try? CutoutNetwork(url: u, accelerate: true) {
+           let n = try? CutoutNetwork(url: u, accelerate: useGPU) {
             return n
         }
         if let p = ProcessInfo.processInfo.environment["CLEARCUT_MODEL"], let n = try? CutoutNetwork(url: URL(fileURLWithPath: p)) {

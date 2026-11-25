@@ -155,7 +155,10 @@ paint hid what it fixed, a second finger for zooming left paint dots, and pannin
 - **GPU** (`CutoutNetwork`, app only): the network was CPU-only. The app now tries the GPU, checks
   it against the CPU on the first photo per iOS version (outline IoU over 0.985, mean difference
   under 0.02), and keeps using it only if they agree; any non-finite or flat GPU output drops back
-  to the CPU for good. The bench stays on the CPU. Real speed-up still to be measured on the phone.
+  to the CPU for good. The bench stays on the CPU. **Switched off the same day** (`useGPU = false`):
+  on Mathew's iPhone 11 the app was closed by iOS for passing its 2348 MB memory limit during the
+  first-photo check (GPU and CPU copies of the model loaded together). Revisit with on-phone memory
+  measurements and one copy loaded at a time.
 - **Touch-up rebuilt** (`Clearcut/TouchUp.swift`): UIKit canvas at 2048 px. The item is shown cut out
   over a checkerboard with the removed part faint behind it, and strokes change the matte as you
   draw. One finger paints; two fingers pan and zoom and cancel the stroke they interrupted; a
