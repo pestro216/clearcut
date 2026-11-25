@@ -1,0 +1,110 @@
+{
+  "01_navy_shirt_on_white" : {
+    "bandMAE" : 0.06289439257455003,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 4.037464174839972,
+    "edgeDeltaE95" : 8.85052857597199,
+    "iou" : 0.9991494465322507,
+    "keptBackground" : 0.0008493542729693963,
+    "missedItem" : 1.9216160021932046e-06
+  },
+  "02_white_on_white" : {
+    "bandMAE" : 0.17361707197855886,
+    "boundaryF" : 0.9930248256206406,
+    "edgeDeltaE" : 10.75503243686678,
+    "edgeDeltaE95" : 20.691129400040747,
+    "iou" : 0.9974214414882658,
+    "keptBackground" : 1.3465075633329832e-06,
+    "missedItem" : 0.00257721547621933
+  },
+  "03_black_on_dark_wood" : {
+    "bandMAE" : 0.08888161253501539,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 10.135027790386966,
+    "edgeDeltaE95" : 27.06153618144667,
+    "iou" : 0.999556483594749,
+    "keptBackground" : 0.00016513191125616815,
+    "missedItem" : 0.00027845773270647966
+  },
+  "04_watch_thin_straps" : {
+    "bandMAE" : 0.01730154190370032,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 2.366152357657139,
+    "edgeDeltaE95" : 7.063274140982495,
+    "iou" : 0.9984551586388231,
+    "keptBackground" : 0.001547231588530169,
+    "missedItem" : 0
+  },
+  "06_mug_handle_gap" : {
+    "bandMAE" : 0.02271198940619966,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 1.6655723586739142,
+    "edgeDeltaE95" : 5.53093720781129,
+    "iou" : 0.9996687221302862,
+    "keptBackground" : 2.15720475571197e-05,
+    "missedItem" : 0.00030971296849864713
+  },
+  "07_reflective_bottle" : {
+    "bandMAE" : 0.10700316496529112,
+    "boundaryF" : 0.975170413360194,
+    "edgeDeltaE" : 5.6204083370279285,
+    "edgeDeltaE95" : 17.1366797742321,
+    "iou" : 0.995567789040351,
+    "keptBackground" : 0.004033348849337971,
+    "missedItem" : 0.00041673876328507126
+  },
+  "08_fuzzy_knit_edge" : {
+    "bandMAE" : 0.0468594230534189,
+    "boundaryF" : 0.9980969642048029,
+    "edgeDeltaE" : 3.562998206970382,
+    "edgeDeltaE95" : 13.134595910491761,
+    "iou" : 0.998525951210605,
+    "keptBackground" : 0.0002445074206529232,
+    "missedItem" : 0.0012299017846095835
+  },
+  "09_sunglasses_gaps" : {
+    "bandMAE" : 0.13887807233721955,
+    "boundaryF" : 0.786020846106683,
+    "edgeDeltaE" : 8.613673492737453,
+    "edgeDeltaE95" : 62.16529370643577,
+    "iou" : 0.9742912138941706,
+    "keptBackground" : 0.0027262445100544957,
+    "missedItem" : 0.023052630032756063
+  },
+  "10_comb_narrow_teeth" : {
+    "bandMAE" : 0.10529507445620719,
+    "boundaryF" : 0.9025612024718853,
+    "edgeDeltaE" : 6.909356663456035,
+    "edgeDeltaE95" : 33.84960834209596,
+    "iou" : 0.9020899852004503,
+    "keptBackground" : 0.04697380151958401,
+    "missedItem" : 0.05553541888193935
+  },
+  "11_red_shirt_24mp" : {
+    "bandMAE" : 0.04607932862763165,
+    "boundaryF" : 1,
+    "edgeDeltaE" : 3.4518869948543935,
+    "edgeDeltaE95" : 10.003229119934332,
+    "iou" : 0.9995546695024053,
+    "keptBackground" : 0.0003799193249850011,
+    "missedItem" : 6.558036227166546e-05
+  },
+  "12_striped_shirt_on_carpet" : {
+    "bandMAE" : 0.10229336638546686,
+    "boundaryF" : 0.9192590518074454,
+    "edgeDeltaE" : 8.608240991123846,
+    "edgeDeltaE95" : 29.969351698484896,
+    "iou" : 0.997658090724752,
+    "keptBackground" : 0.0011075090367747794,
+    "missedItem" : 0.0012369939241588955
+  },
+  "13_leather_vest_cropped_lining" : {
+    "bandMAE" : 0.3728991058339258,
+    "boundaryF" : 0.33769013623061034,
+    "edgeDeltaE" : 17.17448155906273,
+    "edgeDeltaE95" : 42.84335161080193,
+    "iou" : 0.7965957681096035,
+    "keptBackground" : 0.2534275210014725,
+    "missedItem" : 0.0015249411381157729
+  }
+}
