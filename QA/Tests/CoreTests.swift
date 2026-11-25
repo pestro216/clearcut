@@ -165,4 +165,87 @@ final class CoreTests: XCTestCase {
         XCTAssertGreaterThan(bg.pixels[(75 * 300 + 100) * 4], 200)   // left half red
         XCTAssertLessThan(bg.pixels[(75 * 300 + 200) * 4], 50)       // right half black
     }
+
+    // MARK: Touch-up brush
+
+    func testSmartBrushStopsAtAColourEdge() {
+        // Grey on the left, brown on the right; a restore stroke started on grey runs across both.
+        let w = 120, h = 40
+        let photo = stepImage(w: w, h: h, edgeX: 60, left: (150, 150, 150), right: (120, 80, 50))
+        var alpha = [UInt8](repeating: 0, count: w * h)
+        let ref = Brush.sample(photo, at: CGPoint(x: 30, y: 20), radius: 4)
+        let stroke = BrushStroke(points: [CGPoint(x: 0.25, y: 0.5), CGPoint(x: 0.75, y: 0.5)], radius: 10 / 120,
+                                 erase: false, reference: ref, tolerance: Brush.smartTolerance)
+        Brush.apply([stroke], to: &alpha, width: w, height: h, photo: photo)
+        XCTAssertEqual(alpha[20 * w + 40], 255, "grey restored")
+        XCTAssertEqual(alpha[20 * w + 80], 0, "brown left alone")
+        // The same stroke without the smart test paints both.
+        var plain = [UInt8](repeating: 0, count: w * h)
+        Brush.apply([BrushStroke(points: stroke.points, radius: stroke.radius, erase: false)], to: &plain, width: w, height: h)
+        XCTAssertEqual(plain[20 * w + 80], 255)
+    }
+
+    func testBrushReplayMatchesLivePainting() {
+        // The touch-up screen paints a dab, then piece by piece; Apply replays the stored stroke.
+        let w = 256, h = 128   // powers of two, so the stored fractions are exact
+        var live = [UInt8](repeating: 0, count: w * h)
+        let pts = [CGPoint(x: 20, y: 30), CGPoint(x: 90, y: 60), CGPoint(x: 160, y: 40)]
+        Brush.segment(&live, w, h, from: pts[0], to: pts[0], radius: 7, erase: false, gate: nil)
+        Brush.segment(&live, w, h, from: pts[0], to: pts[1], radius: 7, erase: false, gate: nil)
+        Brush.segment(&live, w, h, from: pts[1], to: pts[2], radius: 7, erase: false, gate: nil)
+        var replay = [UInt8](repeating: 0, count: w * h)
+        let s = BrushStroke(points: pts.map { CGPoint(x: $0.x / CGFloat(w), y: $0.y / CGFloat(h)) }, radius: 7 / 256, erase: false)
+        Brush.apply([s], to: &replay, width: w, height: h)
+        XCTAssertEqual(live, replay)
+    }
+
+    // MARK: Network input
+
+    func testDarkPhotoIsBrightenedForTheNetworkAndGoodOneLeftAlone() {
+        var dark = [UInt8](repeating: 255, count: 64 * 64 * 4)
+        for i in 0..<(64 * 64) { let v = UInt8(10 + (i % 50)); dark[i * 4] = v; dark[i * 4 + 1] = v; dark[i * 4 + 2] = v }
+        let lut = CutoutNetwork.exposureCurve(dark)
+        XCTAssertNotNil(lut)
+        if let lut { XCTAssertGreaterThan(Int(lut[35]), 90) }
+        var good = [UInt8](repeating: 255, count: 64 * 64 * 4)
+        for i in 0..<(64 * 64) { let v = UInt8(i % 256); good[i * 4] = v; good[i * 4 + 1] = v; good[i * 4 + 2] = v }
+        XCTAssertNil(CutoutNetwork.exposureCurve(good))
+    }
+
+    func testNetworkAgreementCheck() {
+        let a: [Float] = (0..<1000).map { $0 < 500 ? 4 : -4 }
+        XCTAssertTrue(CutoutNetwork.agree(a, a))
+        let b: [Float] = (0..<1000).map { $0 < 300 ? 4 : -4 }
+        XCTAssertFalse(CutoutNetwork.agree(a, b))
+        XCTAssertFalse(CutoutNetwork.agree(a.map { _ in Float.nan }, a))
+    }
+
+    // MARK: Second opinion
+
+    func testDroppedPartIsRecoveredButShadowIsNot() {
+        // Brown surface; the item is a dark block with a grey cuff below it the network missed,
+        // and a shadow (darker brown) to its right that the subject finder also included.
+        let w = 160, h = 160
+        var img = RGBAImage(width: w, height: h, fill: (120, 80, 50))
+        var prob = Plane(width: w, height: h, value: 0)
+        var vision = Plane(width: w, height: h, value: 0)
+        for y in 40..<100 { for x in 50..<110 {
+            let i = y * w + x
+            img.pixels[i * 4] = 25; img.pixels[i * 4 + 1] = 25; img.pixels[i * 4 + 2] = 28
+            prob.data[i] = 1; vision.data[i] = 1
+        } }
+        for y in 100..<112 { for x in 50..<110 {
+            let i = y * w + x
+            img.pixels[i * 4] = 150; img.pixels[i * 4 + 1] = 150; img.pixels[i * 4 + 2] = 150
+            vision.data[i] = 0.9
+        } }
+        for y in 40..<100 { for x in 110..<124 {
+            let i = y * w + x
+            img.pixels[i * 4] = 72; img.pixels[i * 4 + 1] = 48; img.pixels[i * 4 + 2] = 30
+            vision.data[i] = 0.9
+        } }
+        _ = Segmenter.recoverParts(&prob, vision: vision, image: img)
+        XCTAssertGreaterThan(prob.data[106 * w + 80], 0.5, "cuff recovered")
+        XCTAssertLessThan(prob.data[70 * w + 117], 0.5, "shadow left out")
+    }
 }

@@ -18,15 +18,10 @@ struct ItemEditor: View {
     @State private var pan: CGSize = .zero
     @State private var panBase: CGSize = .zero
     @State private var tool: Tool?
-
-    // Touch-up
-    @State private var touching = false
-    enum BrushMode: Hashable { case erase, restore, move }
-    @State private var mode: BrushMode = .erase
-    @State private var brush: CGFloat = 0.012
-    @State private var strokes: [BrushStroke] = []
-    @State private var current: [CGPoint] = []
-    @State private var saving = false
+    @State private var touchUp = false
+    /// While the compare button is held, the original photo is shown.
+    @State private var comparing = false
+    @State private var original: UIImage?
 
     private var item: BatchItem? { store.items.first { $0.id == id } }
 
@@ -39,18 +34,19 @@ struct ItemEditor: View {
                 let w = min(geo.size.width - 24, (geo.size.height - 12) * aspect)
                 let h = w / aspect
                 ZStack {
-                    if item?.removed == true, store.transparent { Checker() }
-                    if let shown = (detailVersion == store.lookVersion ? detail : nil) ?? image {
+                    if item?.removed == true, store.transparent, !comparing { Checker() }
+                    if comparing, let original {
+                        Image(uiImage: original).resizable().interpolation(.high)
+                    } else if let shown = (detailVersion == store.lookVersion ? detail : nil) ?? image {
                         Image(uiImage: shown).resizable().interpolation(.high)
                     } else { ProgressView() }
-                    if touching { strokeOverlay(width: w, height: h) }
                 }
                 .frame(width: w, height: h)
                 .scaleEffect(zoom)
                 .offset(pan)
                 .position(x: geo.size.width / 2, y: geo.size.height / 2)
                 .contentShape(Rectangle())
-                .gesture(touching && mode != .move ? AnyGesture(paintGesture(width: w, height: h, geo: geo).map { _ in () }) : AnyGesture(viewGesture.map { _ in () }))
+                .gesture(viewGesture)
                 .simultaneousGesture(MagnifyGesture()
                     .onChanged { v in
                         let z = min(8, max(1, zoomBase * v.magnification))
@@ -65,7 +61,7 @@ struct ItemEditor: View {
                         if zoom <= 1.01 { withAnimation(.easeOut(duration: 0.15)) { resetZoom() } }
                         if zoom > 1.4 { loadDetail() }
                     })
-                .onTapGesture(count: 2) { if !touching { withAnimation(.easeOut(duration: 0.2)) { resetZoom() } } }
+                .onTapGesture(count: 2) { withAnimation(.easeOut(duration: 0.2)) { resetZoom() } }
                 .onAppear { box = CGSize(width: w, height: h); container = geo.size }
                 .onChange(of: geo.size) { _, g in container = g; box = CGSize(width: w, height: h) }
             }
@@ -78,32 +74,17 @@ struct ItemEditor: View {
             if zoom > 1.4 { loadDetail() }
         }
         .fullScreenCover(item: $tool) { t in ToolScreen(tool: t, startID: id) }
+        .background(Color.clear.fullScreenCover(isPresented: $touchUp) { TouchUpScreen(id: id) })
     }
 
     private var topBar: some View {
         HStack {
-            if touching {
-                Button("Cancel") { strokes = []; touching = false }
-                Spacer()
-                Text("Touch up").font(.system(size: 17, weight: .semibold))
-                Spacer()
-                Button(saving ? "Saving" : "Apply") {
-                    saving = true
-                    Task {
-                        await store.applyTouchUp(id, strokes: strokes)
-                        strokes = []; saving = false; touching = false
-                    }
-                }
-                .font(.system(size: 17, weight: .semibold))
-                .disabled(strokes.isEmpty || saving)
-            } else {
-                Button("Done") { dismiss() }.font(.system(size: 17, weight: .semibold))
-                Spacer()
-                Button(role: .destructive) { store.delete(id); dismiss() } label: {
-                    Image(systemName: "trash").font(.system(size: 17))
-                }
-                .accessibilityLabel("Remove from batch")
+            Button("Done") { dismiss() }.font(.system(size: 17, weight: .semibold))
+            Spacer()
+            Button(role: .destructive) { store.delete(id); dismiss() } label: {
+                Image(systemName: "trash").font(.system(size: 17))
             }
+            .accessibilityLabel("Remove from batch")
         }
         .foregroundStyle(Theme.ink)
         .padding(.horizontal, 20)
@@ -112,50 +93,60 @@ struct ItemEditor: View {
 
     @ViewBuilder private var controls: some View {
         if let item {
-            if touching {
-                VStack(spacing: 12) {
-                    Picker("Brush", selection: $mode) {
-                        Text("Erase").tag(BrushMode.erase)
-                        Text("Restore").tag(BrushMode.restore)
-                        Text("Move").tag(BrushMode.move)
-                    }
-                    .pickerStyle(.segmented)
-                    HStack(spacing: 12) {
-                        Text("Brush").font(.system(size: 15))
-                        Slider(value: $brush, in: 0.003...0.04)
-                        Button("Undo") { if !strokes.isEmpty { strokes.removeLast() } }.disabled(strokes.isEmpty)
-                    }
-                    Text(mode == .move ? "Drag to move around. Pinch to zoom." : "Paint over the edge to fix it. Pinch to zoom.").font(.system(size: 13)).foregroundStyle(Theme.muted)
-                }
-            } else {
-                VStack(spacing: 10) {
+            VStack(spacing: 10) {
+                HStack(spacing: 12) {
                     if let note = item.statusNote {
-                        Text(note).font(.system(size: 15)).foregroundStyle(Theme.warning).multilineTextAlignment(.center)
+                        Text(note).font(.system(size: 15)).foregroundStyle(Theme.warning).multilineTextAlignment(.leading)
                     } else {
                         Text(zoom > 1 ? "Double-tap to fit." : "Pinch to zoom in on the edges.")
                             .font(.system(size: 14)).foregroundStyle(Theme.muted)
                     }
-                    if item.canRemove {
-                        HStack(spacing: 10) {
-                            if item.removed {
-                                pill("Touch up") { resetZoom(); touching = true }
-                                pill("Background") { tool = .background }
-                                pill("Shadow") { tool = .shadow }
-                            }
+                    Spacer(minLength: 0)
+                    if item.removed && item.canRemove { compareButton }
+                }
+                if item.canRemove {
+                    HStack(spacing: 10) {
+                        if item.removed {
+                            pill("Touch up") { touchUp = true }
+                            pill("Background") { tool = .background }
+                            pill("Shadow") { tool = .shadow }
                         }
-                        Button { store.setRemoved(id, !item.removed) } label: {
-                            Text(item.removed ? "Use original photo" : "Use cutout")
-                                .font(.system(size: 17, weight: .semibold))
-                                .frame(maxWidth: .infinity).padding(.vertical, 15)
-                                .background(item.removed ? Color.white : Theme.ink)
-                                .foregroundStyle(item.removed ? Theme.ink : Color.white)
-                                .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(item.removed ? Theme.line : Color.clear))
-                                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
-                        }
+                    }
+                    Button { store.setRemoved(id, !item.removed) } label: {
+                        Text(item.removed ? "Use original photo" : "Use cutout")
+                            .font(.system(size: 17, weight: .semibold))
+                            .frame(maxWidth: .infinity).padding(.vertical, 15)
+                            .background(item.removed ? Color.white : Theme.ink)
+                            .foregroundStyle(item.removed ? Theme.ink : Color.white)
+                            .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(item.removed ? Theme.line : Color.clear))
+                            .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                 }
             }
         }
+    }
+
+    /// Hold to see the original photo in place of the cutout.
+    private var compareButton: some View {
+        Text(comparing ? "Original" : "Hold to compare")
+            .font(.system(size: 14, weight: .medium))
+            .padding(.horizontal, 12).padding(.vertical, 7)
+            .background(comparing ? Theme.ink : Color.white)
+            .foregroundStyle(comparing ? Color.white : Theme.ink)
+            .overlay(Capsule().stroke(comparing ? Color.clear : Theme.line))
+            .clipShape(Capsule())
+            .contentShape(Capsule())
+            .gesture(DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !comparing { loadOriginal(); comparing = true }
+                }
+                .onEnded { _ in comparing = false })
+            .accessibilityLabel("Show the original photo while held")
+    }
+
+    private func loadOriginal() {
+        guard original == nil, let u = item?.previewPhotoURL else { return }
+        original = UIImage(contentsOfFile: u.path)
     }
 
     private func pill(_ title: String, action: @escaping () -> Void) -> some View {
@@ -175,41 +166,6 @@ struct ItemEditor: View {
                 pan = clamped(CGSize(width: panBase.width + v.translation.width, height: panBase.height + v.translation.height), zoom: zoom)
             }
             .onEnded { _ in panBase = pan }
-    }
-
-    /// Converts touches into resolution-independent stroke points.
-    private func paintGesture(width w: CGFloat, height h: CGFloat, geo: GeometryProxy) -> some Gesture {
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-            .onChanged { v in
-                                // The view is centred in the container, scaled by zoom and moved by pan.
-                let cx = geo.size.width / 2 + pan.width, cy = geo.size.height / 2 + pan.height
-                let ix = (v.location.x - cx) / zoom + w / 2, iy = (v.location.y - cy) / zoom + h / 2
-                current.append(CGPoint(x: ix / w, y: iy / h))
-            }
-            .onEnded { _ in
-                if !current.isEmpty {
-                    strokes.append(BrushStroke(points: current, radius: brush / zoom, erase: mode == .erase))
-                }
-                current = []
-            }
-    }
-
-    private func strokeOverlay(width w: CGFloat, height h: CGFloat) -> some View {
-        Canvas { ctx, _ in
-            let L = max(w, h)
-            func draw(_ pts: [CGPoint], _ r: CGFloat, _ erase: Bool) {
-                guard let first = pts.first else { return }
-                var path = Path()
-                path.move(to: CGPoint(x: first.x * w, y: first.y * h))
-                for p in pts.dropFirst() { path.addLine(to: CGPoint(x: p.x * w, y: p.y * h)) }
-                if pts.count == 1 { path.addLine(to: CGPoint(x: first.x * w + 0.1, y: first.y * h)) }
-                ctx.stroke(path, with: .color(erase ? Color.red.opacity(0.45) : Color.green.opacity(0.45)),
-                           style: StrokeStyle(lineWidth: r * L * 2, lineCap: .round, lineJoin: .round))
-            }
-            for s in strokes { draw(s.points, s.radius, s.erase) }
-            draw(current, brush / zoom, mode == .erase)
-        }
-        .allowsHitTesting(false)
     }
 
     private func resetZoom() { zoom = 1; zoomBase = 1; pan = .zero; panBase = .zero }

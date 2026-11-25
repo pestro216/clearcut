@@ -137,3 +137,31 @@ traced with debug maps to the background estimate falling to black under large i
 surface, at the source's own resolution, never upscaled. `library.json` lists titles and groups. Any
 other .jpg placed in the folder appears automatically under "Yours"; backgrounds can also be added
 from Photos inside the app. Surfaces under 3000 px are labelled "Low resolution".
+
+## 7. Changes of 25 November 2026
+
+Prompted by a real failure: a dark jacket on herringbone parquet lost both cuffs, and the touch-up
+screen made the fix hard (the result was shown over a wood backdrop that looked like the floor, the
+paint hid what it fixed, a second finger for zooming left paint dots, and panning needed a mode).
+
+- **Second opinion** (`Segmenter.recoverParts`): after the network passes, Apple's subject finder
+  runs once at working size (about 0.1 s). Pieces it includes that the network dropped are added
+  back when they touch the item, are smaller than it, and mostly don't look like the surface
+  around them (local colour histograms of surface and item) or like that surface in shadow (all
+  three channels dimmed alike). Unit test: a grey cuff is recovered, a darker-brown shadow is not.
+- **Low light** (`CutoutNetwork.exposureCurve`): dark or very flat photos get a tone curve before
+  the network sees them (1% to 99% stretched, dark mid-tones lifted). Well-exposed photos are
+  untouched, so the ground-truth scenes should not move; the quality run confirms it.
+- **GPU** (`CutoutNetwork`, app only): the network was CPU-only. The app now tries the GPU, checks
+  it against the CPU on the first photo per iOS version (outline IoU over 0.985, mean difference
+  under 0.02), and keeps using it only if they agree; any non-finite or flat GPU output drops back
+  to the CPU for good. The bench stays on the CPU. Real speed-up still to be measured on the phone.
+- **Touch-up rebuilt** (`Clearcut/TouchUp.swift`): UIKit canvas at 2048 px. The item is shown cut out
+  over a checkerboard with the removed part faint behind it, and strokes change the matte as you
+  draw. One finger paints; two fingers pan and zoom and cancel the stroke they interrupted; a
+  two-finger tap undoes; Undo and Redo; a magnifier in the top corner shows the spot under the
+  finger; brush size is in screen points. **Smart edges** (on by default) samples the colour where a
+  stroke starts and only changes similar colours (tolerance 34, fading out by 54), so a stroke along
+  an edge stops at it. Apply replays the same strokes on the full-size matte with the full-size photo;
+  a unit test checks the replay matches live painting exactly.
+- **Hold to compare** on the photo screen shows the original in place.

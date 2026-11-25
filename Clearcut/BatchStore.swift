@@ -339,15 +339,43 @@ final class BatchStore: ObservableObject {
     }
 
     /// Applies touch-up strokes to the full-resolution matte and its smaller copies.
+    /// Longest side of the photo and matte used while touching up: sharp enough to zoom in on
+    /// edges, small enough to repaint instantly.
+    nonisolated static let touchUpSide = 2048
+
+    /// The photo and its matte at touch-up size.
+    func touchUpSource(_ id: UUID) async -> TouchUpSource? {
+        guard let item = items.first(where: { $0.id == id }), let au = item.alphaURL else { return nil }
+        let ou = item.originalURL, size = item.pixelSize
+        return await Task.detached(priority: .userInitiated) { () -> TouchUpSource? in
+            autoreleasepool {
+                let side = BatchStore.touchUpSide
+                let (w, h) = BatchStore.scaled(Int(size.width), Int(size.height), side)
+                guard let data = try? Data(contentsOf: ou), let cg = ImageIOHelpers.loadOriented(data, maxPixel: side),
+                      let photo = RGBAImage(cgImage: cg, width: w, height: h), let image = photo.makeOpaqueCGImage(),
+                      let ad = try? Data(contentsOf: au), let acg = ImageIOHelpers.loadOriented(ad, maxPixel: side) else { return nil }
+                return TouchUpSource(photo: photo, image: image, alpha: ImageIOHelpers.grayBytes(acg, width: w, height: h))
+            }
+        }.value
+    }
+
     func applyTouchUp(_ id: UUID, strokes: [BrushStroke]) async {
         guard !strokes.isEmpty, let i = items.firstIndex(where: { $0.id == id }),
               let au = items[i].alphaURL, let pau = items[i].previewAlphaURL else { return }
         let size = items[i].pixelSize
+        let ou = items[i].originalURL
         let grid = items[i].gridPhoto.map { ($0.width, $0.height) }
         let result = await Task.detached(priority: .userInitiated) { () -> Box<[UInt8]?> in
             let w = Int(size.width), h = Int(size.height)
             guard var alpha = BatchStore.readAlpha(au, width: w, height: h) else { return Box(nil) }
-            Brush.apply(strokes, to: &alpha, width: w, height: h)
+            // Smart strokes compare colours, so they need the full-size photo.
+            var photo: RGBAImage?
+            if strokes.contains(where: { $0.reference != nil }), let data = try? Data(contentsOf: ou),
+               let cg = ImageIOHelpers.loadOriented(data) {
+                photo = RGBAImage(cgImage: cg, width: w, height: h)
+            }
+            Brush.apply(strokes, to: &alpha, width: w, height: h, photo: photo)
+            photo = nil
             BatchStore.writeAlpha(alpha, w, h, to: au)
             let full = Plane(bytes: alpha, width: w, height: h)
             let p = BatchStore.scaled(w, h, BatchStore.previewSide)

@@ -138,7 +138,123 @@ public enum Segmenter {
                 }
             }
         }
+        // A second opinion from Apple's subject finder, for parts the network dropped.
+        if let small = RGBAImage(cgImage: full, width: ww, height: wh), let cg = small.makeOpaqueCGImage(),
+           let vision = try? mask(of: cg, network: nil) {
+            _ = recoverParts(&prob, vision: vision.prob, image: small)
+        }
         return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed)
+    }
+
+    /// Adds back parts Apple's subject finder includes but the network left out: a cuff, the end
+    /// of a strap, a pale lining. Apple's model judges whole objects; the network draws crisper
+    /// outlines but now and then drops a part that looks unlike the rest of the item.
+    ///
+    /// Each disputed piece must touch the item, be smaller than it, and mostly not look like the
+    /// surface around it: its colours are compared with the surface and the item nearby, and
+    /// anything that reads as the surface in shadow (same colour, only darker) counts as surface.
+    /// Returns how many pixels were added.
+    static func recoverParts(_ prob: inout Plane, vision: Plane, image: RGBAImage) -> Int {
+        let w = prob.width, h = prob.height, n = w * h
+        guard vision.width == w, vision.height == h, image.width == w, image.height == h, n > 0 else { return 0 }
+        var fg = [Bool](repeating: false, count: n), disputed = [Bool](repeating: false, count: n)
+        var fgCount = 0
+        for i in 0..<n {
+            fg[i] = prob.data[i] > 0.5
+            if fg[i] { fgCount += 1 }
+            disputed[i] = !fg[i] && vision.data[i] > 0.6
+        }
+        guard fgCount > 0 else { return 0 }
+        let (labels, sizes) = Matting.label(disputed, width: w, height: h)
+        let count = sizes.count
+        guard count > 1 else { return 0 }
+        var minX = [Int](repeating: w, count: count), minY = [Int](repeating: h, count: count)
+        var maxX = [Int](repeating: -1, count: count), maxY = [Int](repeating: -1, count: count)
+        var touches = [Bool](repeating: false, count: count)
+        for y in 0..<h {
+            for x in 0..<w {
+                let i = y * w + x, c = Int(labels[i])
+                if c == 0 { continue }
+                minX[c] = min(minX[c], x); maxX[c] = max(maxX[c], x)
+                minY[c] = min(minY[c], y); maxY[c] = max(maxY[c], y)
+                if !touches[c] {
+                    if (x > 0 && fg[i - 1]) || (x < w - 1 && fg[i + 1]) || (y > 0 && fg[i - w]) || (y < h - 1 && fg[i + w]) {
+                        touches[c] = true
+                    }
+                }
+            }
+        }
+        let px = image.pixels
+        @inline(__always) func bin(_ i: Int) -> Int {
+            let p = i * 4
+            return (Int(px[p]) >> 4) << 8 | (Int(px[p + 1]) >> 4) << 4 | Int(px[p + 2]) >> 4
+        }
+        /// Density of a colour bin, smoothed over its neighbouring bins.
+        func density(_ hist: [Int], _ total: Int, _ b: Int) -> Float {
+            guard total > 0 else { return 0 }
+            let r = b >> 8, g = (b >> 4) & 15, bl = b & 15
+            var sum = 0
+            for dr in -1...1 { let rr = r + dr; if rr < 0 || rr > 15 { continue }
+                for dg in -1...1 { let gg = g + dg; if gg < 0 || gg > 15 { continue }
+                    for db in -1...1 { let bb = bl + db; if bb < 0 || bb > 15 { continue }
+                        sum += hist[rr << 8 | gg << 4 | bb]
+                    }
+                }
+            }
+            return Float(sum) / Float(total * 27)
+        }
+        let minSize = max(30, n / 4000)
+        var added = 0
+        for c in 1..<count where sizes[c] >= minSize && touches[c] && sizes[c] * 2 < fgCount {
+            // The neighbourhood that describes this piece's surroundings.
+            let bw = maxX[c] - minX[c] + 1, bh = maxY[c] - minY[c] + 1
+            let m = Int(0.75 * Double(max(bw, bh))) + 8
+            let x0 = max(0, minX[c] - m), x1 = min(w - 1, maxX[c] + m)
+            let y0 = max(0, minY[c] - m), y1 = min(h - 1, maxY[c] + m)
+            var bgHist = [Int](repeating: 0, count: 4096), fgHist = [Int](repeating: 0, count: 4096)
+            var bgN = 0, fgN = 0
+            var mean: (Float, Float, Float) = (0, 0, 0)
+            for y in y0...y1 {
+                for x in x0...x1 {
+                    let i = y * w + x
+                    if !fg[i] && vision.data[i] < 0.3 {
+                        bgHist[bin(i)] += 1; bgN += 1
+                        mean.0 += Float(px[i * 4]); mean.1 += Float(px[i * 4 + 1]); mean.2 += Float(px[i * 4 + 2])
+                    } else if prob.data[i] > 0.8 {
+                        fgHist[bin(i)] += 1; fgN += 1
+                    }
+                }
+            }
+            // Without a view of the surface there is nothing to judge against: leave it.
+            guard bgN > 50 else { continue }
+            mean = (max(1, mean.0 / Float(bgN)), max(1, mean.1 / Float(bgN)), max(1, mean.2 / Float(bgN)))
+            var keep = [Int]()
+            keep.reserveCapacity(sizes[c])
+            var total = 0
+            for y in minY[c]...maxY[c] {
+                for x in minX[c]...maxX[c] {
+                    let i = y * w + x
+                    guard Int(labels[i]) == c else { continue }
+                    total += 1
+                    let b = bin(i)
+                    let dB = density(bgHist, bgN, b), dF = density(fgHist, fgN, b)
+                    var surface = dB > 3 * dF && dB > 2 / 4096
+                    if !surface {
+                        // The surface in shadow: each channel dimmed by about the same amount.
+                        let r = Float(px[i * 4]) / mean.0, g = Float(px[i * 4 + 1]) / mean.1, bl = Float(px[i * 4 + 2]) / mean.2
+                        let lo = min(r, g, bl), hi = max(r, g, bl)
+                        if lo > 0.2 && hi < 0.97 && hi - lo < 0.12 { surface = true }
+                    }
+                    if !surface { keep.append(i) }
+                }
+            }
+            guard total > 0, Float(keep.count) >= 0.6 * Float(total) else { continue }
+            for i in keep where vision.data[i] > prob.data[i] {
+                prob.data[i] = vision.data[i]
+                added += 1
+            }
+        }
+        return added
     }
 
     /// A first result is doubtful when it runs off the frame (more than 3% of the border) or is small.
