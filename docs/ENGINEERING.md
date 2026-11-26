@@ -168,3 +168,25 @@ paint hid what it fixed, a second finger for zooming left paint dots, and pannin
   an edge stops at it. Apply replays the same strokes on the full-size matte with the full-size photo;
   a unit test checks the replay matches live painting exactly.
 - **Hold to compare** on the photo screen shows the original in place.
+
+## 8. Changes of 26 November 2026 (branch `faster-cutouts`)
+
+Asked for: cutouts that feel instant, cleaner cutouts, no taglines.
+
+- **Quick cutout** (`BatchStore.quickLook`, `Segmenter.quickMask`): each new photo is decoded at
+  1024 px and Apple's subject finder alone gives a rough cutout for its grid tile, so the whole batch
+  appears within a second or so per photo. Full cutouts then run oldest first and replace the quick
+  ones; a small spinner sits on a tile until its full cutout is in. A quick render can never land
+  over the full one (the grid checks the matte it was made from). Apple's model only runs while the
+  network is unloaded (`networkSegment` now unloads on every exit, not only on success).
+- **Fast hardware** (`CutoutNetwork`): the Neural Engine (`.all`), then the GPU, are tried. On the
+  first photo per iOS version the fast copy runs, is unloaded, then the CPU copy runs on the same
+  input and the outputs are compared (`agree`). Only one copy is ever in memory, which was the cause
+  of the 25 Nov crash. The option is saved as failed before the check starts, so if iOS closes the
+  app during it, it is not tried again. The bench stays on the CPU.
+- **Timings**: every "Clearcut memory" log line now ends with seconds since the previous one, so a
+  USB log shows where each photo's time goes (decode, network, second opinion, matting).
+- **Text removed**: home screen tagline and description, shadow style descriptions, touch-up
+  gesture help, "Pinch to zoom" hint.
+- Not changed: edge refinement. Without the bench (macOS only) and Mathew's problem photos, blind
+  changes would risk the measured scenes.

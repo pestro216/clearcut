@@ -74,6 +74,12 @@ public enum Segmenter {
         return Segmentation(prob: prob, instanceCount: first.instances, zoomed: zoomed)
     }
 
+    /// A rough cutout from Apple's subject finder alone, at the image's own size, in a fraction
+    /// of a second. Shown while the full cutout is made. nil when it sees no item.
+    public static func quickMask(_ image: CGImage) -> Plane? {
+        (try? mask(of: image, network: nil))?.prob
+    }
+
     // MARK: Cutout network
 
     /// The cutout network, in up to three passes.
@@ -90,6 +96,10 @@ public enum Segmenter {
     static func networkSegment(_ full: CGImage, ww: Int, wh: Int, zoom: Bool, network: CutoutNetwork) throws -> Segmentation? {
         let fw = CGFloat(full.width), fh = CGFloat(full.height)
         let whole = CGRect(x: 0, y: 0, width: fw, height: fh)
+        Diagnostics.note("network starts")
+        // Never leave the network loaded, even when this photo gives up early: the next photo's
+        // quick cutout runs Apple's model, and the two together don't fit in an iPhone 11.
+        defer { network.unload() }
         guard var prob = try pass(full, region: whole, pads: (0, 0, 0, 0), outW: ww, outH: wh, network: network) else { return nil }
         var canvasUsed = false
         if doubtful(prob) {

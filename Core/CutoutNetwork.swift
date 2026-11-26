@@ -12,22 +12,25 @@ import CoreML
 ///
 /// Speed. The conversion recommends the CPU, because reduced-precision hardware can change the
 /// result. The CPU is also the slowest place to run it. In the app (`accelerate`), the phone's
-/// GPU is tried, but only trusted after it has been checked: the first photo runs on both, and
-/// the GPU is used from then on only if the two agree (same outline, near-identical values).
-/// The verdict is remembered per iOS version. Any later GPU output that is not sane (NaN, flat)
-/// falls back to the CPU for good. The test bench stays on the CPU, so its numbers are stable.
+/// Neural Engine (then, failing that, its GPU) is tried, but only trusted after a check: on the
+/// first photo the fast copy runs, is unloaded, and then the CPU copy runs on the same input. Only
+/// one copy is ever in memory (two at once pushed an iPhone 11 past its limit on 25 Nov 2026). The
+/// fast copy is used from then on only if the two agree (same outline, near-identical values). The
+/// verdict is remembered per iOS version. Any later fast output that is not sane (NaN, flat) falls
+/// back to the CPU for good. The test bench stays on the CPU, so its numbers are stable.
 public final class CutoutNetwork: @unchecked Sendable {
     public static let side = 1024
     private let compiledURL: URL
     private let accelerate: Bool
-    private var cpuModel: MLModel?
-    private var gpuModel: MLModel?
+    /// The one model currently loaded, and the hardware it was loaded for.
+    private var model: MLModel?
+    private var modelUnits: MLComputeUnits?
     private var inputName = "image"
     private var outputName = "mask_logits"
     private let lock = NSLock()
     /// Range and mean of the last raw output, for the quality report.
     public private(set) var lastOutputRange: (min: Float, max: Float, mean: Float) = (0, 0, 0)
-    /// Whether the last run used the GPU, and how long the network itself took (seconds).
+    /// Whether the last run used the Neural Engine or GPU, and how long the network itself took (seconds).
     public private(set) var lastRunAccelerated = false
     public private(set) var lastSeconds: Double = 0
     /// Whether the last photo was brightened or given more contrast before the network saw it.
@@ -41,36 +44,39 @@ public final class CutoutNetwork: @unchecked Sendable {
         }
         compiledURL = compiled
         self.accelerate = accelerate
-        // Load one model now so a broken file fails here, not on the first photo.
-        let first: MLModel
-        if accelerate, CutoutNetwork.gpuTrust != false, let g = try? load(.cpuAndGPU) {
-            gpuModel = g; first = g
-        } else {
-            let c = try load(.cpuOnly)
-            cpuModel = c; first = c
-        }
+        // Load the CPU copy now so a broken file fails here, not on the first photo. It is
+        // unloaded straight away in the app; the fast copy is loaded when the first photo runs.
+        let first = try MLModel(contentsOf: compiled, configuration: CutoutNetwork.config(.cpuOnly))
         let inputs = first.modelDescription.inputDescriptionsByName
         let outputs = first.modelDescription.outputDescriptionsByName
         inputName = inputs["image"] != nil ? "image" : (inputs.keys.sorted().first ?? "image")
         outputName = outputs["mask_logits"] != nil ? "mask_logits" : (outputs.keys.sorted().first ?? "mask_logits")
+        if !accelerate { model = first; modelUnits = .cpuOnly }
     }
 
-    private func load(_ units: MLComputeUnits) throws -> MLModel {
+    private static func config(_ units: MLComputeUnits) -> MLModelConfiguration {
         let config = MLModelConfiguration()
         config.computeUnits = units
-        return try MLModel(contentsOf: compiledURL, configuration: config)
+        return config
     }
 
-    /// Whether the app tries the GPU. Off: on an iPhone 11 (2.3 GB app memory limit) holding the
-    /// GPU and CPU copies of the model for the first-photo check went over the limit and iOS closed
-    /// the app (phone log, 25 Nov 2026). Before turning it on again, measure memory on the phone
-    /// and run the check with only one copy loaded at a time.
-    public static let useGPU = false
+    /// The loaded model for this hardware, loading it (and unloading any other) if needed.
+    private func loaded(_ units: MLComputeUnits) throws -> MLModel {
+        if let m = model, modelUnits == units { return m }
+        model = nil; modelUnits = nil
+        let m = try MLModel(contentsOf: compiledURL, configuration: CutoutNetwork.config(units))
+        model = m; modelUnits = units
+        return m
+    }
+
+    /// Whether the app tries the Neural Engine and GPU. Back on since 26 Nov 2026, now that the
+    /// first-photo check holds only one copy of the model at a time.
+    public static let useAcceleration = true
 
     /// The model bundled with the app, if present.
     public static func bundled() -> CutoutNetwork? {
         if let u = Bundle.main.url(forResource: "BiRefNetLite", withExtension: "mlmodelc"),
-           let n = try? CutoutNetwork(url: u, accelerate: useGPU) {
+           let n = try? CutoutNetwork(url: u, accelerate: useAcceleration) {
             return n
         }
         if let p = ProcessInfo.processInfo.environment["CLEARCUT_MODEL"], let n = try? CutoutNetwork(url: URL(fileURLWithPath: p)) {
@@ -83,23 +89,29 @@ public final class CutoutNetwork: @unchecked Sendable {
     /// a gigabyte for this network). It is loaded again, from the compiled cache, when next needed.
     public func unload() {
         lock.lock()
-        cpuModel = nil
-        gpuModel = nil
+        model = nil
+        modelUnits = nil
         lock.unlock()
     }
 
-    // MARK: GPU trust
+    // MARK: Hardware trust
 
-    private static var trustKey: String {
-        "network.gpu.v1." + ProcessInfo.processInfo.operatingSystemVersionString
+    /// Fast hardware to try, best first: the Neural Engine (with GPU and CPU for any layer it
+    /// can't run), then the GPU.
+    static let fastOptions: [(units: MLComputeUnits, name: String)] = [(.all, "all"), (.cpuAndGPU, "gpu")]
+
+    private static func trustKey(_ name: String) -> String {
+        "network.fast.v2." + name + "." + ProcessInfo.processInfo.operatingSystemVersionString
     }
 
     /// nil: not checked yet on this iOS version. true/false: the verdict.
-    static var gpuTrust: Bool? {
-        get { UserDefaults.standard.object(forKey: trustKey) as? Bool }
-        set { UserDefaults.standard.set(newValue, forKey: trustKey) }
-    }
+    static func trust(_ name: String) -> Bool? { UserDefaults.standard.object(forKey: trustKey(name)) as? Bool }
+    static func setTrust(_ name: String, _ ok: Bool) { UserDefaults.standard.set(ok, forKey: trustKey(name)) }
 
+    /// The fast hardware to use or check next, or nil when every option has failed its check.
+    static var fastCandidate: (units: MLComputeUnits, name: String)? {
+        fastOptions.first { trust($0.name) != false }
+    }
     /// Two raw outputs describe the same cutout: the outlines overlap almost entirely and the
     /// probabilities differ by very little on average.
     static func agree(_ a: [Float], _ b: [Float]) -> Bool {
@@ -137,7 +149,13 @@ public final class CutoutNetwork: @unchecked Sendable {
 
     // MARK: Running
 
+    /// One prediction. Its working objects are released before returning, so the next model to
+    /// load (during the hardware check) doesn't sit on top of them.
     private func run(_ model: MLModel, _ provider: MLFeatureProvider) throws -> [Float]? {
+        try autoreleasepool { try runInPool(model, provider) }
+    }
+
+    private func runInPool(_ model: MLModel, _ provider: MLFeatureProvider) throws -> [Float]? {
         let s = CutoutNetwork.side
         let result = try model.prediction(from: provider)
         guard let out = result.featureValue(for: outputName)?.multiArrayValue else { return nil }
@@ -169,37 +187,37 @@ public final class CutoutNetwork: @unchecked Sendable {
         return raw
     }
 
-    /// Raw network output for a prepared input, on the GPU when it has been checked.
+    /// Raw network output for a prepared input, on fast hardware once it has passed its check.
     private func predict(_ provider: MLFeatureProvider) throws -> [Float]? {
         lock.lock()
         defer { lock.unlock() }
         let started = Date()
         defer { lastSeconds = Date().timeIntervalSince(started) }
-        if accelerate, CutoutNetwork.gpuTrust != false {
-            if gpuModel == nil { gpuModel = try? load(.cpuAndGPU) }
-            if let g = gpuModel {
-                let fast = try? run(g, provider)
-                if CutoutNetwork.gpuTrust == nil {
-                    // First photo on this iOS version: check the GPU against the CPU.
-                    if cpuModel == nil { cpuModel = try load(.cpuOnly) }
-                    guard let reference = try run(cpuModel!, provider) else { return nil }
-                    let ok = fast.map { CutoutNetwork.agree($0, reference) } ?? false
-                    CutoutNetwork.gpuTrust = ok
-                    if ok { cpuModel = nil } else { gpuModel = nil }
-                    lastRunAccelerated = false
-                    return reference
-                }
-                if let f = fast, CutoutNetwork.sane(f) {
-                    lastRunAccelerated = true
-                    return f
-                }
-                CutoutNetwork.gpuTrust = false
-                gpuModel = nil
+        if accelerate, let fast = CutoutNetwork.fastCandidate {
+            let checking = CutoutNetwork.trust(fast.name) == nil
+            // Marked as failed until it passes: if iOS closes the app during the check, this
+            // hardware is not tried again on the next launch.
+            if checking { CutoutNetwork.setTrust(fast.name, false) }
+            let out = try? run(try loaded(fast.units), provider)
+            if checking {
+                // First photo on this iOS version: check against the CPU. `loaded` unloads the
+                // fast copy before the CPU copy loads, so only one is ever in memory.
+                Diagnostics.note("fast hardware check (\(fast.name))")
+                guard let reference = try run(try loaded(.cpuOnly), provider) else { return nil }
+                let ok = out.map { CutoutNetwork.agree($0, reference) } ?? false
+                CutoutNetwork.setTrust(fast.name, ok)
+                Diagnostics.note("fast hardware \(fast.name) " + (ok ? "agrees" : "disagrees") + " with the CPU")
+                lastRunAccelerated = false
+                return reference
             }
+            if let f = out, CutoutNetwork.sane(f) {
+                lastRunAccelerated = true
+                return f
+            }
+            CutoutNetwork.setTrust(fast.name, false)
         }
-        if cpuModel == nil { cpuModel = try load(.cpuOnly) }
         lastRunAccelerated = false
-        return try run(cpuModel!, provider)
+        return try run(try loaded(.cpuOnly), provider)
     }
 
     // MARK: Exposure

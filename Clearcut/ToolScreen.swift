@@ -307,7 +307,6 @@ struct ShadowControls: View {
                     }
                 }
             }
-            Text(description).font(.system(size: 14)).foregroundStyle(Theme.muted).frame(height: 38, alignment: .top)
             if store.look.shadow.kind != .none {
                 row("Strength", Slider(value: strength, in: 0.15...1, onEditingChanged: released), "\(Int((strengthDraft * 100).rounded()))%")
                 row("Light from", Slider(value: angle, in: 0...359, onEditingChanged: released), lightName)
@@ -325,14 +324,6 @@ struct ShadowControls: View {
             if pending == nil {
                 strengthDraft = Double(s.strength); angleDraft = Double(s.angle)
             }
-        }
-    }
-
-    private var description: String {
-        switch store.look.shadow.kind {
-        case .flatlay: return "Lying on the surface: dark where it touches, softening where it is thicker."
-        case .lifted: return "Raised slightly off the surface, with a wider, softer shadow."
-        case .none: return "No shadow."
         }
     }
 

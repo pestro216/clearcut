@@ -147,6 +147,12 @@ struct Tile: View {
                     ProgressView()
                 }
             }
+            .overlay(alignment: .topTrailing) {
+                // The quick cutout is showing; the full one is still being made.
+                if item.status == .processing && store.grid[item.id] != nil {
+                    ProgressView().controlSize(.small).padding(6)
+                }
+            }
             .overlay(alignment: .bottomLeading) {
                 switch item.status {
                 case .check:

@@ -97,9 +97,6 @@ struct ItemEditor: View {
                 HStack(spacing: 12) {
                     if let note = item.statusNote {
                         Text(note).font(.system(size: 15)).foregroundStyle(Theme.warning).multilineTextAlignment(.leading)
-                    } else {
-                        Text(zoom > 1 ? "Double-tap to fit." : "Pinch to zoom in on the edges.")
-                            .font(.system(size: 14)).foregroundStyle(Theme.muted)
                     }
                     Spacer(minLength: 0)
                     if item.removed && item.canRemove { compareButton }

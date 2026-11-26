@@ -609,13 +609,6 @@ private struct TouchUpEditor: View {
                     model.showRemoved.toggle()
                 }
             }
-            Text(model.smart
-                 ? "Smart edges change only the colour you start on. One finger paints, two fingers move and zoom, a two-finger tap undoes."
-                 : "One finger paints, two fingers move and zoom, a two-finger tap undoes.")
-                .font(.system(size: 13))
-                .foregroundStyle(Theme.muted)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
         }
     }
 

@@ -36,8 +36,17 @@ public enum Diagnostics {
         return h >= mb
     }
 
+    private static let clockLock = NSLock()
+    private static var lastNote = Date()
+
+    /// Logs memory and the seconds since the previous note, so the log shows where time goes.
     public static func note(_ stage: String) {
         let f = footprintMB() ?? -1, h = headroomMB() ?? -1
-        log.notice("Clearcut memory: \(stage, privacy: .public): using \(f, privacy: .public) MB, headroom \(h, privacy: .public) MB")
+        clockLock.lock()
+        let now = Date(), dt = now.timeIntervalSince(lastNote)
+        lastNote = now
+        clockLock.unlock()
+        let secs = String(format: "%.2f", dt)
+        log.notice("Clearcut memory: \(stage, privacy: .public): using \(f, privacy: .public) MB, headroom \(h, privacy: .public) MB, \(secs, privacy: .public) s since last note")
     }
 }

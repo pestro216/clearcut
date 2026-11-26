@@ -58,6 +58,8 @@ final class BatchStore: ObservableObject {
     private var gridTask: Task<Void, Never>?
     private enum Source { case pick(PhotosPickerItem), file(URL) }
     private var queue: [Source] = []
+    /// Photos shown with a quick cutout, waiting for the full one, oldest first.
+    private var refineQueue: [UUID] = []
     private var running = false
 
     init(library: BackgroundLibrary) {
@@ -101,22 +103,36 @@ final class BatchStore: ObservableObject {
         guard !running else { return }
         running = true
         Task {
-            while !queue.isEmpty {
-                let source = queue.removeFirst()
-                let id = UUID()
-                let loaded: Data?
-                switch source {
-                case .pick(let p): loaded = try? await p.loadTransferable(type: Data.self)
-                case .file(let u): loaded = try? Data(contentsOf: u)
-                }
-                if let data = loaded {
-                    let original = dir.appendingPathComponent("\(id.uuidString)-original")
-                    if (try? data.write(to: original)) != nil {
-                        items.append(BatchItem(id: id, originalURL: original))
+            // New photos first: each gets a quick cutout from Apple's subject finder within a
+            // fraction of a second, so the whole batch shows up at once. The full cutout then
+            // replaces each quick one in turn.
+            while !queue.isEmpty || !refineQueue.isEmpty {
+                if !queue.isEmpty {
+                    let source = queue.removeFirst()
+                    let id = UUID()
+                    let loaded: Data?
+                    switch source {
+                    case .pick(let p): loaded = try? await p.loadTransferable(type: Data.self)
+                    case .file(let u): loaded = try? Data(contentsOf: u)
+                    }
+                    var added = false
+                    if let data = loaded {
+                        let original = dir.appendingPathComponent("\(id.uuidString)-original")
+                        if (try? data.write(to: original)) != nil {
+                            items.append(BatchItem(id: id, originalURL: original))
+                            await quickLook(id: id, data: data)
+                            refineQueue.append(id)
+                            added = true
+                        }
+                    }
+                    if !added, let p = importing { importing = (p.done + 1, p.total) }
+                } else {
+                    let id = refineQueue.removeFirst()
+                    if let item = items.first(where: { $0.id == id }), let data = try? Data(contentsOf: item.originalURL) {
                         await cutOut(id: id, data: data)
                     }
+                    if let p = importing { importing = (p.done + 1, p.total) }
                 }
-                if let p = importing { importing = (p.done + 1, p.total) }
             }
             // Photos that couldn't be cut out before the surface was known get a second go.
             if surface != nil {
@@ -128,6 +144,30 @@ final class BatchStore: ObservableObject {
             }
             importing = nil
             running = false
+        }
+    }
+
+    /// A quick, rough cutout for the grid while the full one is made.
+    private func quickLook(id: UUID, data: Data) async {
+        let result = await Task.detached(priority: .userInitiated) {
+            Box(BatchStore.quick(data: data))
+        }.value.value
+        guard let r = result, let i = items.firstIndex(where: { $0.id == id }), items[i].status == .processing else { return }
+        items[i].gridPhoto = r.photo
+        items[i].gridAlpha = r.alpha
+        renderGrid(items[i])
+    }
+
+    /// The photo at grid size and, when Apple's subject finder sees an item, its rough cutout.
+    nonisolated static func quick(data: Data) -> (photo: RGBAImage, alpha: [UInt8]?)? {
+        autoreleasepool {
+            guard let size = ImageIOHelpers.orientedSize(data),
+                  let cg = ImageIOHelpers.loadOriented(data, maxPixel: 1024), let small = RGBAImage(cgImage: cg) else { return nil }
+            let g = scaled(Int(size.width), Int(size.height), gridSide)
+            let photo = small.resized(width: g.0, height: g.1)
+            guard let prob = Segmenter.quickMask(cg) else { return (photo, nil) }
+            Diagnostics.note("quick cutout done")
+            return (photo, prob.resized(width: g.0, height: g.1).toBytes())
         }
     }
 
@@ -152,6 +192,8 @@ final class BatchStore: ObservableObject {
         } else {
             items[i].status = .failed("This photo couldn't be opened")
             items[i].removed = false
+            items[i].gridAlpha = nil
+            renderGrid(items[i])
         }
     }
 
@@ -173,6 +215,7 @@ final class BatchStore: ObservableObject {
     nonisolated static func process(data: Data, id: UUID, dir: URL, surface: SurfaceModel?) -> Processed? {
         autoreleasepool {
             guard let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg) else { return nil }
+            Diagnostics.note("photo decoded")
             let size = CGSize(width: photo.width, height: photo.height)
             let pw = scaled(photo.width, photo.height, previewSide), gw = scaled(photo.width, photo.height, gridSide)
             let preview = photo.resized(width: pw.0, height: pw.1)
@@ -265,7 +308,9 @@ final class BatchStore: ObservableObject {
             let img = await Task.detached(priority: .userInitiated) {
                 Box(BatchStore.renderSmall(photo: p.value, alpha: alpha, look: look, surfaceURL: url))
             }.value.value
-            if self.look == look, let img { grid[id] = img }
+            // A quick cutout's render must not land on top of the full one that replaced it.
+            guard self.look == look, let img, let now = items.first(where: { $0.id == id }), now.gridAlpha == alpha else { return }
+            grid[id] = img
         }
     }
 
@@ -407,6 +452,7 @@ final class BatchStore: ObservableObject {
 
     func clear() {
         gridTask?.cancel()
+        refineQueue = []
         items = []
         grid = [:]
         exportResult = nil
