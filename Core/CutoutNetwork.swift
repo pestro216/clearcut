@@ -69,9 +69,13 @@ public final class CutoutNetwork: @unchecked Sendable {
         return m
     }
 
-    /// Whether the app tries the Neural Engine and GPU. Back on since 26 Nov 2026, now that the
-    /// first-photo check holds only one copy of the model at a time.
-    public static let useAcceleration = true
+    /// Whether the app tries the Neural Engine. Off since 26 Nov 2026: on Mathew's iPhone 11 the
+    /// first-photo check closed the app every time it ran (GPU twice, Neural Engine twice; the
+    /// Neural Engine sat about 35 s on the first photo first, compiling, then was killed). A user's
+    /// first photo must never crash, so the CPU is used everywhere. To revisit: measure peak
+    /// memory of a Neural Engine load on a phone with more memory, and only try it where headroom
+    /// clearly allows.
+    public static let useAcceleration = false
 
     /// The model bundled with the app, if present.
     public static func bundled() -> CutoutNetwork? {

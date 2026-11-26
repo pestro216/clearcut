@@ -122,6 +122,13 @@ public enum Matting {
             fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) }
         }
 
+        // 2b. See-through patches enclosed by the item are kept only if what shows through them
+        // looks like the surface; otherwise they are the item's own material (a dark fold on a
+        // dark coat on a grey floor) and are filled. Covers every earlier step and the network.
+        let filledHoles = fillFalseHoles(R: R, G: G, B: B, prob: &p, fg: &fg)
+        notes["falseHolesFilledPx"] = Double(filledHoles)
+        if filledHoles > 0 { fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) } }
+
         let areaFrac = Float(fgArea) / Float(n)
         notes["areaFraction"] = Double(areaFrac)
 
@@ -515,6 +522,88 @@ public enum Matting {
             p = p.gaussianBlurred(sigma: 0.8)
         }
         return warning
+    }
+
+    // MARK: False holes
+
+    /// Fills see-through patches enclosed by the item that don't look like the surface around it.
+    ///
+    /// A patch is any region where the cutout is not solid (probability under 0.85) that doesn't
+    /// reach the edge of the photo through other non-solid pixels, so it is surrounded by item.
+    /// It stays see-through only if most of its pixels look like the surface outside the item:
+    /// the same colours (smoothed colour histograms of surface and item), or that surface in
+    /// shadow (every channel dimmed alike, not too dark). Real gaps (between comb teeth, inside a
+    /// handle, between an arm and the body) show the surface and are kept; a dark fold of a dark
+    /// item looks like the item, not the floor, and is filled. When in doubt it fills: a gap left
+    /// solid is easy to fix with touch-up, while blotches in the item spoil the photo.
+    /// Returns how many pixels were filled.
+    static func fillFalseHoles(R: Plane, G: Plane, B: Plane, prob p: inout Plane, fg: inout [Bool]) -> Int {
+        let w = p.width, h = p.height, n = w * h
+        guard n > 0, R.count == n, G.count == n, B.count == n else { return 0 }
+        let open = p.data.map { $0 < 0.85 }
+        let (lab, sz) = Regions.label(open, width: w, height: h)
+        let nc = sz.count
+        guard nc > 1 else { return 0 }
+        var outer = [Bool](repeating: false, count: nc)
+        for x in 0..<w { outer[Int(lab[x])] = true; outer[Int(lab[(h - 1) * w + x])] = true }
+        for y in 0..<h { outer[Int(lab[y * w])] = true; outer[Int(lab[y * w + w - 1])] = true }
+        guard (1..<nc).contains(where: { !outer[$0] }) else { return 0 }
+
+        @inline(__always) func bin(_ i: Int) -> Int {
+            let r = min(15, max(0, Int(R.data[i] * 16))), g = min(15, max(0, Int(G.data[i] * 16))), b = min(15, max(0, Int(B.data[i] * 16)))
+            return r << 8 | g << 4 | b
+        }
+        var bgHist = [Int](repeating: 0, count: 4096), fgHist = [Int](repeating: 0, count: 4096)
+        var bgN = 0, fgN = 0
+        var mean: (Float, Float, Float) = (0, 0, 0)
+        for i in 0..<n {
+            let l = Int(lab[i])
+            if l != 0 && outer[l] && p.data[i] < 0.03 {
+                bgHist[bin(i)] += 1; bgN += 1
+                mean.0 += R.data[i]; mean.1 += G.data[i]; mean.2 += B.data[i]
+            } else if p.data[i] > 0.97 {
+                fgHist[bin(i)] += 1; fgN += 1
+            }
+        }
+        // Without a clear view of both the surface and the item, there is nothing to judge by.
+        guard bgN > 200, fgN > 200 else { return 0 }
+        mean = (max(0.004, mean.0 / Float(bgN)), max(0.004, mean.1 / Float(bgN)), max(0.004, mean.2 / Float(bgN)))
+        func density(_ hist: [Int], _ total: Int, _ b: Int) -> Float {
+            let r = b >> 8, g = (b >> 4) & 15, bl = b & 15
+            var sum = 0
+            for dr in -1...1 { let rr = r + dr; if rr < 0 || rr > 15 { continue }
+                for dg in -1...1 { let gg = g + dg; if gg < 0 || gg > 15 { continue }
+                    for db in -1...1 { let bb = bl + db; if bb < 0 || bb > 15 { continue }
+                        sum += hist[rr << 8 | gg << 4 | bb]
+                    }
+                }
+            }
+            return Float(sum) / Float(total * 27)
+        }
+        var total = [Int](repeating: 0, count: nc), surfaceLike = [Int](repeating: 0, count: nc)
+        for i in 0..<n {
+            let l = Int(lab[i])
+            if l == 0 || outer[l] { continue }
+            total[l] += 1
+            let b = bin(i)
+            let dB = density(bgHist, bgN, b), dF = density(fgHist, fgN, b)
+            var surface = dB > 3 * dF && dB > 2 / 4096
+            if !surface {
+                let r = R.data[i] / mean.0, g = G.data[i] / mean.1, bl = B.data[i] / mean.2
+                let lo = min(r, g, bl), hi = max(r, g, bl)
+                if lo > 0.4 && hi < 0.97 && hi - lo < 0.10 { surface = true }
+            }
+            if surface { surfaceLike[l] += 1 }
+        }
+        var fill = [Bool](repeating: false, count: nc)
+        var filled = 0
+        for l in 1..<nc where !outer[l] && total[l] > 0 && Float(surfaceLike[l]) < 0.5 * Float(total[l]) {
+            fill[l] = true
+            filled += total[l]
+        }
+        guard filled > 0 else { return 0 }
+        for i in 0..<n where fill[Int(lab[i])] { p.data[i] = 1; fg[i] = true }
+        return filled
     }
 
     // MARK: Guided upsampling

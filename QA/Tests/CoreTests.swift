@@ -248,4 +248,33 @@ final class CoreTests: XCTestCase {
         XCTAssertGreaterThan(prob.data[106 * w + 80], 0.5, "cuff recovered")
         XCTAssertLessThan(prob.data[70 * w + 117], 0.5, "shadow left out")
     }
+
+    func testFalseHoleIsFilledButRealGapIsKept() {
+        // Grey floor; a dark item with two non-solid patches inside it: one where the floor shows
+        // through (a real gap) and one that is the item's own slightly lighter material.
+        let w = 160, h = 160
+        var R = Plane(width: w, height: h, value: 0.5), G = Plane(width: w, height: h, value: 0.5), B = Plane(width: w, height: h, value: 0.5)
+        var prob = Plane(width: w, height: h, value: 0)
+        for y in 30..<130 { for x in 30..<130 {
+            let i = y * w + x
+            R.data[i] = 0.12; G.data[i] = 0.11; B.data[i] = 0.10
+            prob.data[i] = 1
+        } }
+        for y in 50..<62 { for x in 50..<62 {
+            let i = y * w + x
+            R.data[i] = 0.5; G.data[i] = 0.5; B.data[i] = 0.5
+            prob.data[i] = 0
+        } }
+        for y in 90..<110 { for x in 80..<110 {
+            let i = y * w + x
+            R.data[i] = 0.18; G.data[i] = 0.16; B.data[i] = 0.14
+            prob.data[i] = 0.3
+        } }
+        var fg = prob.data.map { $0 > 0.5 }
+        let filled = Matting.fillFalseHoles(R: R, G: G, B: B, prob: &prob, fg: &fg)
+        XCTAssertGreaterThan(filled, 0)
+        XCTAssertEqual(prob.data[100 * w + 95], 1, "item material filled")
+        XCTAssertLessThan(prob.data[56 * w + 56], 0.5, "real gap kept")
+        XCTAssertEqual(prob.data[5 * w + 5], 0, "outside untouched")
+    }
 }

@@ -211,3 +211,17 @@ Asked for: cutouts that feel instant, cleaner cutouts, no taglines.
 - **Attribution**: About screen (version, © Woolfall, privacy, credits, MIT text), Info.plist
   `NSHumanReadableCopyright`, `LICENSE`, `PrivacyInfo.xcprivacy` (no tracking, no data collected,
   UserDefaults reason CA92.1).
+
+## 10. Coat video, 26 November 2026 (late)
+
+- **Crash**: the Neural Engine check sat about 35 s on photo 1, then iOS closed the app. With
+  GPU twice and Neural Engine twice killed on the iPhone 11, `useAcceleration` is now false. On
+  reopening, the resume worked: the batch came back and the photo was marked "Skipped".
+- **See-through blotches in a black coat on a grey floor** (flagged "Some background may be left
+  between parts of the item"): new `Matting.fillFalseHoles`, run after colour evidence, before
+  the guided filter. Regions with probability under 0.85 that are enclosed by the item stay
+  see-through only if most pixels look like the outside surface (smoothed 16-level colour
+  histograms, surface density over 3x item density) or that surface in shadow (all channels
+  dimmed alike, at least 40% of its brightness). Otherwise they are filled. Unit test: a gap
+  showing the floor is kept, a patch of the item's own material is filled. Note
+  `falseHolesFilledPx` in the bench report.
