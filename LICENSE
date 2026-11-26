@@ -1,0 +1,11 @@
+Copyright (c) 2026 Woolfall. All rights reserved.
+
+Clearcut, its source code, design and artwork are the property of Woolfall. The source is
+published for reference only. No permission is granted to copy, modify, distribute, sublicense
+or sell it, in whole or in part, without written permission from Woolfall.
+
+Third-party components keep their own licences:
+- BiRefNet, MIT License, Copyright (c) 2024 ZhengPeng.
+- birefnet-lite-coreml (Core ML conversion of BiRefNet), MIT License as stated on its model page.
+- Surface photos from Poly Haven (polyhaven.com), CC0 1.0.
+Their full texts are shown in the app under About.

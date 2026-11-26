@@ -8,7 +8,13 @@ public enum Diagnostics {
     private static let log = Logger(subsystem: "app.clearcut.photos", category: "memory")
 
     /// Memory this app is using, in megabytes (what iOS counts against the limit).
-    public static func footprintMB() -> Int? {
+    public static func footprintMB() -> Int? { vmInfo().map { Int($0.phys_footprint / 1_048_576) } }
+
+    /// The most memory this app has used at any moment since it started, in megabytes. Catches
+    /// the brief spike while the network runs, which the readings between stages can't see.
+    public static func peakMB() -> Int? { vmInfo().map { Int($0.ledger_phys_footprint_peak / 1_048_576) } }
+
+    private static func vmInfo() -> task_vm_info_data_t? {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<natural_t>.size)
         let kr = withUnsafeMutablePointer(to: &info) {
@@ -16,7 +22,7 @@ public enum Diagnostics {
                 task_info(mach_task_self_, task_flavor_t(TASK_VM_INFO), $0, &count)
             }
         }
-        return kr == KERN_SUCCESS ? Int(info.phys_footprint / 1_048_576) : nil
+        return kr == KERN_SUCCESS ? info : nil
     }
 
     /// Memory the app may still use before iOS closes it, in megabytes. nil where unknown
@@ -41,12 +47,12 @@ public enum Diagnostics {
 
     /// Logs memory and the seconds since the previous note, so the log shows where time goes.
     public static func note(_ stage: String) {
-        let f = footprintMB() ?? -1, h = headroomMB() ?? -1
+        let f = footprintMB() ?? -1, h = headroomMB() ?? -1, pk = peakMB() ?? -1
         clockLock.lock()
         let now = Date(), dt = now.timeIntervalSince(lastNote)
         lastNote = now
         clockLock.unlock()
         let secs = String(format: "%.2f", dt)
-        log.notice("Clearcut memory: \(stage, privacy: .public): using \(f, privacy: .public) MB, headroom \(h, privacy: .public) MB, \(secs, privacy: .public) s since last note")
+        log.notice("Clearcut memory: \(stage, privacy: .public): using \(f, privacy: .public) MB, peak \(pk, privacy: .public) MB, headroom \(h, privacy: .public) MB, \(secs, privacy: .public) s since last note")
     }
 }

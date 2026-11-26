@@ -75,11 +75,11 @@ struct BatchView: View {
                 }
             }
             Spacer()
-            PhotosPicker(selection: $morePicks, maxSelectionCount: 250, selectionBehavior: .ordered, matching: .images) {
+            PhotosPicker(selection: $morePicks, maxSelectionCount: max(1, store.room), selectionBehavior: .ordered, matching: .images) {
                 Image(systemName: "plus").font(.system(size: 18, weight: .semibold)).frame(width: 40, height: 40)
             }
             .accessibilityLabel("Add photos")
-            .disabled(store.exportProgress != nil)
+            .disabled(store.exportProgress != nil || store.room == 0)
         }
         .foregroundStyle(Theme.ink)
         .padding(.horizontal, 10)

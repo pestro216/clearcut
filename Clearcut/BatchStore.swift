@@ -10,7 +10,12 @@ import UniformTypeIdentifiers
 /// exported). Everything else lives on disk, plus ~0.5 MB per photo for the grid.
 @MainActor
 final class BatchStore: ObservableObject {
-    @Published var items: [BatchItem] = []
+    @Published var items: [BatchItem] = [] { didSet { saveManifest() } }
+    /// Photos per batch. Each photo is cut out one at a time, so memory doesn't grow with the
+    /// batch, but a long batch keeps the phone busy and warm; 40 is a sensible sitting.
+    nonisolated static let maxPerBatch = 40
+    /// Room left in the batch, counting photos still waiting to be imported.
+    var room: Int { max(0, BatchStore.maxPerBatch - items.count - queue.count) }
     @Published var look: Look {
         didSet {
             guard look != oldValue else { return }
@@ -64,9 +69,18 @@ final class BatchStore: ObservableObject {
 
     init(library: BackgroundLibrary) {
         self.library = library
-        dir = FileManager.default.temporaryDirectory.appendingPathComponent("ClearcutBatch", isDirectory: true)
-        try? FileManager.default.removeItem(at: dir)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        // The batch lives in Application Support (not backed up), so it survives the app being
+        // closed by iOS and carries on when reopened. The old temporary folder is cleared.
+        let fm = FileManager.default
+        try? fm.removeItem(at: fm.temporaryDirectory.appendingPathComponent("ClearcutBatch", isDirectory: true))
+        let support = (try? fm.url(for: .applicationSupportDirectory, in: .userDomainMask, appropriateFor: nil, create: true))
+            ?? fm.temporaryDirectory
+        var batchDir = support.appendingPathComponent("ClearcutBatch", isDirectory: true)
+        try? fm.createDirectory(at: batchDir, withIntermediateDirectories: true)
+        var rv = URLResourceValues()
+        rv.isExcludedFromBackup = true
+        try? batchDir.setResourceValues(rv)
+        dir = batchDir
         var initial = Look()
         if let d = UserDefaults.standard.data(forKey: Look.storageKey), let saved = try? JSONDecoder().decode(Look.self, from: d) {
             initial = saved
@@ -75,6 +89,107 @@ final class BatchStore: ObservableObject {
         look = initial
         if let d = UserDefaults.standard.data(forKey: "surface.v1"), let m = try? JSONDecoder().decode(SurfaceModel?.self, from: d) {
             surface = m
+        }
+        restore()
+    }
+
+    // MARK: Saved batch
+
+    /// What is kept on disk about each photo. File names are relative to the batch folder,
+    /// because the app's folder path can change between installs.
+    private struct Saved: Codable {
+        var id: UUID
+        var status: BatchItem.Status
+        var removed: Bool
+        var edited: Bool
+        var triedWithSurface: Bool
+        var original: String
+        var width: Double
+        var height: Double
+        var alpha: String?
+        var previewPhoto: String?
+        var previewAlpha: String?
+    }
+
+    private var manifestURL: URL { dir.appendingPathComponent("batch.json") }
+    private static let inProgressKey = "batch.inProgress.v1"
+    private var restoring = false
+
+    private func saveManifest() {
+        guard !restoring else { return }
+        let saved = items.map { i in
+            Saved(id: i.id, status: i.status, removed: i.removed, edited: i.edited, triedWithSurface: i.triedWithSurface,
+                  original: i.originalURL.lastPathComponent, width: Double(i.pixelSize.width), height: Double(i.pixelSize.height),
+                  alpha: i.alphaURL?.lastPathComponent, previewPhoto: i.previewPhotoURL?.lastPathComponent,
+                  previewAlpha: i.previewAlphaURL?.lastPathComponent)
+        }
+        if let d = try? JSONEncoder().encode(saved) { try? d.write(to: manifestURL, options: .atomic) }
+    }
+
+    /// Reopens the batch the app was working on when it was last closed. A photo that was being
+    /// cut out at that moment may be what made iOS close the app, so it is skipped and kept as
+    /// the original rather than tried again.
+    private func restore() {
+        let fm = FileManager.default
+        guard let d = try? Data(contentsOf: manifestURL), let saved = try? JSONDecoder().decode([Saved].self, from: d) else { return }
+        let crashed = UserDefaults.standard.string(forKey: BatchStore.inProgressKey).flatMap(UUID.init(uuidString:))
+        UserDefaults.standard.removeObject(forKey: BatchStore.inProgressKey)
+        func url(_ name: String?) -> URL? {
+            guard let name else { return nil }
+            let u = dir.appendingPathComponent(name)
+            return fm.fileExists(atPath: u.path) ? u : nil
+        }
+        restoring = true
+        var restored: [BatchItem] = []
+        for s in saved {
+            guard let original = url(s.original) else { continue }
+            var item = BatchItem(id: s.id, originalURL: original)
+            item.status = s.status
+            item.removed = s.removed
+            item.edited = s.edited
+            item.triedWithSurface = s.triedWithSurface
+            item.pixelSize = CGSize(width: s.width, height: s.height)
+            item.alphaURL = url(s.alpha)
+            item.previewPhotoURL = url(s.previewPhoto)
+            item.previewAlphaURL = url(s.previewAlpha)
+            if s.id == crashed {
+                item.status = .failed("Skipped: the phone ran out of memory on this photo, kept as the original")
+                item.removed = false
+                item.triedWithSurface = true
+                item.alphaURL = nil
+            } else if item.status == .processing {
+                refineQueue.append(s.id)
+            }
+            if item.alphaURL == nil { item.removed = false }
+            restored.append(item)
+        }
+        items = restored
+        restoring = false
+        saveManifest()
+        guard !items.isEmpty else { return }
+        // Grid images come back from the saved previews (or the original, for unfinished photos).
+        let jobs = items.map { ($0.id, $0.previewPhotoURL ?? $0.originalURL, $0.previewAlphaURL) }
+        Task {
+            for (id, photoURL, alphaURL) in jobs {
+                let r = await Task.detached(priority: .userInitiated) { () -> Box<(RGBAImage, [UInt8]?)?> in
+                    autoreleasepool {
+                        guard let data = try? Data(contentsOf: photoURL), let size = ImageIOHelpers.orientedSize(data),
+                              let cg = ImageIOHelpers.loadOriented(data, maxPixel: 1024), let small = RGBAImage(cgImage: cg) else { return Box(nil) }
+                        let g = BatchStore.scaled(Int(size.width), Int(size.height), BatchStore.gridSide)
+                        let photo = small.resized(width: g.0, height: g.1)
+                        let alpha = alphaURL.flatMap { BatchStore.readAlpha($0, width: g.0, height: g.1) }
+                        return Box((photo, alpha))
+                    }
+                }.value.value
+                guard let r, let i = items.firstIndex(where: { $0.id == id }) else { continue }
+                items[i].gridPhoto = r.0
+                if items[i].status != .processing { items[i].gridAlpha = items[i].removed ? r.1 : nil }
+                renderGrid(items[i])
+            }
+            if !refineQueue.isEmpty {
+                importing = (0, refineQueue.count)
+                run()
+            }
         }
     }
 
@@ -88,7 +203,11 @@ final class BatchStore: ObservableObject {
     // MARK: Import
 
     func add(_ picks: [PhotosPickerItem]) {
-        enqueue(picks.map { .pick($0) })
+        let room = self.room
+        if picks.count > room {
+            message = "A batch holds up to \(BatchStore.maxPerBatch) photos, so \(room == 0 ? "none" : "the first \(room)") of these \(room == 1 ? "was" : "were") added. Save this batch, then start a new one for the rest."
+        }
+        enqueue(picks.prefix(room).map { .pick($0) })
     }
 
     /// Adds photos from files (used by the automated simulator check).
@@ -100,6 +219,10 @@ final class BatchStore: ObservableObject {
         guard !sources.isEmpty else { return }
         queue.append(contentsOf: sources)
         importing = (importing?.done ?? 0, (importing?.total ?? 0) + sources.count)
+        run()
+    }
+
+    private func run() {
         guard !running else { return }
         running = true
         Task {
@@ -129,7 +252,10 @@ final class BatchStore: ObservableObject {
                 } else {
                     let id = refineQueue.removeFirst()
                     if let item = items.first(where: { $0.id == id }), let data = try? Data(contentsOf: item.originalURL) {
+                        // Remembered until done: if iOS closes the app on this photo, it is skipped on reopening.
+                        UserDefaults.standard.set(id.uuidString, forKey: BatchStore.inProgressKey)
                         await cutOut(id: id, data: data)
+                        UserDefaults.standard.removeObject(forKey: BatchStore.inProgressKey)
                     }
                     if let p = importing { importing = (p.done + 1, p.total) }
                 }
@@ -138,7 +264,9 @@ final class BatchStore: ObservableObject {
             if surface != nil {
                 for item in items where !item.triedWithSurface {
                     if case .failed = item.status, let data = try? Data(contentsOf: item.originalURL) {
+                        UserDefaults.standard.set(item.id.uuidString, forKey: BatchStore.inProgressKey)
                         await cutOut(id: item.id, data: data)
+                        UserDefaults.standard.removeObject(forKey: BatchStore.inProgressKey)
                     }
                 }
             }
@@ -456,8 +584,9 @@ final class BatchStore: ObservableObject {
         items = []
         grid = [:]
         exportResult = nil
-        try? FileManager.default.removeItem(at: dir)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let fm = FileManager.default
+        for u in (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [] { try? fm.removeItem(at: u) }
+        saveManifest()
     }
 
     // MARK: Export

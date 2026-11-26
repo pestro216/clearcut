@@ -12,7 +12,7 @@ import CoreML
 ///
 /// Speed. The conversion recommends the CPU, because reduced-precision hardware can change the
 /// result. The CPU is also the slowest place to run it. In the app (`accelerate`), the phone's
-/// Neural Engine (then, failing that, its GPU) is tried, but only trusted after a check: on the
+/// Neural Engine is tried, but only trusted after a check: on the
 /// first photo the fast copy runs, is unloaded, and then the CPU copy runs on the same input. Only
 /// one copy is ever in memory (two at once pushed an iPhone 11 past its limit on 25 Nov 2026). The
 /// fast copy is used from then on only if the two agree (same outline, near-identical values). The
@@ -96,12 +96,13 @@ public final class CutoutNetwork: @unchecked Sendable {
 
     // MARK: Hardware trust
 
-    /// Fast hardware to try, best first: the Neural Engine (with GPU and CPU for any layer it
-    /// can't run), then the GPU.
-    static let fastOptions: [(units: MLComputeUnits, name: String)] = [(.all, "all"), (.cpuAndGPU, "gpu")]
+    /// Fast hardware to try: the Neural Engine, with the CPU for any layer it can't run. The GPU
+    /// is not offered: on Mathew's iPhone 11 it went over the memory limit twice (25 and 26 Nov
+    /// 2026), and the GPU is the part that holds a large working copy in app memory.
+    static let fastOptions: [(units: MLComputeUnits, name: String)] = [(.cpuAndNeuralEngine, "ane")]
 
     private static func trustKey(_ name: String) -> String {
-        "network.fast.v2." + name + "." + ProcessInfo.processInfo.operatingSystemVersionString
+        "network.fast.v3." + name + "." + ProcessInfo.processInfo.operatingSystemVersionString
     }
 
     /// nil: not checked yet on this iOS version. true/false: the verdict.
@@ -116,6 +117,13 @@ public final class CutoutNetwork: @unchecked Sendable {
     /// probabilities differ by very little on average.
     static func agree(_ a: [Float], _ b: [Float]) -> Bool {
         guard a.count == b.count, !a.isEmpty, sane(a) else { return false }
+        let m = agreement(a, b)
+        return m.iou > 0.985 && m.diff < 0.02
+    }
+
+    /// Outline overlap (intersection over union at one half) and mean probability difference.
+    static func agreement(_ a: [Float], _ b: [Float]) -> (iou: Double, diff: Double) {
+        guard a.count == b.count, !a.isEmpty else { return (0, 1) }
         let pa = probabilities(a), pb = probabilities(b)
         var inter = 0, uni = 0
         var diff: Double = 0
@@ -126,7 +134,7 @@ public final class CutoutNetwork: @unchecked Sendable {
             diff += Double(abs(pa[i] - pb[i]))
         }
         let iou = uni == 0 ? 1 : Double(inter) / Double(uni)
-        return iou > 0.985 && diff / Double(pa.count) < 0.02
+        return (iou, diff / Double(pa.count))
     }
 
     static func sane(_ raw: [Float]) -> Bool {
@@ -206,7 +214,9 @@ public final class CutoutNetwork: @unchecked Sendable {
                 guard let reference = try run(try loaded(.cpuOnly), provider) else { return nil }
                 let ok = out.map { CutoutNetwork.agree($0, reference) } ?? false
                 CutoutNetwork.setTrust(fast.name, ok)
-                Diagnostics.note("fast hardware \(fast.name) " + (ok ? "agrees" : "disagrees") + " with the CPU")
+                let m = out.map { CutoutNetwork.agreement($0, reference) }
+                let detail = m.map { String(format: "outline overlap %.4f, mean difference %.4f", $0.iou, $0.diff) } ?? "no output"
+                Diagnostics.note("fast hardware \(fast.name) " + (ok ? "agrees" : "disagrees") + " with the CPU (" + detail + ")")
                 lastRunAccelerated = false
                 return reference
             }

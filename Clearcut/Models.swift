@@ -49,7 +49,7 @@ struct Look: Codable, Hashable {
 }
 
 struct BatchItem: Identifiable, @unchecked Sendable {
-    enum Status: Equatable {
+    enum Status: Equatable, Codable {
         case processing
         case ready
         case check(String)      // cut out, but worth a look

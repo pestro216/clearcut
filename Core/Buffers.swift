@@ -243,10 +243,15 @@ public enum ColourSpaces {
 }
 
 public enum ImageIOHelpers {
-    /// Decodes with EXIF orientation applied, at full size unless maxPixel is smaller.
+    /// The longest side any photo is worked on at. Every iPhone photo (up to 48 MP, 8064 px) fits;
+    /// a panorama or a very large file is scaled down, so one image can't exhaust the phone's memory.
+    public static let maxSide = 8192
+
+    /// Decodes with EXIF orientation applied, at full size (up to `maxSide`) unless maxPixel is smaller.
     public static func loadOriented(_ data: Data, maxPixel: Int? = nil) -> CGImage? {
         guard let src = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
-        let full = orientedSize(data).map { Int(max($0.width, $0.height)) } ?? 8192
+        let full = min(maxSide, orientedSize(data).map { Int(max($0.width, $0.height)) } ?? maxSide)
+        guard full > 0 else { return nil }
         let options: [CFString: Any] = [
             kCGImageSourceCreateThumbnailFromImageAlways: true,
             kCGImageSourceCreateThumbnailWithTransform: true,

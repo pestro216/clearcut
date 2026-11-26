@@ -24,6 +24,7 @@ targets:
           - UIInterfaceOrientationPortrait
         NSPhotoLibraryAddUsageDescription: Clearcut saves your finished photos to your library.
         ITSAppUsesNonExemptEncryption: false
+        NSHumanReadableCopyright: "© 2026 Woolfall. All rights reserved."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.clearcut.photos

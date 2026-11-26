@@ -190,3 +190,24 @@ Asked for: cutouts that feel instant, cleaner cutouts, no taglines.
   gesture help, "Pinch to zoom" hint.
 - Not changed: edge refinement. Without the bench (macOS only) and Mathew's problem photos, blind
   changes would risk the measured scenes.
+
+## 9. Later on 26 November 2026
+
+- **Crash on photo 1 of 2**: no crash report (a memory kill). The safety rule then marked both fast
+  options failed, so later runs used the CPU (network 6 to 9 s per photo, footprint 130 to 240 MB
+  between stages). The GPU option is removed; the Neural Engine (`.cpuAndNeuralEngine`) is checked
+  again under key `network.fast.v3.ane.*`, and the log now gives the check's outline overlap and
+  mean difference and, on every line, the app's peak memory since launch.
+- **Batches**: at most 40 (`BatchStore.maxPerBatch`). The batch folder moved from the temporary
+  folder to Application Support (excluded from backup) with `batch.json`; reopening restores it and
+  continues unfinished photos. The photo being cut out is recorded (`batch.inProgress.v1`); if the
+  app is closed on it, it is skipped on reopening so it can't crash the app again.
+- **Image size**: `ImageIOHelpers.maxSide` 8192 caps every decode.
+- **Security review**: no network code at all; Photos access is add-only through the system picker;
+  exports are re-encoded from pixels, so location and camera metadata are not carried over; the
+  repo has no secrets or email addresses; workflows run only on pushes to `main`, use only
+  `actions/*` and have scoped permissions; the model download is checked against SHA-256 hashes.
+  Open point: releases (the .ipa) are downloadable by anyone while the repo is public.
+- **Attribution**: About screen (version, © Woolfall, privacy, credits, MIT text), Info.plist
+  `NSHumanReadableCopyright`, `LICENSE`, `PrivacyInfo.xcprivacy` (no tracking, no data collected,
+  UserDefaults reason CA92.1).
