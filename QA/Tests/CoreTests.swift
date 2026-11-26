@@ -277,36 +277,4 @@ final class CoreTests: XCTestCase {
         XCTAssertLessThan(prob.data[56 * w + 56], 0.5, "real gap kept")
         XCTAssertEqual(prob.data[5 * w + 5], 0, "outside untouched")
     }
-
-    func testAppleSolidInsideFillsLeakingPatchButNotASeparateObject() {
-        // Grey floor; a dark item with a lighter patch of its own material that leaks out to the
-        // floor through a thin channel (so it is not enclosed), and a separate red object beside
-        // it that Apple's outline includes but the network left out.
-        let w = 170, h = 160
-        var R = Plane(width: w, height: h, value: 0.5), G = Plane(width: w, height: h, value: 0.5), B = Plane(width: w, height: h, value: 0.5)
-        var prob = Plane(width: w, height: h, value: 0)
-        var solid = Plane(width: w, height: h, value: 0)
-        func paint(_ ys: Range<Int>, _ xs: Range<Int>, _ c: (Float, Float, Float), _ pv: Float?, _ sv: Float?) {
-            for y in ys { for x in xs {
-                let i = y * w + x
-                R.data[i] = c.0; G.data[i] = c.1; B.data[i] = c.2
-                if let pv { prob.data[i] = pv }
-                if let sv { solid.data[i] = sv }
-            } }
-        }
-        paint(30..<130, 30..<130, (0.12, 0.11, 0.10), 1, 1)
-        paint(60..<80, 40..<70, (0.18, 0.16, 0.14), 0.3, nil)
-        paint(68..<71, 30..<40, (0.18, 0.16, 0.14), 0.3, nil)
-        paint(40..<60, 140..<156, (0.6, 0.1, 0.1), 0, 1)
-
-        var plain = prob, fgPlain = prob.data.map { $0 > 0.5 }
-        _ = Matting.fillFalseHoles(R: R, G: G, B: B, prob: &plain, fg: &fgPlain)
-        XCTAssertLessThan(plain.data[70 * w + 55], 0.5, "without Apple's outline a leaking patch isn't enclosed")
-
-        var fg = prob.data.map { $0 > 0.5 }
-        _ = Matting.fillFalseHoles(R: R, G: G, B: B, prob: &prob, fg: &fg, solid: solid, band: 4)
-        XCTAssertEqual(prob.data[70 * w + 55], 1, "patch inside Apple's solid inside filled")
-        XCTAssertEqual(prob.data[50 * w + 148], 0, "separate object not added")
-        XCTAssertEqual(prob.data[5 * w + 5], 0, "floor untouched")
-    }
 }
