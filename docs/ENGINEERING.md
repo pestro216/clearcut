@@ -225,3 +225,20 @@ Asked for: cutouts that feel instant, cleaner cutouts, no taglines.
   dimmed alike, at least 40% of its brightness). Otherwise they are filled. Unit test: a gap
   showing the floor is kept, a patch of the item's own material is filled. Note
   `falseHolesFilledPx` in the bench report.
+
+## 11. Apple's outline as the solid inside (build 40, reverted 27 November 2026)
+
+Tried: `Segmentation.solid` carried Apple's mask into `Matting.fillFalseHoles`, which also judged
+non-solid pixels inside Apple's outline (shrunk by 1.2% of the long side) when at least 60%
+bordered by item. Mathew found build 40 promising but with too much feathering, so `main` went
+back to build 39's code (revert of 1ba78c4; the code is still in git history).
+
+Likely cause, for a second attempt: where Apple's outline is larger than the item (it often takes
+in a soft shadow or the fuzz along an edge), the network's soft edge band falls inside Apple's
+"solid inside" and can be filled to fully solid, widening the item into the surface; the guided
+filter then blends that wider edge, which reads as feathering. A second attempt should never
+touch pixels within a few pixels of the network's own outline (only patches whose whole rim is
+well inside the item), and be compared against build 39 on Mathew's photos before shipping.
+
+**Reverting**: tags `build-38` and `build-39` on GitHub; their apps are in `builds/` (not in git,
+checksums in `builds/SHA256SUMS`), installable with SideStore.
