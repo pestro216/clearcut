@@ -225,3 +225,18 @@ Asked for: cutouts that feel instant, cleaner cutouts, no taglines.
   dimmed alike, at least 40% of its brightness). Otherwise they are filled. Unit test: a gap
   showing the floor is kept, a patch of the item's own material is filled. Note
   `falseHolesFilledPx` in the bench report.
+
+## 11. Apple's outline as the solid inside, 27 November 2026
+
+Mathew's idea: let Apple's subject finder say what is solidly the item, and let the network and
+edge refinement work only around the outline. `Segmentation.solid` carries Apple's mask (the
+second-opinion run, already made for every photo) into `Matting.fillFalseHoles`, which now also
+judges non-solid pixels inside Apple's outline shrunk by 1.2% of the long side, when the patch is
+at least 60% bordered by item. Same surface test as before decides fill or keep. A separate object
+Apple included is bordered by background, so it is never added. If Apple's model finds nothing,
+only enclosed patches are judged (section 10). Unit test covers a patch leaking to the floor
+through a thin channel, and the separate object.
+
+**Reverting**: tags `build-38` and `build-39` on GitHub; their apps are in `builds/` (not in git,
+checksums in `builds/SHA256SUMS`), installable with SideStore. To rebuild an old version on GitHub,
+`git revert` back to the tag on `main` and push.

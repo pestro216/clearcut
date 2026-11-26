@@ -14,6 +14,10 @@ public struct Segmentation {
     public var prob: Plane
     public var instanceCount: Int
     public var zoomed: Bool
+    /// Apple's subject finder at working resolution, when it ran alongside the network. Used by
+    /// the matting as the item's solid inside: Apple's model judges whole objects and doesn't
+    /// punch holes in them, while the network draws the sharper outline.
+    public var solid: Plane? = nil
 }
 
 public enum Segmenter {
@@ -155,14 +159,16 @@ public enum Segmenter {
         Diagnostics.note("network unloaded")
         // A second opinion from Apple's subject finder, for parts the network dropped. Skipped,
         // rather than risk the app being closed, if memory is short anyway.
+        var solid: Plane?
         if Diagnostics.canSpare(450), let small = RGBAImage(cgImage: full, width: ww, height: wh),
            let cg = small.makeOpaqueCGImage(), let vision = try? mask(of: cg, network: nil) {
             _ = recoverParts(&prob, vision: vision.prob, image: small)
+            solid = vision.prob
             Diagnostics.note("second opinion done")
         } else {
             Diagnostics.note("second opinion skipped")
         }
-        return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed)
+        return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed, solid: solid)
     }
 
     /// Adds back parts Apple's subject finder includes but the network left out: a cuff, the end
