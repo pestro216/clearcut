@@ -8,8 +8,9 @@ struct BatchView: View {
     @State private var confirmClose = false
     @State private var morePicks: [PhotosPickerItem] = []
     @State private var onlyAttention = false
-
-    private let columns = [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)]
+    // Two across on every iPhone; four on an 11-inch iPad, more on a 13-inch.
+    // Two across on a phone; on an iPad's wider screen as many as fit at least 240 points wide.
+    private let columns = [GridItem(.adaptive(minimum: 170, maximum: 320), spacing: 8)]
 
     private var shown: [BatchItem] {
         onlyAttention ? store.items.filter { $0.needsAttention } : store.items
