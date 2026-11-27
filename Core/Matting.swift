@@ -71,6 +71,7 @@ public enum Matting {
         var flags: [String] = []
         notes["instances"] = Double(seg.instanceCount)
         notes["zoomed"] = seg.zoomed ? 1 : 0
+        if let a = seg.agreement { notes["appleAgreement"] = Double(a) }
 
         let guide = full.resized(width: ww, height: wh)
         let R = guide.channel(0), G = guide.channel(1), B = guide.channel(2)
@@ -125,7 +126,8 @@ public enum Matting {
         // 2b. See-through patches enclosed by the item are kept only if what shows through them
         // looks like the surface; otherwise they are the item's own material (a dark fold on a
         // dark coat on a grey floor) and are filled. Covers every earlier step and the network.
-        let filledHoles = fillFalseHoles(R: R, G: G, B: B, prob: &p, fg: &fg)
+        let filledHoles = fillFalseHoles(R: R, G: G, B: B, prob: &p, fg: &fg,
+                                         solid: seg.solid, band: max(4, Int(0.012 * longW)))
         notes["falseHolesFilledPx"] = Double(filledHoles)
         if filledHoles > 0 { fgArea = fg.reduce(0) { $0 + ($1 ? 1 : 0) } }
 
@@ -166,6 +168,11 @@ public enum Matting {
             let share = Float(left) / Float(solidArea)
             notes["backgroundLeftInside"] = Double(share)
             if share > 0.01 && flags.isEmpty { flags.append("Some background may be left between parts of the item") }
+        }
+
+        // Two independent models that disagree strongly about where the item is: worth a look.
+        if let a = seg.agreement, a < 0.5, flags.isEmpty {
+            flags.append("The two cutout methods disagree about this item, worth checking")
         }
 
         // Confidence.
@@ -526,28 +533,53 @@ public enum Matting {
 
     // MARK: False holes
 
-    /// Fills see-through patches enclosed by the item that don't look like the surface around it.
+    /// Fills see-through patches inside the item that don't look like the surface around it.
     ///
-    /// A patch is any region where the cutout is not solid (probability under 0.85) that doesn't
-    /// reach the edge of the photo through other non-solid pixels, so it is surrounded by item.
-    /// It stays see-through only if most of its pixels look like the surface outside the item:
-    /// the same colours (smoothed colour histograms of surface and item), or that surface in
-    /// shadow (every channel dimmed alike, not too dark). Real gaps (between comb teeth, inside a
-    /// handle, between an arm and the body) show the surface and are kept; a dark fold of a dark
-    /// item looks like the item, not the floor, and is filled. When in doubt it fills: a gap left
-    /// solid is easy to fix with touch-up, while blotches in the item spoil the photo.
+    /// Trimap thinking (glance and focus, as in GFM and AIM): a coarse, whole-object judgement says
+    /// what is definitely item, and fine edge work is kept to a band around the outline. Here the
+    /// band follows the network's own outline, never Apple's (build 40 used Apple's, which is often
+    /// a little larger than the item, and widened soft edges into the surface: feathering).
+    ///
+    /// A patch is a region where the cutout is not solid (probability under 0.85) that is either
+    /// enclosed by the item, or lies both in the solid inside of Apple's outline (`solid`, shrunk
+    /// by `band`) and at least `band` pixels inside the network's own outline, and is mostly
+    /// bordered by item. It stays see-through only if most of its pixels look like the surface
+    /// outside the item: the same colours (smoothed colour histograms of surface and item), or that
+    /// surface in shadow (every channel dimmed alike, not too dark). Real gaps (between comb teeth,
+    /// inside a handle, between an arm and the body) show the surface and are kept; a dark fold of
+    /// a dark item looks like the item, not the floor, and is filled. A separate object Apple
+    /// included is bordered by background, not item, and is never added.
     /// Returns how many pixels were filled.
-    static func fillFalseHoles(R: Plane, G: Plane, B: Plane, prob p: inout Plane, fg: inout [Bool]) -> Int {
+    static func fillFalseHoles(R: Plane, G: Plane, B: Plane, prob p: inout Plane, fg: inout [Bool],
+                               solid: Plane? = nil, band: Int = 0) -> Int {
         let w = p.width, h = p.height, n = w * h
         guard n > 0, R.count == n, G.count == n, B.count == n else { return 0 }
         let open = p.data.map { $0 < 0.85 }
         let (lab, sz) = Regions.label(open, width: w, height: h)
-        let nc = sz.count
-        guard nc > 1 else { return 0 }
-        var outer = [Bool](repeating: false, count: nc)
+        guard sz.count > 1 else { return 0 }
+        var outer = [Bool](repeating: false, count: sz.count)
         for x in 0..<w { outer[Int(lab[x])] = true; outer[Int(lab[(h - 1) * w + x])] = true }
         for y in 0..<h { outer[Int(lab[y * w])] = true; outer[Int(lab[y * w + w - 1])] = true }
-        guard (1..<nc).contains(where: { !outer[$0] }) else { return 0 }
+
+        // The "definitely item" zone: inside Apple's outline and well inside the network's own.
+        var inside = [Bool](repeating: false, count: n)
+        var appleArea = [Bool](repeating: false, count: n)
+        if let s = solid, s.width == w, s.height == h, band > 0 {
+            for i in 0..<n { appleArea[i] = s.data[i] > 0.3 }
+            let apple = Plane(width: w, height: h, data: s.data.map { $0 > 0.5 ? 1 : 0 }).boxBlurred(radius: band)
+            // Distance from where the network is confident the surface begins (open to the frame
+            // and under 0.03). Soft patches inside the item don't count as surface here, and a
+            // shadow Apple took in does, so its edge is never widened.
+            var item = [Float](repeating: 0, count: n)
+            for i in 0..<n { item[i] = (open[i] && outer[Int(lab[i])] && p.data[i] < 0.03) ? 0 : 1 }
+            let net = Plane(width: w, height: h, data: item).boxBlurred(radius: band)
+            for i in 0..<n { inside[i] = apple.data[i] >= 0.999 && net.data[i] >= 0.999 }
+        }
+        var cand = [Bool](repeating: false, count: n)
+        for i in 0..<n where open[i] { cand[i] = !outer[Int(lab[i])] || inside[i] }
+        let (cl, cs) = Regions.label(cand, width: w, height: h)
+        let nc = cs.count
+        guard nc > 1 else { return 0 }
 
         @inline(__always) func bin(_ i: Int) -> Int {
             let r = min(15, max(0, Int(R.data[i] * 16))), g = min(15, max(0, Int(G.data[i] * 16))), b = min(15, max(0, Int(B.data[i] * 16)))
@@ -558,7 +590,7 @@ public enum Matting {
         var mean: (Float, Float, Float) = (0, 0, 0)
         for i in 0..<n {
             let l = Int(lab[i])
-            if l != 0 && outer[l] && p.data[i] < 0.03 {
+            if l != 0 && outer[l] && p.data[i] < 0.03 && !appleArea[i] {
                 bgHist[bin(i)] += 1; bgN += 1
                 mean.0 += R.data[i]; mean.1 += G.data[i]; mean.2 += B.data[i]
             } else if p.data[i] > 0.97 {
@@ -581,10 +613,18 @@ public enum Matting {
             return Float(sum) / Float(total * 27)
         }
         var total = [Int](repeating: 0, count: nc), surfaceLike = [Int](repeating: 0, count: nc)
+        var rimItem = [Int](repeating: 0, count: nc), rimAll = [Int](repeating: 0, count: nc)
         for i in 0..<n {
-            let l = Int(lab[i])
-            if l == 0 || outer[l] { continue }
+            let l = Int(cl[i])
+            if l == 0 { continue }
             total[l] += 1
+            let x = i % w, y = i / w
+            for (nx, ny) in [(x - 1, y), (x + 1, y), (x, y - 1), (x, y + 1)] where nx >= 0 && ny >= 0 && nx < w && ny < h {
+                let j = ny * w + nx
+                if cl[j] == cl[i] { continue }
+                rimAll[l] += 1
+                if p.data[j] >= 0.85 { rimItem[l] += 1 }
+            }
             let b = bin(i)
             let dB = density(bgHist, bgN, b), dF = density(fgHist, fgN, b)
             var surface = dB > 3 * dF && dB > 2 / 4096
@@ -597,12 +637,15 @@ public enum Matting {
         }
         var fill = [Bool](repeating: false, count: nc)
         var filled = 0
-        for l in 1..<nc where !outer[l] && total[l] > 0 && Float(surfaceLike[l]) < 0.5 * Float(total[l]) {
-            fill[l] = true
-            filled += total[l]
+        for l in 1..<nc where total[l] > 0 && rimAll[l] > 0 {
+            let surrounded = Float(rimItem[l]) >= 0.6 * Float(rimAll[l])
+            if surrounded && Float(surfaceLike[l]) < 0.5 * Float(total[l]) {
+                fill[l] = true
+                filled += total[l]
+            }
         }
         guard filled > 0 else { return 0 }
-        for i in 0..<n where fill[Int(lab[i])] { p.data[i] = 1; fg[i] = true }
+        for i in 0..<n where fill[Int(cl[i])] { p.data[i] = 1; fg[i] = true }
         return filled
     }
 

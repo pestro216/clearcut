@@ -14,6 +14,15 @@ public struct Segmentation {
     public var prob: Plane
     public var instanceCount: Int
     public var zoomed: Bool
+    /// Apple's subject finder at working resolution (only the subjects overlapping the network's
+    /// item), when it ran alongside the network. The matting uses it as the item's solid inside,
+    /// away from the network's own edge: Apple's model judges whole objects and doesn't punch
+    /// holes in them, while the network draws the sharper outline.
+    public var solid: Plane? = nil
+    /// How well Apple's outline and the network's agree (intersection over union at one half),
+    /// when both ran. A self-check in the spirit of MODNet's consistency between sub-objectives:
+    /// two independent models that disagree strongly mean the photo is worth a look.
+    public var agreement: Float? = nil
 }
 
 public enum Segmenter {
@@ -155,14 +164,18 @@ public enum Segmenter {
         Diagnostics.note("network unloaded")
         // A second opinion from Apple's subject finder, for parts the network dropped. Skipped,
         // rather than risk the app being closed, if memory is short anyway.
+        var solid: Plane?
+        var agreement: Float?
         if Diagnostics.canSpare(450), let small = RGBAImage(cgImage: full, width: ww, height: wh),
-           let cg = small.makeOpaqueCGImage(), let vision = try? mask(of: cg, network: nil) {
+           let cg = small.makeOpaqueCGImage(), let vision = try? appleMask(of: cg, overlapping: prob) {
+            agreement = iou(prob, vision.prob)
             _ = recoverParts(&prob, vision: vision.prob, image: small)
+            solid = vision.prob
             Diagnostics.note("second opinion done")
         } else {
             Diagnostics.note("second opinion skipped")
         }
-        return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed)
+        return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed, solid: solid, agreement: agreement)
     }
 
     /// Adds back parts Apple's subject finder includes but the network left out: a cuff, the end
@@ -402,11 +415,60 @@ public enum Segmenter {
             guard p.data.contains(where: { $0 > 0.5 }) else { return nil }
             return (p, 1)
         }
+        return try appleMask(of: image, overlapping: nil)
+    }
+
+    /// Intersection over union of two probability maps of the same size, at one half.
+    static func iou(_ a: Plane, _ b: Plane) -> Float? {
+        guard a.width == b.width, a.height == b.height, a.count > 0 else { return nil }
+        var inter = 0, uni = 0
+        for i in 0..<a.count {
+            let x = a.data[i] > 0.5, y = b.data[i] > 0.5
+            if x && y { inter += 1 }
+            if x || y { uni += 1 }
+        }
+        return uni == 0 ? nil : Float(inter) / Float(uni)
+    }
+
+    /// Of Apple's subjects (it labels each object it finds separately), those to keep: every one
+    /// that has at least a quarter of its area on the item. If none qualifies, all of them.
+    static func chooseInstances(labels: [UInt8], width w: Int, height h: Int, all: [Int], item: Plane) -> [Int] {
+        var area = [Int](repeating: 0, count: 256), over = [Int](repeating: 0, count: 256)
+        for y in 0..<h {
+            let fy = (Float(y) + 0.5) / Float(h) * Float(item.height)
+            for x in 0..<w {
+                let l = Int(labels[y * w + x])
+                if l == 0 { continue }
+                area[l] += 1
+                if item.sample((Float(x) + 0.5) / Float(w) * Float(item.width), fy) > 0.5 { over[l] += 1 }
+            }
+        }
+        let keep = all.filter { $0 > 0 && $0 < 256 && area[$0] > 0 && Float(over[$0]) >= 0.25 * Float(area[$0]) }
+        return keep.isEmpty ? all : keep
+    }
+
+    /// Apple's subject finder. With `item` (the network's result, any size), only the subjects
+    /// that overlap it are kept, so a hanger, a tag or a second item in the shot is never mixed
+    /// into the second opinion (WWDC23 "Lift subjects from images in your app": instances are
+    /// labelled separately and can be chosen by index).
+    static func appleMask(of image: CGImage, overlapping item: Plane?) throws -> (prob: Plane, instances: Int)? {
         let request = VNGenerateForegroundInstanceMaskRequest()
         let handler = VNImageRequestHandler(cgImage: image, orientation: .up, options: [:])
         try handler.perform([request])
         guard let obs = request.results?.first, !obs.allInstances.isEmpty else { return nil }
-        let buffer = try obs.generateScaledMaskForImage(forInstances: obs.allInstances, from: handler)
+        var chosen = obs.allInstances
+        if let item, chosen.count > 1 {
+            let lb = obs.instanceMask
+            CVPixelBufferLockBaseAddress(lb, .readOnly)
+            let lw = CVPixelBufferGetWidth(lb), lh = CVPixelBufferGetHeight(lb), row = CVPixelBufferGetBytesPerRow(lb)
+            var labels = [UInt8](repeating: 0, count: lw * lh)
+            if let base = CVPixelBufferGetBaseAddress(lb)?.assumingMemoryBound(to: UInt8.self) {
+                for y in 0..<lh { for x in 0..<lw { labels[y * lw + x] = base[y * row + x] } }
+            }
+            CVPixelBufferUnlockBaseAddress(lb, .readOnly)
+            chosen = IndexSet(chooseInstances(labels: labels, width: lw, height: lh, all: Array(chosen), item: item))
+        }
+        let buffer = try obs.generateScaledMaskForImage(forInstances: chosen, from: handler)
         CVPixelBufferLockBaseAddress(buffer, .readOnly)
         defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
         let w = CVPixelBufferGetWidth(buffer), h = CVPixelBufferGetHeight(buffer)

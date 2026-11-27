@@ -17,6 +17,13 @@ public struct MatteScores: Codable {
     public var edgeDeltaE: Double
     /// 95th percentile of the same: the worst visible edge spots.
     public var edgeDeltaE95: Double
+    /// Gradient error (Rhemann et al. 2009, as in the Deep Image Matting evaluation): squared
+    /// difference of alpha gradient magnitudes (Gaussian derivative, sigma 1.4), summed, / 1000.
+    /// Rises when edges are blurrier (feathered) or noisier than the truth. Lower is better.
+    public var gradient: Double?
+    /// Connectivity error (same source): penalises parts of the matte cut off from the solid item,
+    /// such as blotches and holes inside it. Summed, / 1000. Lower is better.
+    public var connectivity: Double?
 }
 
 public enum Metrics {
@@ -64,7 +71,75 @@ public enum Metrics {
         return MatteScores(iou: iou, boundaryF: bf, bandMAE: bandN == 0 ? 0 : sad / Double(bandN),
                            missedItem: refCount == 0 ? 0 : Double(missed) / Double(refCount),
                            keptBackground: refCount == 0 ? 0 : Double(kept) / Double(refCount),
-                           edgeDeltaE: meanDE, edgeDeltaE95: p95)
+                           edgeDeltaE: meanDE, edgeDeltaE95: p95,
+                           gradient: gradientError(alpha, reference, w, h),
+                           connectivity: connectivityError(alpha, reference, w, h))
+    }
+
+    /// Gradient error / 1000. Both mattes are differentiated with first-order Gaussian derivative
+    /// filters (sigma 1.4), and the squared differences of gradient magnitude are summed.
+    static func gradientError(_ a: [UInt8], _ r: [UInt8], _ w: Int, _ h: Int) -> Double {
+        let sigma: Float = 1.4, rad = Int((3 * sigma).rounded(.up))
+        var g = [Float](repeating: 0, count: 2 * rad + 1), dg = g
+        var gs: Float = 0, ds: Float = 0
+        for k in -rad...rad {
+            let x = Float(k), e = expf(-x * x / (2 * sigma * sigma))
+            g[k + rad] = e; gs += e
+            dg[k + rad] = -x * e; ds += abs(x * e)
+        }
+        for k in 0..<g.count { g[k] /= gs; dg[k] /= ds / 2 }
+        func conv(_ src: [Float], _ kx: [Float], _ ky: [Float]) -> [Float] {
+            var tmp = [Float](repeating: 0, count: w * h), out = tmp
+            for y in 0..<h { for x in 0..<w {
+                var s: Float = 0
+                for k in -rad...rad { s += src[y * w + min(w - 1, max(0, x + k))] * kx[k + rad] }
+                tmp[y * w + x] = s
+            } }
+            for y in 0..<h { for x in 0..<w {
+                var s: Float = 0
+                for k in -rad...rad { s += tmp[min(h - 1, max(0, y + k)) * w + x] * ky[k + rad] }
+                out[y * w + x] = s
+            } }
+            return out
+        }
+        func magnitude(_ m: [UInt8]) -> [Float] {
+            let f = m.map { Float($0) / 255 }
+            let gx = conv(f, dg, g), gy = conv(f, g, dg)
+            return zip(gx, gy).map { sqrtf($0 * $0 + $1 * $1) }
+        }
+        let ma = magnitude(a), mr = magnitude(r)
+        var e: Double = 0
+        for i in 0..<(w * h) { let d = Double(ma[i] - mr[i]); e += d * d }
+        return e / 1000
+    }
+
+    /// Connectivity error / 1000. For thresholds 0, 0.1 ... 1, the largest region where both
+    /// mattes reach the threshold is the solid core; each pixel's level is the last threshold at
+    /// which it still belonged to that core. Pixels whose alpha rises well above their level
+    /// (disconnected from the core) are penalised, and the two mattes' penalties are compared.
+    static func connectivityError(_ a: [UInt8], _ r: [UInt8], _ w: Int, _ h: Int) -> Double {
+        let n = w * h
+        let fa = a.map { Float($0) / 255 }, fr = r.map { Float($0) / 255 }
+        var level = [Float](repeating: -1, count: n)
+        let step: Float = 0.1
+        var t: Float = 0
+        while t <= 1.0001 {
+            var both = [Bool](repeating: false, count: n)
+            for i in 0..<n { both[i] = fa[i] >= t && fr[i] >= t }
+            let (lab, sz) = Regions.label(both, width: w, height: h)
+            var biggest = 0, best = 0
+            for l in 1..<max(1, sz.count) where sz[l] > biggest { biggest = sz[l]; best = l }
+            for i in 0..<n where level[i] == -1 && (best == 0 || Int(lab[i]) != best) { level[i] = t - step }
+            t += step
+        }
+        for i in 0..<n where level[i] == -1 { level[i] = 1 }
+        var e: Double = 0
+        for i in 0..<n {
+            let da = fa[i] - level[i], dr = fr[i] - level[i]
+            let pa: Float = da >= 0.15 ? 1 - da : 1, pr: Float = dr >= 0.15 ? 1 - dr : 1
+            e += Double(abs(pa - pr))
+        }
+        return e / 1000
     }
 
     static func boundary(_ a: [UInt8], _ w: Int, _ h: Int) -> [Bool] {

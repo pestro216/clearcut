@@ -256,3 +256,37 @@ checksums in `builds/SHA256SUMS`), installable with SideStore.
   never shows up as a backdrop. Wikimedia Commons searched for CC0 garments on 27 Nov: the best
   candidates (a hoodie on carpet, a work jacket on a blanket) carry a clothing brand or a company
   logo, the rest have price tags or are museum pieces on grey. None used.
+
+## 13. Engine v3 from the research list, 27 November 2026
+
+Sources read 27 Nov (Mathew's list): MODNet, FBA Matting, MatteFormer, ViTMatte, ViTAE/GFM,
+DeepFashion2, ModaNet, Fashionpedia, Apple's salient object segmentation article, WWDC23 10176,
+background-remover-ios, ML Kit Subject Segmentation. Licences in `docs/decisions.md`.
+
+What carried over:
+- **Apple's own design** (salient object segmentation article): 512 x 512 prediction, then guided
+  upsampling to full resolution, plus a confidence branch. Clearcut's pipeline already has this
+  shape (network, guided filter, confidence).
+- **Instance selection** (WWDC23): `Segmenter.appleMask(of:overlapping:)` reads Apple's instance
+  labels and keeps only subjects with at least a quarter of their area on the network's item
+  (`chooseInstances`, unit-tested). A hanger, tag or second item can't enter the second opinion.
+- **Glance and focus / trimap** (GFM, AIM, MatteFormer's trimap tokens): definite item, definite
+  background, and an unknown band where fine work happens. `fillFalseHoles` now judges patches in
+  Apple's shrunk outline only where they are also at least the band width from where the network
+  is confident the surface begins. This is build 40's idea with its feathering cause removed; a
+  unit test checks a soft edge is left exactly as drawn when Apple's outline is larger.
+- **Consistency as a self-check** (MODNet's sub-objective consistency): `Segmentation.agreement`
+  is the IoU of Apple's chosen subjects and the network; under 0.5 the photo is marked Check.
+  Bench note `appleAgreement`.
+- **Evaluation** (FBA, MatteFormer report SAD, MSE, Grad, Conn on Composition-1k): Gradient and
+  Connectivity errors added to `Metrics` and the bench table, written from the standard
+  definitions (Rhemann et al. 2009 / Deep Image Matting evaluation; from memory, the fetched pages
+  did not define them; the gradient kernel normalisation may differ from the MATLAB code, so
+  compare runs with each other, not with published numbers). Report only; gate them once a
+  baseline is recorded. Gradient catches feathering, Connectivity catches blotches.
+- **Foreground colour** (FBA predicts F, B and alpha together): Clearcut already estimates F with
+  Forte and Pitié's blur fusion; no change.
+
+Not adopted: any matting network (non-commercial or unclear weights; MODNet is for portraits).
+Training a garment model on Fashionpedia (CC BY 4.0 annotations) needs a GPU and per-image licence
+checks: a later project.

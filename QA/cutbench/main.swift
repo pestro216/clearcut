@@ -188,8 +188,9 @@ for name in cases {
             confidences[name] = o.confidence
             print("NOTES \(name): " + o.notes.sorted { $0.key < $1.key }.map { "\($0.key)=\(String(format: "%.3g", $0.value))" }.joined(separator: " "))
         }
-        print(String(format: "%@ | %@ | IoU %.4f BF %.3f bandMAE %.3f missed %.4f kept %.4f dE %.2f dE95 %.2f | %.2fs",
-                     name, mname, s.iou, s.boundaryF, s.bandMAE, s.missedItem, s.keptBackground, s.edgeDeltaE, s.edgeDeltaE95, o.seconds))
+        print(String(format: "%@ | %@ | IoU %.4f BF %.3f bandMAE %.3f missed %.4f kept %.4f dE %.2f dE95 %.2f grad %.2f conn %.2f | %.2fs",
+                     name, mname, s.iou, s.boundaryF, s.bandMAE, s.missedItem, s.keptBackground, s.edgeDeltaE, s.edgeDeltaE95,
+                     s.gradient ?? -1, s.connectivity ?? -1, o.seconds))
     }
 
     // Contact sheet: truth, previous, new on the green test backdrop + a zoom on the worst edge spot of "new".
@@ -247,10 +248,10 @@ if let big = cases.last(where: { $0.hasPrefix("11_") }), let cg = loadCG(testset
 
 // Report tables
 func fmt(_ v: Double, _ d: Int) -> String { String(format: "%.\(d)f", v) }
-report += "## Shipping method by scene\n\n| Scene | IoU | Boundary F | Edge alpha error | Missed item | Kept background | Edge ΔE | Edge ΔE 95% | Time | Confidence |\n|---|---|---|---|---|---|---|---|---|---|\n"
+report += "## Shipping method by scene\n\n| Scene | IoU | Boundary F | Edge alpha error | Missed item | Kept background | Edge ΔE | Edge ΔE 95% | Gradient | Connectivity | Time | Confidence |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n"
 for name in cases {
     guard let s = results[name]?[shipping] else { continue }
-    report += "| \(name) | \(fmt(s.iou, 4)) | \(fmt(s.boundaryF, 3)) | \(fmt(s.bandMAE, 3)) | \(fmt(s.missedItem * 100, 2))% | \(fmt(s.keptBackground * 100, 2))% | \(fmt(s.edgeDeltaE, 2)) | \(fmt(s.edgeDeltaE95, 2)) | \(fmt(timings[name]?[shipping] ?? 0, 2)) s | \(confidences[name] ?? "") |\n"
+    report += "| \(name) | \(fmt(s.iou, 4)) | \(fmt(s.boundaryF, 3)) | \(fmt(s.bandMAE, 3)) | \(fmt(s.missedItem * 100, 2))% | \(fmt(s.keptBackground * 100, 2))% | \(fmt(s.edgeDeltaE, 2)) | \(fmt(s.edgeDeltaE95, 2)) | \(fmt(s.gradient ?? 0, 2)) | \(fmt(s.connectivity ?? 0, 2)) | \(fmt(timings[name]?[shipping] ?? 0, 2)) s | \(confidences[name] ?? "") |\n"
 }
 report += "\n## Methods compared (mean over scenes)\n\n| Method | IoU | Boundary F | Edge alpha error | Missed item | Kept background | Edge ΔE | Edge ΔE 95% |\n|---|---|---|---|---|---|---|---|\n"
 for (mname, _) in methods {
