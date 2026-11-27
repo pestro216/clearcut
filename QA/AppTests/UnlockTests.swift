@@ -1,4 +1,5 @@
 import XCTest
+import StoreKit
 import StoreKitTest
 @testable import Clearcut
 
@@ -13,12 +14,19 @@ final class UnlockTests: XCTestCase {
         session.resetToDefaultState()
         session.clearTransactions()
         session.disableDialogs = true
+        // The test store can take a moment to load its products after the session starts.
+        for _ in 0..<10 {
+            if let found = try? await Product.products(for: [Unlock.productID]), !found.isEmpty { break }
+            try? await Task.sleep(nanoseconds: 1_000_000_000)
+        }
     }
 
     func testProductHasAPrice() async {
         let u = Unlock()
         await u.loadProduct()
-        XCTAssertEqual(u.product?.id, Unlock.productID)
+        var why = "the test store returned no products"
+        do { _ = try await Product.products(for: [Unlock.productID]) } catch { why = "the test store said: \(error)" }
+        XCTAssertEqual(u.product?.id, Unlock.productID, why)
         XCTAssertFalse(u.product?.displayPrice.isEmpty ?? true, "The price must be shown before buying")
     }
 

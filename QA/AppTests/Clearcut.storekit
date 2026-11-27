@@ -1,32 +1,38 @@
 {
-  "identifier" : "C1EA2C07-0000-4000-8000-000000000001",
-  "nonRenewingSubscriptions" : [],
-  "products" : [
+  "identifier": "C1EA2C07-0000-4000-8000-000000000001",
+  "nonRenewingSubscriptions": [],
+  "products": [
     {
-      "displayPrice" : "6.99",
-      "familyShareable" : false,
-      "internalID" : "6740000001",
-      "localizations" : [
+      "displayPrice": "6.99",
+      "familyShareable": false,
+      "internalID": "6740000001",
+      "localizations": [
         {
-          "description" : "Save as many photos as you like. One payment, no subscription.",
-          "displayName" : "Unlock",
-          "locale" : "en_GB"
+          "description": "Save as many photos as you like. One payment, no subscription.",
+          "displayName": "Unlock",
+          "locale": "en_GB"
         }
       ],
-      "productID" : "app.clearcut.photos.unlock",
-      "referenceName" : "Unlock",
-      "type" : "NonConsumable"
+      "productID": "app.clearcut.photos.unlock",
+      "referenceName": "Unlock",
+      "type": "NonConsumable"
     }
   ],
-  "settings" : {
-    "_failTransactionsEnabled" : false,
-    "_locale" : "en_GB",
-    "_storefront" : "GBR",
-    "_storeKitErrors" : []
+  "settings": {
+    "_askToBuyEnabled": false,
+    "_billingGracePeriodEnabled": false,
+    "_billingIssuesEnabled": false,
+    "_disableDialogs": true,
+    "_failTransactionsEnabled": false,
+    "_locale": "en_GB",
+    "_renewalBillingIssuesEnabled": false,
+    "_storeKitErrors": [],
+    "_storefront": "GBR",
+    "_timeRate": 0
   },
-  "subscriptionGroups" : [],
-  "version" : {
-    "major" : 4,
-    "minor" : 0
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
   }
 }
