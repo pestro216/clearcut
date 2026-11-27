@@ -31,6 +31,7 @@ final class UnlockTests: XCTestCase {
 
         // A fresh start (or another device on the same Apple Account) finds the purchase.
         let again = Unlock()
+        again.syncWithAppStore = {}
         await again.refresh()
         XCTAssertTrue(again.unlocked)
         await again.restore()
@@ -49,6 +50,7 @@ final class UnlockTests: XCTestCase {
 
     func testRestoreWithNothingBoughtSaysSo() async {
         let u = Unlock()
+        u.syncWithAppStore = {}
         await u.restore()
         XCTAssertFalse(u.unlocked)
         XCTAssertNotNil(u.problem)

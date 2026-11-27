@@ -22,6 +22,9 @@ final class Unlock: ObservableObject {
     var freeLeft: Int { unlocked ? .max : max(0, Self.freeSaves - used) }
 
     private var updates: Task<Void, Never>?
+    /// Asks Apple for this account's purchases (it may ask the person to sign in). Swapped out in
+    /// the app tests, where nobody can answer a sign-in.
+    var syncWithAppStore: () async throws -> Void = { try await AppStore.sync() }
 
     init() {
         #if PERSONAL
@@ -111,7 +114,7 @@ final class Unlock: ObservableObject {
         problem = nil
         busy = true
         defer { busy = false }
-        try? await AppStore.sync()
+        try? await syncWithAppStore()
         await refresh()
         if !unlocked { problem = "No earlier purchase found on this Apple Account." }
     }

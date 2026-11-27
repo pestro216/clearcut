@@ -93,14 +93,22 @@ jobs:
         run: QA/publish.sh shots "app-check" "App check ${{ github.run_number }}"
       # The unlock purchase, bought, restored and refunded against Apple's local test store
       # (QA/AppTests/Clearcut.storekit). No developer account or real money involved.
-      - name: App tests (unlock purchase)
+      - name: App tests (unlock purchase, cutout fallback)
+        timeout-minutes: 20
         run: |
           xcodebuild test -project Clearcut.xcodeproj -scheme Clearcut \
             -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -test-timeouts-enabled YES -default-test-execution-time-allowance 120 \
             -derivedDataPath build-test CODE_SIGNING_ALLOWED=NO > test.log 2>&1 || {
               grep -E "error:|failed|XCTAssert" test.log | sort -u | head -40
               tail -30 test.log
               exit 1
             }
           grep -E "Test Case .* (passed|failed)|Executed" test.log | tail -8
+
+      - name: Test log if the tests stopped
+        if: failure() || cancelled()
+        run: |
+          grep -E "Test Case|error:|Executed" test.log | tail -40 || true
+          tail -20 test.log || true
 
