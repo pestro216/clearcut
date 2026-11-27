@@ -1,0 +1,15 @@
+{
+ "what": "dark Columbia anorak, front, hood up, whole, on pale concrete",
+ "original": "IMG_3169.HEIC",
+ "cutout": "IMG_3200.JPG",
+ "matches": 477,
+ "scale": 0.595,
+ "unknownShare": 0.0007,
+ "size": [
+  2268,
+  3024
+ ],
+ "source": "Woolfall stock photo; reference from a white-background cutout",
+ "added": "2026-11-27",
+ "reference": "Photoroom export on white, alpha recovered with tools/photoroom_reference.py"
+}

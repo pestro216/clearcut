@@ -1,0 +1,15 @@
+{
+ "what": "close-up of anorak side, vertical tape measure, touches frame edges",
+ "original": "IMG_3174.HEIC",
+ "cutout": "IMG_3204.JPG",
+ "matches": 1045,
+ "scale": 0.595,
+ "unknownShare": 0.0,
+ "size": [
+  2268,
+  3024
+ ],
+ "source": "Woolfall stock photo; reference from a white-background cutout",
+ "added": "2026-11-27",
+ "reference": "Photoroom export on white, alpha recovered with tools/photoroom_reference.py"
+}

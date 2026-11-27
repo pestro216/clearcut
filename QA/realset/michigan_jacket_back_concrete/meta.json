@@ -1,0 +1,15 @@
+{
+ "what": "navy and yellow Michigan jacket, back, whole, on concrete",
+ "original": "IMG_3166.HEIC",
+ "cutout": "IMG_3205.JPG",
+ "matches": 733,
+ "scale": 0.595,
+ "unknownShare": 0.0014,
+ "size": [
+  2268,
+  3024
+ ],
+ "source": "Woolfall stock photo; reference from a white-background cutout",
+ "added": "2026-11-27",
+ "reference": "Photoroom export on white, alpha recovered with tools/photoroom_reference.py"
+}

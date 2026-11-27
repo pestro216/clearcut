@@ -1,0 +1,15 @@
+{
+ "what": "close-up of anorak hem and lining with tape measure, fills the frame",
+ "original": "IMG_3175.HEIC",
+ "cutout": "IMG_3202.JPG",
+ "matches": 1255,
+ "scale": 0.595,
+ "unknownShare": 0.0008,
+ "size": [
+  2268,
+  3024
+ ],
+ "source": "Woolfall stock photo; reference from a white-background cutout",
+ "added": "2026-11-27",
+ "reference": "Photoroom export on white, alpha recovered with tools/photoroom_reference.py"
+}

@@ -1,0 +1,15 @@
+{
+ "what": "close-up of jacket front with vertical tape measure, drawstring",
+ "original": "IMG_3162.HEIC",
+ "cutout": "IMG_3211.JPG",
+ "matches": 1108,
+ "scale": 0.595,
+ "unknownShare": 0.0017,
+ "size": [
+  2268,
+  3024
+ ],
+ "source": "Woolfall stock photo; reference from a white-background cutout",
+ "added": "2026-11-27",
+ "reference": "Photoroom export on white, alpha recovered with tools/photoroom_reference.py"
+}

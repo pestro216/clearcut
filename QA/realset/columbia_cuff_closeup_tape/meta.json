@@ -1,0 +1,15 @@
+{
+ "what": "close-up of dark cuff with button and tape measure",
+ "original": "IMG_3176.HEIC",
+ "cutout": "IMG_3203.JPG",
+ "matches": 1072,
+ "scale": 0.595,
+ "unknownShare": 0.0,
+ "size": [
+  2268,
+  3024
+ ],
+ "source": "Woolfall stock photo; reference from a white-background cutout",
+ "added": "2026-11-27",
+ "reference": "Photoroom export on white, alpha recovered with tools/photoroom_reference.py"
+}
