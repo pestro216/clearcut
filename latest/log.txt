@@ -1,289 +1,289 @@
-Cutout network loaded in 8.3 s
-Network probe on 01_navy_shirt_on_white: raw output -23.969 to 22.359, mean -4.666; item area 25.6%; one pass 2.34 s.
+Cutout network loaded in 6.6 s
+Network probe on 01_navy_shirt_on_white: raw output -23.969 to 22.359, mean -4.666; item area 25.6%; one pass 2.45 s.
 
 
-01_navy_shirt_on_white | Apple model only | IoU 0.9969 BF 0.917 bandMAE 0.221 missed 0.0014 kept 0.0017 dE 24.28 dE95 46.61 grad 10.63 conn 32.36 | 1.61s
-01_navy_shirt_on_white | previous app | IoU 0.9988 BF 1.000 bandMAE 0.086 missed 0.0000 kept 0.0012 dE 4.72 dE95 9.40 grad 1.27 conn 8.47 | 3.66s
-01_navy_shirt_on_white | BiRefNet only | IoU 0.9978 BF 0.997 bandMAE 0.082 missed 0.0020 kept 0.0002 dE 10.29 dE95 39.91 grad 4.05 conn 10.83 | 5.17s
-01_navy_shirt_on_white | edges: tight levels | IoU 0.9992 BF 1.000 bandMAE 0.040 missed 0.0000 kept 0.0008 dE 2.67 dE95 10.12 grad 0.72 conn 3.88 | 8.25s
-01_navy_shirt_on_white | edges: radius 3 | IoU 0.9993 BF 1.000 bandMAE 0.061 missed 0.0000 kept 0.0007 dE 4.65 dE95 12.27 grad 0.84 conn 4.32 | 8.93s
-01_navy_shirt_on_white | edges: radius 3, tight levels | IoU 0.9993 BF 1.000 bandMAE 0.036 missed 0.0000 kept 0.0007 dE 2.49 dE95 9.57 grad 0.57 conn 3.14 | 8.84s
-01_navy_shirt_on_white | edges: radius 8, finer eps | IoU 0.9989 BF 1.000 bandMAE 0.066 missed 0.0000 kept 0.0011 dE 3.78 dE95 8.84 grad 1.12 conn 5.90 | 10.28s
+01_navy_shirt_on_white | Apple model only | IoU 0.9969 BF 0.917 bandMAE 0.221 missed 0.0014 kept 0.0017 dE 24.28 dE95 46.61 grad 10.63 conn 32.36 | 1.37s
+01_navy_shirt_on_white | previous app | IoU 0.9988 BF 1.000 bandMAE 0.086 missed 0.0000 kept 0.0012 dE 4.72 dE95 9.40 grad 1.27 conn 8.47 | 3.80s
+01_navy_shirt_on_white | BiRefNet only | IoU 0.9978 BF 0.997 bandMAE 0.082 missed 0.0020 kept 0.0002 dE 10.29 dE95 39.91 grad 4.05 conn 10.83 | 2.88s
+01_navy_shirt_on_white | edges: tight levels | IoU 0.9992 BF 1.000 bandMAE 0.040 missed 0.0000 kept 0.0008 dE 2.67 dE95 10.12 grad 0.72 conn 3.88 | 8.82s
+01_navy_shirt_on_white | edges: radius 3 | IoU 0.9993 BF 1.000 bandMAE 0.061 missed 0.0000 kept 0.0007 dE 4.65 dE95 12.27 grad 0.84 conn 4.32 | 7.66s
+01_navy_shirt_on_white | edges: radius 3, tight levels | IoU 0.9993 BF 1.000 bandMAE 0.036 missed 0.0000 kept 0.0007 dE 2.49 dE95 9.57 grad 0.57 conn 3.14 | 7.59s
+01_navy_shirt_on_white | edges: radius 8, finer eps | IoU 0.9989 BF 1.000 bandMAE 0.066 missed 0.0000 kept 0.0011 dE 3.78 dE95 8.84 grad 1.12 conn 5.90 | 7.55s
 NOTES 01_navy_shirt_on_white: areaFraction=0.256 backgroundLeftInside=0 backgroundNoise=0.012 backgroundSampleFraction=0.485 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=37 separation=97 zoomed=1
-01_navy_shirt_on_white | new | IoU 0.9992 BF 1.000 bandMAE 0.063 missed 0.0000 kept 0.0008 dE 4.04 dE95 8.85 grad 0.95 conn 5.06 | 8.89s
-02_white_on_white | Apple model only | IoU 0.9902 BF 0.693 bandMAE 0.185 missed 0.0000 kept 0.0099 dE 11.48 dE95 33.78 grad 3.92 conn 8.68 | 0.41s
-02_white_on_white | previous app | IoU 0.9979 BF 0.999 bandMAE 0.152 missed 0.0020 kept 0.0001 dE 9.39 dE95 20.86 grad 1.67 conn 8.29 | 1.68s
-02_white_on_white | BiRefNet only | IoU 0.9968 BF 0.979 bandMAE 0.062 missed 0.0018 kept 0.0015 dE 4.02 dE95 18.44 grad 1.31 conn 2.88 | 2.98s
-02_white_on_white | edges: tight levels | IoU 0.9976 BF 0.997 bandMAE 0.131 missed 0.0024 kept 0.0000 dE 8.61 dE95 20.35 grad 1.73 conn 5.60 | 8.03s
-02_white_on_white | edges: radius 3 | IoU 0.9981 BF 0.999 bandMAE 0.114 missed 0.0019 kept 0.0000 dE 7.94 dE95 19.06 grad 1.48 conn 4.48 | 6.74s
-02_white_on_white | edges: radius 3, tight levels | IoU 0.9981 BF 0.999 bandMAE 0.080 missed 0.0019 kept 0.0000 dE 5.98 dE95 18.99 grad 1.15 conn 3.07 | 6.95s
-02_white_on_white | edges: radius 8, finer eps | IoU 0.9970 BF 0.989 bandMAE 0.179 missed 0.0030 kept 0.0000 dE 10.40 dE95 21.01 grad 2.08 conn 10.97 | 6.57s
+01_navy_shirt_on_white | new | IoU 0.9992 BF 1.000 bandMAE 0.063 missed 0.0000 kept 0.0008 dE 4.04 dE95 8.85 grad 0.95 conn 5.06 | 7.09s
+02_white_on_white | Apple model only | IoU 0.9902 BF 0.693 bandMAE 0.185 missed 0.0000 kept 0.0099 dE 11.48 dE95 33.78 grad 3.92 conn 8.68 | 0.36s
+02_white_on_white | previous app | IoU 0.9979 BF 0.999 bandMAE 0.152 missed 0.0020 kept 0.0001 dE 9.39 dE95 20.86 grad 1.67 conn 8.29 | 1.50s
+02_white_on_white | BiRefNet only | IoU 0.9968 BF 0.979 bandMAE 0.062 missed 0.0018 kept 0.0015 dE 4.02 dE95 18.44 grad 1.31 conn 2.88 | 2.54s
+02_white_on_white | edges: tight levels | IoU 0.9976 BF 0.997 bandMAE 0.131 missed 0.0024 kept 0.0000 dE 8.61 dE95 20.35 grad 1.73 conn 5.60 | 6.16s
+02_white_on_white | edges: radius 3 | IoU 0.9981 BF 0.999 bandMAE 0.114 missed 0.0019 kept 0.0000 dE 7.94 dE95 19.06 grad 1.48 conn 4.48 | 5.25s
+02_white_on_white | edges: radius 3, tight levels | IoU 0.9981 BF 0.999 bandMAE 0.080 missed 0.0019 kept 0.0000 dE 5.98 dE95 18.99 grad 1.15 conn 3.07 | 6.04s
+02_white_on_white | edges: radius 8, finer eps | IoU 0.9970 BF 0.989 bandMAE 0.179 missed 0.0030 kept 0.0000 dE 10.40 dE95 21.01 grad 2.08 conn 10.97 | 6.22s
 NOTES 02_white_on_white: areaFraction=0.172 backgroundLeftInside=0.000359 backgroundNoise=0.012 backgroundSampleFraction=0.674 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=0 separation=9.09 zoomed=1
-02_white_on_white | new | IoU 0.9976 BF 0.997 bandMAE 0.170 missed 0.0024 kept 0.0000 dE 10.47 dE95 21.08 grad 2.05 conn 8.50 | 6.27s
-03_black_on_dark_wood | Apple model only | IoU 0.9946 BF 1.000 bandMAE 0.155 missed 0.0036 kept 0.0018 dE 13.72 dE95 39.96 grad 2.58 conn 6.72 | 0.46s
-03_black_on_dark_wood | previous app | IoU 0.9987 BF 0.997 bandMAE 0.100 missed 0.0002 kept 0.0011 dE 9.40 dE95 25.14 grad 0.91 conn 3.34 | 1.74s
-03_black_on_dark_wood | BiRefNet only | IoU 0.9974 BF 1.000 bandMAE 0.059 missed 0.0023 kept 0.0003 dE 5.47 dE95 26.81 grad 0.87 conn 2.47 | 7.11s
-03_black_on_dark_wood | edges: tight levels | IoU 0.9996 BF 1.000 bandMAE 0.051 missed 0.0003 kept 0.0002 dE 5.20 dE95 21.61 grad 0.44 conn 1.86 | 10.01s
-03_black_on_dark_wood | edges: radius 3 | IoU 0.9996 BF 1.000 bandMAE 0.068 missed 0.0003 kept 0.0001 dE 7.94 dE95 25.56 grad 0.55 conn 2.41 | 8.36s
-03_black_on_dark_wood | edges: radius 3, tight levels | IoU 0.9996 BF 1.000 bandMAE 0.041 missed 0.0003 kept 0.0001 dE 3.95 dE95 19.62 grad 0.37 conn 1.61 | 9.06s
-03_black_on_dark_wood | edges: radius 8, finer eps | IoU 0.9995 BF 1.000 bandMAE 0.073 missed 0.0003 kept 0.0002 dE 8.09 dE95 23.50 grad 0.57 conn 2.53 | 8.84s
+02_white_on_white | new | IoU 0.9976 BF 0.997 bandMAE 0.170 missed 0.0024 kept 0.0000 dE 10.47 dE95 21.08 grad 2.05 conn 8.50 | 5.04s
+03_black_on_dark_wood | Apple model only | IoU 0.9946 BF 1.000 bandMAE 0.155 missed 0.0036 kept 0.0018 dE 13.72 dE95 39.96 grad 2.58 conn 6.72 | 0.30s
+03_black_on_dark_wood | previous app | IoU 0.9987 BF 0.997 bandMAE 0.100 missed 0.0002 kept 0.0011 dE 9.40 dE95 25.14 grad 0.91 conn 3.34 | 1.65s
+03_black_on_dark_wood | BiRefNet only | IoU 0.9974 BF 1.000 bandMAE 0.059 missed 0.0023 kept 0.0003 dE 5.47 dE95 26.81 grad 0.87 conn 2.47 | 5.70s
+03_black_on_dark_wood | edges: tight levels | IoU 0.9996 BF 1.000 bandMAE 0.051 missed 0.0003 kept 0.0002 dE 5.20 dE95 21.61 grad 0.44 conn 1.86 | 7.07s
+03_black_on_dark_wood | edges: radius 3 | IoU 0.9996 BF 1.000 bandMAE 0.068 missed 0.0003 kept 0.0001 dE 7.94 dE95 25.56 grad 0.55 conn 2.41 | 6.80s
+03_black_on_dark_wood | edges: radius 3, tight levels | IoU 0.9996 BF 1.000 bandMAE 0.041 missed 0.0003 kept 0.0001 dE 3.95 dE95 19.62 grad 0.37 conn 1.61 | 6.60s
+03_black_on_dark_wood | edges: radius 8, finer eps | IoU 0.9995 BF 1.000 bandMAE 0.073 missed 0.0003 kept 0.0002 dE 8.09 dE95 23.50 grad 0.57 conn 2.53 | 8.43s
 NOTES 03_black_on_dark_wood: areaFraction=0.143 backgroundNoise=0.0438 backgroundSampleFraction=0.712 colourEvidence=0 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 separation=4.98 zoomed=1
-03_black_on_dark_wood | new | IoU 0.9996 BF 1.000 bandMAE 0.089 missed 0.0003 kept 0.0002 dE 10.14 dE95 27.06 grad 0.71 conn 3.22 | 9.34s
-04_watch_thin_straps | Apple model only | IoU 0.9873 BF 0.997 bandMAE 0.159 missed 0.0091 kept 0.0037 dE 14.56 dE95 32.96 grad 3.20 conn 8.29 | 0.33s
-04_watch_thin_straps | previous app | IoU 0.9980 BF 1.000 bandMAE 0.038 missed 0.0000 kept 0.0020 dE 3.33 dE95 8.61 grad 0.29 conn 1.30 | 1.78s
-04_watch_thin_straps | BiRefNet only | IoU 0.9975 BF 1.000 bandMAE 0.040 missed 0.0012 kept 0.0013 dE 5.72 dE95 20.23 grad 0.41 conn 2.01 | 5.52s
-04_watch_thin_straps | edges: tight levels | IoU 0.9985 BF 1.000 bandMAE 0.016 missed 0.0000 kept 0.0015 dE 2.58 dE95 9.87 grad 0.10 conn 0.71 | 10.99s
-04_watch_thin_straps | edges: radius 3 | IoU 0.9987 BF 1.000 bandMAE 0.013 missed 0.0000 kept 0.0013 dE 2.20 dE95 6.67 grad 0.06 conn 0.24 | 9.99s
-04_watch_thin_straps | edges: radius 3, tight levels | IoU 0.9987 BF 1.000 bandMAE 0.013 missed 0.0000 kept 0.0013 dE 2.47 dE95 9.23 grad 0.07 conn 0.61 | 10.04s
-04_watch_thin_straps | edges: radius 8, finer eps | IoU 0.9983 BF 1.000 bandMAE 0.020 missed 0.0000 kept 0.0017 dE 2.43 dE95 7.03 grad 0.13 conn 0.62 | 9.61s
+03_black_on_dark_wood | new | IoU 0.9996 BF 1.000 bandMAE 0.089 missed 0.0003 kept 0.0002 dE 10.14 dE95 27.06 grad 0.71 conn 3.22 | 7.08s
+04_watch_thin_straps | Apple model only | IoU 0.9873 BF 0.997 bandMAE 0.159 missed 0.0091 kept 0.0037 dE 14.56 dE95 32.96 grad 3.20 conn 8.29 | 0.59s
+04_watch_thin_straps | previous app | IoU 0.9980 BF 1.000 bandMAE 0.038 missed 0.0000 kept 0.0020 dE 3.33 dE95 8.61 grad 0.29 conn 1.30 | 1.87s
+04_watch_thin_straps | BiRefNet only | IoU 0.9975 BF 1.000 bandMAE 0.040 missed 0.0012 kept 0.0013 dE 5.72 dE95 20.23 grad 0.41 conn 2.01 | 4.49s
+04_watch_thin_straps | edges: tight levels | IoU 0.9985 BF 1.000 bandMAE 0.016 missed 0.0000 kept 0.0015 dE 2.58 dE95 9.87 grad 0.10 conn 0.71 | 6.75s
+04_watch_thin_straps | edges: radius 3 | IoU 0.9987 BF 1.000 bandMAE 0.013 missed 0.0000 kept 0.0013 dE 2.20 dE95 6.67 grad 0.06 conn 0.24 | 6.81s
+04_watch_thin_straps | edges: radius 3, tight levels | IoU 0.9987 BF 1.000 bandMAE 0.013 missed 0.0000 kept 0.0013 dE 2.47 dE95 9.23 grad 0.07 conn 0.61 | 7.17s
+04_watch_thin_straps | edges: radius 8, finer eps | IoU 0.9983 BF 1.000 bandMAE 0.020 missed 0.0000 kept 0.0017 dE 2.43 dE95 7.03 grad 0.13 conn 0.62 | 7.90s
 NOTES 04_watch_thin_straps: areaFraction=0.0593 backgroundLeftInside=0 backgroundNoise=0.012 backgroundSampleFraction=0.831 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=0 separation=72.1 zoomed=1
-04_watch_thin_straps | new | IoU 0.9985 BF 1.000 bandMAE 0.017 missed 0.0000 kept 0.0015 dE 2.37 dE95 7.05 grad 0.10 conn 0.39 | 9.06s
+04_watch_thin_straps | new | IoU 0.9985 BF 1.000 bandMAE 0.017 missed 0.0000 kept 0.0015 dE 2.37 dE95 7.05 grad 0.10 conn 0.39 | 8.98s
 05_fine_chain_on_marble Apple model only: no result
 05_fine_chain_on_marble previous app: no result
-05_fine_chain_on_marble | BiRefNet only | IoU 0.0048 BF 0.000 bandMAE 0.740 missed 0.0000 kept 206.6519 dE 25.73 dE95 35.88 grad 11.30 conn 4287.50 | 5.61s
+05_fine_chain_on_marble | BiRefNet only | IoU 0.0048 BF 0.000 bandMAE 0.740 missed 0.0000 kept 206.6519 dE 25.73 dE95 35.88 grad 11.30 conn 4287.50 | 4.83s
 05_fine_chain_on_marble edges: tight levels: no result
 05_fine_chain_on_marble edges: radius 3: no result
 05_fine_chain_on_marble edges: radius 3, tight levels: no result
 05_fine_chain_on_marble edges: radius 8, finer eps: no result
 05_fine_chain_on_marble new: no result
-06_mug_handle_gap | Apple model only | IoU 0.9968 BF 0.990 bandMAE 0.143 missed 0.0017 kept 0.0015 dE 8.35 dE95 24.61 grad 3.30 conn 8.98 | 0.28s
-06_mug_handle_gap | previous app | IoU 0.9995 BF 1.000 bandMAE 0.041 missed 0.0005 kept 0.0000 dE 2.78 dE95 7.83 grad 0.20 conn 0.96 | 1.98s
-06_mug_handle_gap | BiRefNet only | IoU 0.9941 BF 0.998 bandMAE 0.061 missed 0.0000 kept 0.0059 dE 3.09 dE95 13.81 grad 1.66 conn 3.75 | 3.39s
-06_mug_handle_gap | edges: tight levels | IoU 0.9997 BF 1.000 bandMAE 0.016 missed 0.0003 kept 0.0000 dE 1.36 dE95 5.77 grad 0.07 conn 0.54 | 5.84s
-06_mug_handle_gap | edges: radius 3 | IoU 0.9997 BF 1.000 bandMAE 0.017 missed 0.0002 kept 0.0000 dE 1.42 dE95 4.72 grad 0.06 conn 0.22 | 5.85s
-06_mug_handle_gap | edges: radius 3, tight levels | IoU 0.9997 BF 1.000 bandMAE 0.015 missed 0.0002 kept 0.0000 dE 1.34 dE95 5.86 grad 0.05 conn 0.59 | 5.68s
-06_mug_handle_gap | edges: radius 8, finer eps | IoU 0.9996 BF 1.000 bandMAE 0.024 missed 0.0004 kept 0.0000 dE 1.73 dE95 6.16 grad 0.18 conn 0.57 | 6.19s
+06_mug_handle_gap | Apple model only | IoU 0.9968 BF 0.990 bandMAE 0.143 missed 0.0017 kept 0.0015 dE 8.35 dE95 24.61 grad 3.30 conn 8.98 | 0.24s
+06_mug_handle_gap | previous app | IoU 0.9995 BF 1.000 bandMAE 0.041 missed 0.0005 kept 0.0000 dE 2.78 dE95 7.83 grad 0.20 conn 0.96 | 1.44s
+06_mug_handle_gap | BiRefNet only | IoU 0.9941 BF 0.998 bandMAE 0.061 missed 0.0000 kept 0.0059 dE 3.09 dE95 13.81 grad 1.66 conn 3.75 | 2.97s
+06_mug_handle_gap | edges: tight levels | IoU 0.9997 BF 1.000 bandMAE 0.016 missed 0.0003 kept 0.0000 dE 1.36 dE95 5.77 grad 0.07 conn 0.54 | 5.85s
+06_mug_handle_gap | edges: radius 3 | IoU 0.9997 BF 1.000 bandMAE 0.017 missed 0.0002 kept 0.0000 dE 1.42 dE95 4.72 grad 0.06 conn 0.22 | 6.11s
+06_mug_handle_gap | edges: radius 3, tight levels | IoU 0.9997 BF 1.000 bandMAE 0.015 missed 0.0002 kept 0.0000 dE 1.34 dE95 5.86 grad 0.05 conn 0.59 | 5.88s
+06_mug_handle_gap | edges: radius 8, finer eps | IoU 0.9996 BF 1.000 bandMAE 0.024 missed 0.0004 kept 0.0000 dE 1.73 dE95 6.16 grad 0.18 conn 0.57 | 6.28s
 NOTES 06_mug_handle_gap: areaFraction=0.151 backgroundLeftInside=0 backgroundNoise=0.0501 backgroundSampleFraction=0.698 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=0 separation=10.4 zoomed=1
-06_mug_handle_gap | new | IoU 0.9997 BF 1.000 bandMAE 0.023 missed 0.0003 kept 0.0000 dE 1.66 dE95 5.53 grad 0.12 conn 0.29 | 6.48s
-07_reflective_bottle | Apple model only | IoU 0.9889 BF 0.811 bandMAE 0.183 missed 0.0014 kept 0.0098 dE 7.01 dE95 21.41 grad 3.34 conn 8.53 | 0.38s
-07_reflective_bottle | previous app | IoU 0.9948 BF 0.942 bandMAE 0.112 missed 0.0002 kept 0.0050 dE 5.80 dE95 18.35 grad 1.62 conn 4.68 | 1.96s
-07_reflective_bottle | BiRefNet only | IoU 0.9944 BF 0.996 bandMAE 0.052 missed 0.0001 kept 0.0055 dE 2.38 dE95 10.10 grad 0.81 conn 2.05 | 5.95s
-07_reflective_bottle | edges: tight levels | IoU 0.9956 BF 0.975 bandMAE 0.081 missed 0.0004 kept 0.0040 dE 4.31 dE95 16.47 grad 1.29 conn 3.28 | 8.17s
-07_reflective_bottle | edges: radius 3 | IoU 0.9957 BF 0.981 bandMAE 0.092 missed 0.0002 kept 0.0041 dE 4.86 dE95 16.01 grad 1.34 conn 3.24 | 9.61s
-07_reflective_bottle | edges: radius 3, tight levels | IoU 0.9957 BF 0.981 bandMAE 0.066 missed 0.0002 kept 0.0041 dE 3.53 dE95 15.45 grad 1.18 conn 2.68 | 9.19s
-07_reflective_bottle | edges: radius 8, finer eps | IoU 0.9953 BF 0.972 bandMAE 0.105 missed 0.0024 kept 0.0023 dE 5.59 dE95 18.71 grad 1.47 conn 4.47 | 8.14s
+06_mug_handle_gap | new | IoU 0.9997 BF 1.000 bandMAE 0.023 missed 0.0003 kept 0.0000 dE 1.66 dE95 5.53 grad 0.12 conn 0.29 | 7.91s
+07_reflective_bottle | Apple model only | IoU 0.9889 BF 0.811 bandMAE 0.183 missed 0.0014 kept 0.0098 dE 7.01 dE95 21.41 grad 3.34 conn 8.53 | 0.56s
+07_reflective_bottle | previous app | IoU 0.9948 BF 0.942 bandMAE 0.112 missed 0.0002 kept 0.0050 dE 5.80 dE95 18.35 grad 1.62 conn 4.68 | 1.88s
+07_reflective_bottle | BiRefNet only | IoU 0.9944 BF 0.996 bandMAE 0.052 missed 0.0001 kept 0.0055 dE 2.38 dE95 10.10 grad 0.81 conn 2.05 | 6.25s
+07_reflective_bottle | edges: tight levels | IoU 0.9956 BF 0.975 bandMAE 0.081 missed 0.0004 kept 0.0040 dE 4.31 dE95 16.47 grad 1.29 conn 3.28 | 7.55s
+07_reflective_bottle | edges: radius 3 | IoU 0.9957 BF 0.981 bandMAE 0.092 missed 0.0002 kept 0.0041 dE 4.86 dE95 16.01 grad 1.34 conn 3.24 | 7.49s
+07_reflective_bottle | edges: radius 3, tight levels | IoU 0.9957 BF 0.981 bandMAE 0.066 missed 0.0002 kept 0.0041 dE 3.53 dE95 15.45 grad 1.18 conn 2.68 | 7.53s
+07_reflective_bottle | edges: radius 8, finer eps | IoU 0.9953 BF 0.972 bandMAE 0.105 missed 0.0024 kept 0.0023 dE 5.59 dE95 18.71 grad 1.47 conn 4.47 | 9.84s
 NOTES 07_reflective_bottle: areaFraction=0.0952 backgroundLeftInside=0 backgroundNoise=0.0181 backgroundSampleFraction=0.842 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=2 separation=19.9 zoomed=1
-07_reflective_bottle | new | IoU 0.9956 BF 0.975 bandMAE 0.107 missed 0.0004 kept 0.0040 dE 5.62 dE95 17.14 grad 1.45 conn 4.55 | 8.65s
-08_fuzzy_knit_edge | Apple model only | IoU 0.9969 BF 0.997 bandMAE 0.088 missed 0.0012 kept 0.0020 dE 4.70 dE95 13.20 grad 0.85 conn 3.75 | 0.28s
-08_fuzzy_knit_edge | previous app | IoU 0.9982 BF 0.998 bandMAE 0.051 missed 0.0016 kept 0.0002 dE 3.45 dE95 12.50 grad 0.27 conn 1.29 | 1.90s
-08_fuzzy_knit_edge | BiRefNet only | IoU 0.9969 BF 1.000 bandMAE 0.046 missed 0.0002 kept 0.0030 dE 2.70 dE95 10.65 grad 0.49 conn 2.24 | 3.35s
-08_fuzzy_knit_edge | edges: tight levels | IoU 0.9985 BF 0.998 bandMAE 0.040 missed 0.0012 kept 0.0002 dE 3.10 dE95 13.56 grad 0.34 conn 1.38 | 6.34s
-08_fuzzy_knit_edge | edges: radius 3 | IoU 0.9987 BF 0.999 bandMAE 0.042 missed 0.0010 kept 0.0003 dE 3.27 dE95 11.30 grad 0.23 conn 0.98 | 7.58s
-08_fuzzy_knit_edge | edges: radius 3, tight levels | IoU 0.9987 BF 0.999 bandMAE 0.037 missed 0.0010 kept 0.0003 dE 2.79 dE95 12.24 grad 0.30 conn 1.28 | 6.44s
-08_fuzzy_knit_edge | edges: radius 8, finer eps | IoU 0.9983 BF 0.999 bandMAE 0.045 missed 0.0015 kept 0.0002 dE 3.37 dE95 12.91 grad 0.31 conn 1.34 | 5.30s
+07_reflective_bottle | new | IoU 0.9956 BF 0.975 bandMAE 0.107 missed 0.0004 kept 0.0040 dE 5.62 dE95 17.14 grad 1.45 conn 4.55 | 11.39s
+08_fuzzy_knit_edge | Apple model only | IoU 0.9969 BF 0.997 bandMAE 0.088 missed 0.0012 kept 0.0020 dE 4.70 dE95 13.20 grad 0.85 conn 3.75 | 0.73s
+08_fuzzy_knit_edge | previous app | IoU 0.9982 BF 0.998 bandMAE 0.051 missed 0.0016 kept 0.0002 dE 3.45 dE95 12.50 grad 0.27 conn 1.29 | 2.69s
+08_fuzzy_knit_edge | BiRefNet only | IoU 0.9969 BF 1.000 bandMAE 0.046 missed 0.0002 kept 0.0030 dE 2.70 dE95 10.65 grad 0.49 conn 2.24 | 4.36s
+08_fuzzy_knit_edge | edges: tight levels | IoU 0.9985 BF 0.998 bandMAE 0.040 missed 0.0012 kept 0.0002 dE 3.10 dE95 13.56 grad 0.34 conn 1.38 | 6.87s
+08_fuzzy_knit_edge | edges: radius 3 | IoU 0.9987 BF 0.999 bandMAE 0.042 missed 0.0010 kept 0.0003 dE 3.27 dE95 11.30 grad 0.23 conn 0.98 | 6.49s
+08_fuzzy_knit_edge | edges: radius 3, tight levels | IoU 0.9987 BF 0.999 bandMAE 0.037 missed 0.0010 kept 0.0003 dE 2.79 dE95 12.24 grad 0.30 conn 1.28 | 7.01s
+08_fuzzy_knit_edge | edges: radius 8, finer eps | IoU 0.9983 BF 0.999 bandMAE 0.045 missed 0.0015 kept 0.0002 dE 3.37 dE95 12.91 grad 0.31 conn 1.34 | 7.23s
 NOTES 08_fuzzy_knit_edge: areaFraction=0.158 backgroundLeftInside=0 backgroundNoise=0.0181 backgroundSampleFraction=0.68 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=14 separation=26.5 zoomed=1
-08_fuzzy_knit_edge | new | IoU 0.9985 BF 0.998 bandMAE 0.047 missed 0.0012 kept 0.0002 dE 3.56 dE95 13.14 grad 0.29 conn 1.26 | 6.78s
-09_sunglasses_gaps | Apple model only | IoU 0.9706 BF 0.775 bandMAE 0.197 missed 0.0254 kept 0.0040 dE 13.74 dE95 62.17 grad 6.26 conn 14.11 | 0.65s
-09_sunglasses_gaps | previous app | IoU 0.9737 BF 0.786 bandMAE 0.146 missed 0.0231 kept 0.0033 dE 8.51 dE95 62.17 grad 4.27 conn 9.59 | 2.31s
-09_sunglasses_gaps | BiRefNet only | IoU 0.9922 BF 0.997 bandMAE 0.043 missed 0.0072 kept 0.0006 dE 4.27 dE95 21.53 grad 0.94 conn 3.07 | 7.05s
-09_sunglasses_gaps | edges: tight levels | IoU 0.9744 BF 0.786 bandMAE 0.126 missed 0.0231 kept 0.0026 dE 7.42 dE95 62.17 grad 4.08 conn 9.00 | 11.23s
-09_sunglasses_gaps | edges: radius 3 | IoU 0.9748 BF 0.786 bandMAE 0.136 missed 0.0231 kept 0.0022 dE 8.72 dE95 62.17 grad 4.13 conn 8.83 | 9.65s
-09_sunglasses_gaps | edges: radius 3, tight levels | IoU 0.9748 BF 0.786 bandMAE 0.124 missed 0.0231 kept 0.0022 dE 7.34 dE95 62.17 grad 4.04 conn 8.81 | 8.68s
-09_sunglasses_gaps | edges: radius 8, finer eps | IoU 0.9740 BF 0.786 bandMAE 0.139 missed 0.0231 kept 0.0030 dE 8.28 dE95 62.17 grad 4.18 conn 9.23 | 8.83s
+08_fuzzy_knit_edge | new | IoU 0.9985 BF 0.998 bandMAE 0.047 missed 0.0012 kept 0.0002 dE 3.56 dE95 13.14 grad 0.29 conn 1.26 | 6.13s
+09_sunglasses_gaps | Apple model only | IoU 0.9706 BF 0.775 bandMAE 0.197 missed 0.0254 kept 0.0040 dE 13.74 dE95 62.17 grad 6.26 conn 14.11 | 0.25s
+09_sunglasses_gaps | previous app | IoU 0.9737 BF 0.786 bandMAE 0.146 missed 0.0231 kept 0.0033 dE 8.51 dE95 62.17 grad 4.27 conn 9.59 | 1.45s
+09_sunglasses_gaps | BiRefNet only | IoU 0.9922 BF 0.997 bandMAE 0.043 missed 0.0072 kept 0.0006 dE 4.27 dE95 21.53 grad 0.94 conn 3.07 | 5.18s
+09_sunglasses_gaps | edges: tight levels | IoU 0.9744 BF 0.786 bandMAE 0.126 missed 0.0231 kept 0.0026 dE 7.42 dE95 62.17 grad 4.08 conn 9.00 | 9.79s
+09_sunglasses_gaps | edges: radius 3 | IoU 0.9748 BF 0.786 bandMAE 0.136 missed 0.0231 kept 0.0022 dE 8.72 dE95 62.17 grad 4.13 conn 8.83 | 8.48s
+09_sunglasses_gaps | edges: radius 3, tight levels | IoU 0.9748 BF 0.786 bandMAE 0.124 missed 0.0231 kept 0.0022 dE 7.34 dE95 62.17 grad 4.04 conn 8.81 | 7.82s
+09_sunglasses_gaps | edges: radius 8, finer eps | IoU 0.9740 BF 0.786 bandMAE 0.139 missed 0.0231 kept 0.0030 dE 8.28 dE95 62.17 grad 4.18 conn 9.23 | 7.64s
 NOTES 09_sunglasses_gaps: areaFraction=0.0766 backgroundLeftInside=0 backgroundNoise=0.0171 backgroundSampleFraction=0.7 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=2.9e+03 recoveredPx=49 separation=42.3 zoomed=1
-09_sunglasses_gaps | new | IoU 0.9744 BF 0.786 bandMAE 0.138 missed 0.0231 kept 0.0026 dE 8.67 dE95 62.17 grad 4.16 conn 9.03 | 9.35s
+09_sunglasses_gaps | new | IoU 0.9744 BF 0.786 bandMAE 0.138 missed 0.0231 kept 0.0026 dE 8.67 dE95 62.17 grad 4.16 conn 9.03 | 8.29s
 HOLE size=2650 ring=400 median=31.95101 carve=true fgArea=223472
 HOLE size=1279 ring=400 median=56.95395 carve=true fgArea=223472
 HOLE size=2074 ring=19 median=57.752296 carve=true fgArea=223472
 HOLE size=1357 ring=62 median=24.815182 carve=true fgArea=223472
-10_comb_narrow_teeth | Apple model only | IoU 0.6776 BF 0.364 bandMAE 0.426 missed 0.0746 kept 0.3658 dE 24.07 dE95 47.48 grad 52.30 conn 262.91 | 0.22s
-10_comb_narrow_teeth | previous app | IoU 0.9871 BF 1.000 bandMAE 0.050 missed 0.0000 kept 0.0131 dE 2.92 dE95 7.04 grad 1.68 conn 8.97 | 1.60s
-10_comb_narrow_teeth | BiRefNet only | IoU 0.6989 BF 0.744 bandMAE 0.299 missed 0.2291 kept 0.1030 dE 18.32 dE95 51.19 grad 29.24 conn 195.42 | 4.78s
-10_comb_narrow_teeth | edges: tight levels | IoU 0.9129 BF 0.916 bandMAE 0.083 missed 0.0447 kept 0.0465 dE 5.35 dE95 33.54 grad 7.37 conn 51.15 | 8.49s
-10_comb_narrow_teeth | edges: radius 3 | IoU 0.8996 BF 0.894 bandMAE 0.116 missed 0.0490 kept 0.0571 dE 7.52 dE95 36.71 grad 9.18 conn 60.85 | 9.23s
-10_comb_narrow_teeth | edges: radius 3, tight levels | IoU 0.8996 BF 0.894 bandMAE 0.097 missed 0.0490 kept 0.0571 dE 6.09 dE95 38.04 grad 9.14 conn 60.87 | 10.07s
-10_comb_narrow_teeth | edges: radius 8, finer eps | IoU 0.9257 BF 0.922 bandMAE 0.095 missed 0.0441 kept 0.0326 dE 6.20 dE95 28.91 grad 7.50 conn 48.20 | 8.18s
+10_comb_narrow_teeth | Apple model only | IoU 0.6776 BF 0.364 bandMAE 0.426 missed 0.0746 kept 0.3658 dE 24.07 dE95 47.48 grad 52.30 conn 262.91 | 0.54s
+10_comb_narrow_teeth | previous app | IoU 0.9871 BF 1.000 bandMAE 0.050 missed 0.0000 kept 0.0131 dE 2.92 dE95 7.04 grad 1.68 conn 8.97 | 2.06s
+10_comb_narrow_teeth | BiRefNet only | IoU 0.6989 BF 0.744 bandMAE 0.299 missed 0.2291 kept 0.1030 dE 18.32 dE95 51.19 grad 29.24 conn 195.42 | 5.16s
+10_comb_narrow_teeth | edges: tight levels | IoU 0.9129 BF 0.916 bandMAE 0.083 missed 0.0447 kept 0.0465 dE 5.35 dE95 33.54 grad 7.37 conn 51.15 | 8.58s
+10_comb_narrow_teeth | edges: radius 3 | IoU 0.8996 BF 0.894 bandMAE 0.116 missed 0.0490 kept 0.0571 dE 7.52 dE95 36.71 grad 9.18 conn 60.85 | 8.16s
+10_comb_narrow_teeth | edges: radius 3, tight levels | IoU 0.8996 BF 0.894 bandMAE 0.097 missed 0.0490 kept 0.0571 dE 6.09 dE95 38.04 grad 9.14 conn 60.87 | 7.46s
+10_comb_narrow_teeth | edges: radius 8, finer eps | IoU 0.9257 BF 0.922 bandMAE 0.095 missed 0.0441 kept 0.0326 dE 6.20 dE95 28.91 grad 7.50 conn 48.20 | 7.10s
 NOTES 10_comb_narrow_teeth: areaFraction=0.122 backgroundLeftInside=0.0164 backgroundNoise=0.012 backgroundSampleFraction=0.609 carvedPx=7.36e+03 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=2.21e+04 recoveredPx=3.71e+04 separation=86.1 zoomed=0
-10_comb_narrow_teeth | new | IoU 0.9129 BF 0.916 bandMAE 0.101 missed 0.0447 kept 0.0465 dE 6.62 dE95 32.64 grad 7.45 conn 51.53 | 8.88s
-11_red_shirt_24mp | Apple model only | IoU 0.9962 BF 0.801 bandMAE 0.280 missed 0.0012 kept 0.0026 dE 26.77 dE95 43.11 grad 18.69 conn 68.43 | 0.73s
-11_red_shirt_24mp | previous app | IoU 0.9994 BF 1.000 bandMAE 0.103 missed 0.0000 kept 0.0006 dE 5.75 dE95 11.03 grad 2.06 conn 18.62 | 5.49s
-11_red_shirt_24mp | BiRefNet only | IoU 0.9978 BF 0.986 bandMAE 0.121 missed 0.0019 kept 0.0004 dE 13.15 dE95 40.67 grad 8.96 conn 22.64 | 4.75s
-11_red_shirt_24mp | edges: tight levels | IoU 0.9994 BF 1.000 bandMAE 0.060 missed 0.0000 kept 0.0006 dE 3.96 dE95 13.59 grad 1.31 conn 8.12 | 13.63s
-11_red_shirt_24mp | edges: radius 3 | IoU 0.9995 BF 1.000 bandMAE 0.078 missed 0.0000 kept 0.0005 dE 5.03 dE95 10.15 grad 1.45 conn 10.12 | 10.75s
-11_red_shirt_24mp | edges: radius 3, tight levels | IoU 0.9995 BF 1.000 bandMAE 0.053 missed 0.0000 kept 0.0005 dE 3.65 dE95 13.14 grad 1.04 conn 6.53 | 14.08s
-11_red_shirt_24mp | edges: radius 8, finer eps | IoU 0.9994 BF 1.000 bandMAE 0.089 missed 0.0000 kept 0.0006 dE 4.89 dE95 10.50 grad 1.98 conn 13.84 | 12.63s
+10_comb_narrow_teeth | new | IoU 0.9129 BF 0.916 bandMAE 0.101 missed 0.0447 kept 0.0465 dE 6.62 dE95 32.64 grad 7.45 conn 51.53 | 7.12s
+11_red_shirt_24mp | Apple model only | IoU 0.9962 BF 0.801 bandMAE 0.280 missed 0.0012 kept 0.0026 dE 26.77 dE95 43.11 grad 18.69 conn 68.43 | 0.51s
+11_red_shirt_24mp | previous app | IoU 0.9994 BF 1.000 bandMAE 0.103 missed 0.0000 kept 0.0006 dE 5.75 dE95 11.03 grad 2.06 conn 18.62 | 6.32s
+11_red_shirt_24mp | BiRefNet only | IoU 0.9978 BF 0.986 bandMAE 0.121 missed 0.0019 kept 0.0004 dE 13.15 dE95 40.67 grad 8.96 conn 22.64 | 5.55s
+11_red_shirt_24mp | edges: tight levels | IoU 0.9994 BF 1.000 bandMAE 0.060 missed 0.0000 kept 0.0006 dE 3.96 dE95 13.59 grad 1.31 conn 8.12 | 10.96s
+11_red_shirt_24mp | edges: radius 3 | IoU 0.9995 BF 1.000 bandMAE 0.078 missed 0.0000 kept 0.0005 dE 5.03 dE95 10.15 grad 1.45 conn 10.12 | 10.63s
+11_red_shirt_24mp | edges: radius 3, tight levels | IoU 0.9995 BF 1.000 bandMAE 0.053 missed 0.0000 kept 0.0005 dE 3.65 dE95 13.14 grad 1.04 conn 6.53 | 12.00s
+11_red_shirt_24mp | edges: radius 8, finer eps | IoU 0.9994 BF 1.000 bandMAE 0.089 missed 0.0000 kept 0.0006 dE 4.89 dE95 10.50 grad 1.98 conn 13.84 | 11.06s
 NOTES 11_red_shirt_24mp: areaFraction=0.256 backgroundLeftInside=0 backgroundNoise=0.012 backgroundSampleFraction=0.485 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=2 separation=73.9 zoomed=1
-11_red_shirt_24mp | new | IoU 0.9994 BF 1.000 bandMAE 0.083 missed 0.0000 kept 0.0006 dE 4.82 dE95 10.02 grad 1.67 conn 11.87 | 13.91s
-12_striped_shirt_on_carpet | Apple model only | IoU 0.9930 BF 0.708 bandMAE 0.239 missed 0.0013 kept 0.0057 dE 13.58 dE95 36.22 grad 20.76 conn 68.91 | 0.72s
-12_striped_shirt_on_carpet | previous app | IoU 0.9970 BF 0.891 bandMAE 0.113 missed 0.0013 kept 0.0017 dE 9.10 dE95 35.36 grad 7.57 conn 31.96 | 3.58s
-12_striped_shirt_on_carpet | BiRefNet only | IoU 0.9972 BF 0.954 bandMAE 0.087 missed 0.0016 kept 0.0012 dE 7.02 dE95 28.59 grad 7.81 conn 21.86 | 3.76s
-12_striped_shirt_on_carpet | edges: tight levels | IoU 0.9976 BF 0.919 bandMAE 0.082 missed 0.0012 kept 0.0011 dE 7.24 dE95 30.32 grad 6.54 conn 20.54 | 5.95s
-12_striped_shirt_on_carpet | edges: radius 3 | IoU 0.9979 BF 0.935 bandMAE 0.095 missed 0.0010 kept 0.0011 dE 8.22 dE95 27.69 grad 5.61 conn 19.56 | 6.68s
-12_striped_shirt_on_carpet | edges: radius 3, tight levels | IoU 0.9979 BF 0.935 bandMAE 0.072 missed 0.0010 kept 0.0011 dE 6.65 dE95 27.83 grad 5.63 conn 17.60 | 5.61s
-12_striped_shirt_on_carpet | edges: radius 8, finer eps | IoU 0.9973 BF 0.891 bandMAE 0.105 missed 0.0016 kept 0.0012 dE 8.81 dE95 34.04 grad 7.62 conn 26.14 | 6.36s
+11_red_shirt_24mp | new | IoU 0.9994 BF 1.000 bandMAE 0.083 missed 0.0000 kept 0.0006 dE 4.82 dE95 10.02 grad 1.67 conn 11.87 | 13.01s
+12_striped_shirt_on_carpet | Apple model only | IoU 0.9930 BF 0.708 bandMAE 0.239 missed 0.0013 kept 0.0057 dE 13.58 dE95 36.22 grad 20.76 conn 68.91 | 0.47s
+12_striped_shirt_on_carpet | previous app | IoU 0.9970 BF 0.891 bandMAE 0.113 missed 0.0013 kept 0.0017 dE 9.10 dE95 35.36 grad 7.57 conn 31.96 | 3.22s
+12_striped_shirt_on_carpet | BiRefNet only | IoU 0.9972 BF 0.954 bandMAE 0.087 missed 0.0016 kept 0.0012 dE 7.02 dE95 28.59 grad 7.81 conn 21.86 | 3.14s
+12_striped_shirt_on_carpet | edges: tight levels | IoU 0.9976 BF 0.919 bandMAE 0.082 missed 0.0012 kept 0.0011 dE 7.24 dE95 30.32 grad 6.54 conn 20.54 | 6.45s
+12_striped_shirt_on_carpet | edges: radius 3 | IoU 0.9979 BF 0.935 bandMAE 0.095 missed 0.0010 kept 0.0011 dE 8.22 dE95 27.69 grad 5.61 conn 19.56 | 6.78s
+12_striped_shirt_on_carpet | edges: radius 3, tight levels | IoU 0.9979 BF 0.935 bandMAE 0.072 missed 0.0010 kept 0.0011 dE 6.65 dE95 27.83 grad 5.63 conn 17.60 | 6.46s
+12_striped_shirt_on_carpet | edges: radius 8, finer eps | IoU 0.9973 BF 0.891 bandMAE 0.105 missed 0.0016 kept 0.0012 dE 8.81 dE95 34.04 grad 7.62 conn 26.14 | 8.67s
 NOTES 12_striped_shirt_on_carpet: areaFraction=0.536 backgroundLeftInside=0.000117 backgroundNoise=0.012 backgroundSampleFraction=0.251 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=306 separation=33 zoomed=0
-12_striped_shirt_on_carpet | new | IoU 0.9976 BF 0.919 bandMAE 0.103 missed 0.0012 kept 0.0011 dE 8.62 dE95 30.21 grad 6.40 conn 23.43 | 5.87s
-13_leather_vest_cropped_lining | Apple model only | IoU 0.9906 BF 0.567 bandMAE 0.265 missed 0.0004 kept 0.0091 dE 14.26 dE95 39.66 grad 11.84 conn 107.49 | 0.41s
-13_leather_vest_cropped_lining | previous app | IoU 0.9914 BF 0.853 bandMAE 0.178 missed 0.0001 kept 0.0086 dE 8.07 dE95 39.47 grad 5.26 conn 95.99 | 3.43s
-13_leather_vest_cropped_lining | BiRefNet only | IoU 0.7934 BF 0.203 bandMAE 0.423 missed 0.0019 kept 0.2581 dE 20.00 dE95 42.90 grad 17.89 conn 2405.89 | 7.88s
-13_leather_vest_cropped_lining | edges: tight levels | IoU 0.7945 BF 0.335 bandMAE 0.385 missed 0.0000 kept 0.2587 dE 17.63 dE95 42.95 grad 14.50 conn 2385.20 | 11.96s
-13_leather_vest_cropped_lining | edges: radius 3 | IoU 0.7944 BF 0.339 bandMAE 0.389 missed 0.0000 kept 0.2588 dE 17.91 dE95 42.93 grad 14.09 conn 2386.39 | 9.43s
-13_leather_vest_cropped_lining | edges: radius 3, tight levels | IoU 0.7944 BF 0.339 bandMAE 0.384 missed 0.0000 kept 0.2588 dE 17.60 dE95 42.95 grad 14.37 conn 2387.77 | 8.52s
-13_leather_vest_cropped_lining | edges: radius 8, finer eps | IoU 0.7944 BF 0.334 bandMAE 0.388 missed 0.0000 kept 0.2588 dE 17.77 dE95 42.92 grad 14.11 conn 2378.75 | 8.24s
+12_striped_shirt_on_carpet | new | IoU 0.9976 BF 0.919 bandMAE 0.103 missed 0.0012 kept 0.0011 dE 8.62 dE95 30.21 grad 6.40 conn 23.43 | 7.25s
+13_leather_vest_cropped_lining | Apple model only | IoU 0.9906 BF 0.567 bandMAE 0.265 missed 0.0004 kept 0.0091 dE 14.26 dE95 39.66 grad 11.84 conn 107.49 | 0.47s
+13_leather_vest_cropped_lining | previous app | IoU 0.9914 BF 0.853 bandMAE 0.178 missed 0.0001 kept 0.0086 dE 8.07 dE95 39.47 grad 5.26 conn 95.99 | 4.28s
+13_leather_vest_cropped_lining | BiRefNet only | IoU 0.7934 BF 0.203 bandMAE 0.423 missed 0.0019 kept 0.2581 dE 20.00 dE95 42.90 grad 17.89 conn 2405.89 | 6.86s
+13_leather_vest_cropped_lining | edges: tight levels | IoU 0.7945 BF 0.335 bandMAE 0.385 missed 0.0000 kept 0.2587 dE 17.63 dE95 42.95 grad 14.50 conn 2385.20 | 9.03s
+13_leather_vest_cropped_lining | edges: radius 3 | IoU 0.7944 BF 0.339 bandMAE 0.389 missed 0.0000 kept 0.2588 dE 17.91 dE95 42.93 grad 14.09 conn 2386.39 | 9.53s
+13_leather_vest_cropped_lining | edges: radius 3, tight levels | IoU 0.7944 BF 0.339 bandMAE 0.384 missed 0.0000 kept 0.2588 dE 17.60 dE95 42.95 grad 14.37 conn 2387.77 | 9.39s
+13_leather_vest_cropped_lining | edges: radius 8, finer eps | IoU 0.7944 BF 0.334 bandMAE 0.388 missed 0.0000 kept 0.2588 dE 17.77 dE95 42.92 grad 14.11 conn 2378.75 | 9.60s
 NOTES 13_leather_vest_cropped_lining: areaFraction=0.953 backgroundSampleFraction=0 colourEvidence=0 components=1 falseHolesFilledPx=3.78e+03 instances=1 islandsRemovedPx=212 zoomed=0
-13_leather_vest_cropped_lining | new | IoU 0.7945 BF 0.335 bandMAE 0.390 missed 0.0000 kept 0.2587 dE 17.88 dE95 42.92 grad 14.15 conn 2382.77 | 8.26s
+13_leather_vest_cropped_lining | new | IoU 0.7945 BF 0.335 bandMAE 0.390 missed 0.0000 kept 0.2587 dE 17.88 dE95 42.92 grad 14.15 conn 2382.77 | 9.28s
 14_shirt_closeup_fills_frame Apple model only: no result
 14_shirt_closeup_fills_frame previous app: no result
-14_shirt_closeup_fills_frame | BiRefNet only | IoU 0.7368 BF 0.011 bandMAE 0.491 missed 0.0010 kept 0.3560 dE 20.93 dE95 43.05 grad 14.62 conn 3212.66 | 5.97s
+14_shirt_closeup_fills_frame | BiRefNet only | IoU 0.7368 BF 0.011 bandMAE 0.491 missed 0.0010 kept 0.3560 dE 20.93 dE95 43.05 grad 14.62 conn 3212.66 | 5.88s
 14_shirt_closeup_fills_frame edges: tight levels: no result
 14_shirt_closeup_fills_frame edges: radius 3: no result
 14_shirt_closeup_fills_frame edges: radius 3, tight levels: no result
 14_shirt_closeup_fills_frame edges: radius 8, finer eps: no result
 14_shirt_closeup_fills_frame new: no result
-15_shirt_cut_off_by_frame | Apple model only | IoU 0.9741 BF 0.469 bandMAE 0.250 missed 0.0006 kept 0.0260 dE 13.70 dE95 32.80 grad 9.98 conn 202.37 | 0.35s
-15_shirt_cut_off_by_frame | previous app | IoU 0.9760 BF 0.813 bandMAE 0.109 missed 0.0002 kept 0.0243 dE 8.51 dE95 34.28 grad 2.92 conn 184.34 | 3.63s
-15_shirt_cut_off_by_frame | BiRefNet only | IoU 0.5720 BF 0.001 bandMAE 0.500 missed 0.0010 kept 0.7466 dE 21.64 dE95 43.42 grad 16.46 conn 5211.88 | 5.81s
+15_shirt_cut_off_by_frame | Apple model only | IoU 0.9741 BF 0.469 bandMAE 0.250 missed 0.0006 kept 0.0260 dE 13.70 dE95 32.80 grad 9.98 conn 202.37 | 0.32s
+15_shirt_cut_off_by_frame | previous app | IoU 0.9760 BF 0.813 bandMAE 0.109 missed 0.0002 kept 0.0243 dE 8.51 dE95 34.28 grad 2.92 conn 184.34 | 4.20s
+15_shirt_cut_off_by_frame | BiRefNet only | IoU 0.5720 BF 0.001 bandMAE 0.500 missed 0.0010 kept 0.7466 dE 21.64 dE95 43.42 grad 16.46 conn 5211.88 | 7.76s
 15_shirt_cut_off_by_frame edges: tight levels: no result
 15_shirt_cut_off_by_frame edges: radius 3: no result
 15_shirt_cut_off_by_frame edges: radius 3, tight levels: no result
 15_shirt_cut_off_by_frame edges: radius 8, finer eps: no result
 15_shirt_cut_off_by_frame new: no result
-16_vest_closeup_corners | Apple model only | IoU 0.3564 BF 0.000 bandMAE 0.503 missed 0.6436 kept 0.0000 dE 19.15 dE95 46.26 grad 10.54 conn 7739.03 | 0.45s
-16_vest_closeup_corners | previous app | IoU 0.3521 BF 0.000 bandMAE 0.503 missed 0.6479 kept 0.0000 dE 19.15 dE95 46.26 grad 9.04 conn 7793.28 | 4.15s
-16_vest_closeup_corners | BiRefNet only | IoU 0.9841 BF 0.002 bandMAE 0.493 missed 0.0013 kept 0.0149 dE 22.75 dE95 43.94 grad 7.08 conn 209.94 | 6.59s
+16_vest_closeup_corners | Apple model only | IoU 0.3564 BF 0.000 bandMAE 0.503 missed 0.6436 kept 0.0000 dE 19.15 dE95 46.26 grad 10.54 conn 7739.03 | 0.38s
+16_vest_closeup_corners | previous app | IoU 0.3521 BF 0.000 bandMAE 0.503 missed 0.6479 kept 0.0000 dE 19.15 dE95 46.26 grad 9.04 conn 7793.28 | 3.85s
+16_vest_closeup_corners | BiRefNet only | IoU 0.9841 BF 0.002 bandMAE 0.493 missed 0.0013 kept 0.0149 dE 22.75 dE95 43.94 grad 7.08 conn 209.94 | 7.05s
 16_vest_closeup_corners edges: tight levels: no result
 16_vest_closeup_corners edges: radius 3: no result
 16_vest_closeup_corners edges: radius 3, tight levels: no result
 16_vest_closeup_corners edges: radius 8, finer eps: no result
 16_vest_closeup_corners new: no result
-R_columbia_anorak_arms_out_concrete | Apple model only | IoU 0.9859 BF 0.343 bandMAE 0.247 missed 0.0003 kept 0.0140 dE 13.91 dE95 34.84 grad 9.37 conn 37.92 | 0.25s
-R_columbia_anorak_arms_out_concrete | previous app | IoU 0.9870 BF 0.556 bandMAE 0.235 missed 0.0003 kept 0.0129 dE 13.17 dE95 42.04 grad 13.08 conn 38.26 | 2.25s
-R_columbia_anorak_arms_out_concrete | BiRefNet only | IoU 0.9924 BF 0.732 bandMAE 0.140 missed 0.0004 kept 0.0073 dE 8.41 dE95 32.91 grad 6.79 conn 19.97 | 5.65s
-R_columbia_anorak_arms_out_concrete | edges: tight levels | IoU 0.9890 BF 0.604 bandMAE 0.216 missed 0.0005 kept 0.0106 dE 11.95 dE95 42.26 grad 13.69 conn 30.87 | 8.51s
-R_columbia_anorak_arms_out_concrete | edges: radius 3 | IoU 0.9895 BF 0.617 bandMAE 0.216 missed 0.0005 kept 0.0102 dE 12.69 dE95 41.72 grad 12.78 conn 29.33 | 9.33s
-R_columbia_anorak_arms_out_concrete | edges: radius 3, tight levels | IoU 0.9895 BF 0.617 bandMAE 0.207 missed 0.0005 kept 0.0102 dE 11.55 dE95 42.09 grad 13.83 conn 29.31 | 9.99s
-R_columbia_anorak_arms_out_concrete | edges: radius 8, finer eps | IoU 0.9889 BF 0.595 bandMAE 0.228 missed 0.0005 kept 0.0107 dE 13.23 dE95 42.07 grad 12.65 conn 33.15 | 11.88s
+R_columbia_anorak_arms_out_concrete | Apple model only | IoU 0.9859 BF 0.343 bandMAE 0.247 missed 0.0003 kept 0.0140 dE 13.91 dE95 34.84 grad 9.37 conn 37.92 | 0.38s
+R_columbia_anorak_arms_out_concrete | previous app | IoU 0.9870 BF 0.556 bandMAE 0.235 missed 0.0003 kept 0.0129 dE 13.17 dE95 42.04 grad 13.08 conn 38.26 | 2.30s
+R_columbia_anorak_arms_out_concrete | BiRefNet only | IoU 0.9924 BF 0.732 bandMAE 0.140 missed 0.0004 kept 0.0073 dE 8.41 dE95 32.91 grad 6.79 conn 19.97 | 7.14s
+R_columbia_anorak_arms_out_concrete | edges: tight levels | IoU 0.9890 BF 0.604 bandMAE 0.216 missed 0.0005 kept 0.0106 dE 11.95 dE95 42.26 grad 13.69 conn 30.87 | 9.41s
+R_columbia_anorak_arms_out_concrete | edges: radius 3 | IoU 0.9895 BF 0.617 bandMAE 0.216 missed 0.0005 kept 0.0102 dE 12.69 dE95 41.72 grad 12.78 conn 29.33 | 11.09s
+R_columbia_anorak_arms_out_concrete | edges: radius 3, tight levels | IoU 0.9895 BF 0.617 bandMAE 0.207 missed 0.0005 kept 0.0102 dE 11.55 dE95 42.09 grad 13.83 conn 29.31 | 11.07s
+R_columbia_anorak_arms_out_concrete | edges: radius 8, finer eps | IoU 0.9889 BF 0.595 bandMAE 0.228 missed 0.0005 kept 0.0107 dE 13.23 dE95 42.07 grad 12.65 conn 33.15 | 9.57s
 NOTES R_columbia_anorak_arms_out_concrete: areaFraction=0.359 backgroundLeftInside=0.000383 backgroundNoise=0.012 backgroundSampleFraction=0.302 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=1 instances=1 islandsRemovedPx=0 recoveredPx=98 separation=67.4 zoomed=1
-R_columbia_anorak_arms_out_concrete | new | IoU 0.9890 BF 0.604 bandMAE 0.227 missed 0.0005 kept 0.0106 dE 13.32 dE95 41.97 grad 12.64 conn 32.06 | 17.41s
-R_columbia_anorak_front_concrete | Apple model only | IoU 0.9794 BF 0.424 bandMAE 0.222 missed 0.0105 kept 0.0104 dE 13.56 dE95 35.03 grad 8.88 conn 60.25 | 0.41s
-R_columbia_anorak_front_concrete | previous app | IoU 0.9857 BF 0.640 bandMAE 0.214 missed 0.0063 kept 0.0081 dE 12.84 dE95 42.89 grad 12.37 conn 45.94 | 1.76s
-R_columbia_anorak_front_concrete | BiRefNet only | IoU 0.9945 BF 0.840 bandMAE 0.111 missed 0.0006 kept 0.0049 dE 7.86 dE95 31.82 grad 4.96 conn 16.55 | 3.35s
-R_columbia_anorak_front_concrete | edges: tight levels | IoU 0.9871 BF 0.709 bandMAE 0.186 missed 0.0063 kept 0.0067 dE 11.19 dE95 43.19 grad 12.62 conn 38.82 | 7.10s
-R_columbia_anorak_front_concrete | edges: radius 3 | IoU 0.9873 BF 0.723 bandMAE 0.190 missed 0.0063 kept 0.0065 dE 12.10 dE95 42.70 grad 12.03 conn 38.18 | 8.46s
-R_columbia_anorak_front_concrete | edges: radius 3, tight levels | IoU 0.9873 BF 0.723 bandMAE 0.179 missed 0.0063 kept 0.0065 dE 10.86 dE95 43.13 grad 12.77 conn 37.98 | 8.20s
-R_columbia_anorak_front_concrete | edges: radius 8, finer eps | IoU 0.9870 BF 0.695 bandMAE 0.202 missed 0.0063 kept 0.0068 dE 12.72 dE95 42.95 grad 11.65 conn 41.01 | 7.53s
+R_columbia_anorak_arms_out_concrete | new | IoU 0.9890 BF 0.604 bandMAE 0.227 missed 0.0005 kept 0.0106 dE 13.32 dE95 41.97 grad 12.64 conn 32.06 | 10.97s
+R_columbia_anorak_front_concrete | Apple model only | IoU 0.9794 BF 0.424 bandMAE 0.222 missed 0.0105 kept 0.0104 dE 13.56 dE95 35.03 grad 8.88 conn 60.25 | 0.52s
+R_columbia_anorak_front_concrete | previous app | IoU 0.9857 BF 0.640 bandMAE 0.214 missed 0.0063 kept 0.0081 dE 12.84 dE95 42.89 grad 12.37 conn 45.94 | 2.01s
+R_columbia_anorak_front_concrete | BiRefNet only | IoU 0.9945 BF 0.840 bandMAE 0.111 missed 0.0006 kept 0.0049 dE 7.86 dE95 31.82 grad 4.96 conn 16.55 | 3.53s
+R_columbia_anorak_front_concrete | edges: tight levels | IoU 0.9871 BF 0.709 bandMAE 0.186 missed 0.0063 kept 0.0067 dE 11.19 dE95 43.19 grad 12.62 conn 38.82 | 7.50s
+R_columbia_anorak_front_concrete | edges: radius 3 | IoU 0.9873 BF 0.723 bandMAE 0.190 missed 0.0063 kept 0.0065 dE 12.10 dE95 42.70 grad 12.03 conn 38.18 | 9.07s
+R_columbia_anorak_front_concrete | edges: radius 3, tight levels | IoU 0.9873 BF 0.723 bandMAE 0.179 missed 0.0063 kept 0.0065 dE 10.86 dE95 43.13 grad 12.77 conn 37.98 | 7.86s
+R_columbia_anorak_front_concrete | edges: radius 8, finer eps | IoU 0.9870 BF 0.695 bandMAE 0.202 missed 0.0063 kept 0.0068 dE 12.72 dE95 42.95 grad 11.65 conn 41.01 | 7.79s
 NOTES R_columbia_anorak_front_concrete: areaFraction=0.392 backgroundLeftInside=0.00129 backgroundNoise=0.012 backgroundSampleFraction=0.325 carvedPx=3.88e+03 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=66 separation=70.8 zoomed=1
 R_columbia_anorak_front_concrete | new | IoU 0.9871 BF 0.709 bandMAE 0.199 missed 0.0063 kept 0.0067 dE 12.67 dE95 42.95 grad 11.86 conn 40.01 | 7.30s
-R_columbia_cuff_closeup_tape | Apple model only | IoU 0.9712 BF 0.262 bandMAE 0.332 missed 0.0000 kept 0.0297 dE 15.73 dE95 40.98 grad 16.03 conn 98.77 | 0.55s
-R_columbia_cuff_closeup_tape | previous app | IoU 0.9308 BF 0.286 bandMAE 0.316 missed 0.0507 kept 0.0198 dE 15.52 dE95 42.96 grad 21.10 conn 222.78 | 2.57s
-R_columbia_cuff_closeup_tape | BiRefNet only | IoU 0.9789 BF 0.547 bandMAE 0.234 missed 0.0001 kept 0.0215 dE 11.78 dE95 40.94 grad 14.49 conn 70.13 | 6.44s
-R_columbia_cuff_closeup_tape | edges: tight levels | IoU 0.9326 BF 0.353 bandMAE 0.300 missed 0.0506 kept 0.0180 dE 14.51 dE95 43.39 grad 21.91 conn 210.78 | 8.01s
-R_columbia_cuff_closeup_tape | edges: radius 3 | IoU 0.9297 BF 0.352 bandMAE 0.304 missed 0.0517 kept 0.0200 dE 15.03 dE95 43.03 grad 20.21 conn 218.77 | 12.22s
-R_columbia_cuff_closeup_tape | edges: radius 3, tight levels | IoU 0.9297 BF 0.352 bandMAE 0.301 missed 0.0517 kept 0.0200 dE 14.48 dE95 43.39 grad 22.21 conn 218.47 | 10.55s
-R_columbia_cuff_closeup_tape | edges: radius 8, finer eps | IoU 0.9337 BF 0.338 bandMAE 0.300 missed 0.0498 kept 0.0177 dE 15.04 dE95 43.23 grad 20.15 conn 210.25 | 11.46s
+R_columbia_cuff_closeup_tape | Apple model only | IoU 0.9712 BF 0.262 bandMAE 0.332 missed 0.0000 kept 0.0297 dE 15.73 dE95 40.98 grad 16.03 conn 98.77 | 0.59s
+R_columbia_cuff_closeup_tape | previous app | IoU 0.9308 BF 0.286 bandMAE 0.316 missed 0.0507 kept 0.0198 dE 15.52 dE95 42.96 grad 21.10 conn 222.78 | 2.38s
+R_columbia_cuff_closeup_tape | BiRefNet only | IoU 0.9789 BF 0.547 bandMAE 0.234 missed 0.0001 kept 0.0215 dE 11.78 dE95 40.94 grad 14.49 conn 70.13 | 6.85s
+R_columbia_cuff_closeup_tape | edges: tight levels | IoU 0.9326 BF 0.353 bandMAE 0.300 missed 0.0506 kept 0.0180 dE 14.51 dE95 43.39 grad 21.91 conn 210.78 | 8.40s
+R_columbia_cuff_closeup_tape | edges: radius 3 | IoU 0.9297 BF 0.352 bandMAE 0.304 missed 0.0517 kept 0.0200 dE 15.03 dE95 43.03 grad 20.21 conn 218.77 | 9.67s
+R_columbia_cuff_closeup_tape | edges: radius 3, tight levels | IoU 0.9297 BF 0.352 bandMAE 0.301 missed 0.0517 kept 0.0200 dE 14.48 dE95 43.39 grad 22.21 conn 218.47 | 8.81s
+R_columbia_cuff_closeup_tape | edges: radius 8, finer eps | IoU 0.9337 BF 0.338 bandMAE 0.300 missed 0.0498 kept 0.0177 dE 15.04 dE95 43.23 grad 20.15 conn 210.25 | 9.03s
 NOTES R_columbia_cuff_closeup_tape: areaFraction=0.425 backgroundLeftInside=0.00799 backgroundNoise=0.012 backgroundSampleFraction=0.253 carvedPx=4.24e+04 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 recoveredPx=183 separation=66.6 zoomed=0
-R_columbia_cuff_closeup_tape | new | IoU 0.9326 BF 0.353 bandMAE 0.303 missed 0.0506 kept 0.0180 dE 15.12 dE95 43.16 grad 20.05 conn 212.38 | 9.70s
+R_columbia_cuff_closeup_tape | new | IoU 0.9326 BF 0.353 bandMAE 0.303 missed 0.0506 kept 0.0180 dE 15.12 dE95 43.16 grad 20.05 conn 212.38 | 9.24s
 R_columbia_hem_closeup_tape Apple model only: no result
 R_columbia_hem_closeup_tape previous app: no result
-R_columbia_hem_closeup_tape | BiRefNet only | IoU 0.9972 BF 0.698 bandMAE 0.145 missed 0.0009 kept 0.0019 dE 7.93 dE95 23.96 grad 7.56 conn 49.88 | 6.39s
-R_columbia_hem_closeup_tape | edges: tight levels | IoU 0.9980 BF 0.837 bandMAE 0.150 missed 0.0006 kept 0.0014 dE 8.14 dE95 30.61 grad 6.55 conn 45.44 | 10.83s
-R_columbia_hem_closeup_tape | edges: radius 3 | IoU 0.9980 BF 0.846 bandMAE 0.151 missed 0.0006 kept 0.0013 dE 8.45 dE95 28.16 grad 6.43 conn 48.95 | 6.69s
-R_columbia_hem_closeup_tape | edges: radius 3, tight levels | IoU 0.9980 BF 0.846 bandMAE 0.141 missed 0.0006 kept 0.0013 dE 7.63 dE95 29.28 grad 6.65 conn 44.70 | 6.62s
-R_columbia_hem_closeup_tape | edges: radius 8, finer eps | IoU 0.9979 BF 0.814 bandMAE 0.163 missed 0.0006 kept 0.0015 dE 9.08 dE95 30.69 grad 6.49 conn 54.49 | 6.28s
+R_columbia_hem_closeup_tape | BiRefNet only | IoU 0.9972 BF 0.698 bandMAE 0.145 missed 0.0009 kept 0.0019 dE 7.93 dE95 23.96 grad 7.56 conn 49.88 | 6.40s
+R_columbia_hem_closeup_tape | edges: tight levels | IoU 0.9980 BF 0.837 bandMAE 0.150 missed 0.0006 kept 0.0014 dE 8.14 dE95 30.61 grad 6.55 conn 45.44 | 7.34s
+R_columbia_hem_closeup_tape | edges: radius 3 | IoU 0.9980 BF 0.846 bandMAE 0.151 missed 0.0006 kept 0.0013 dE 8.45 dE95 28.16 grad 6.43 conn 48.95 | 9.18s
+R_columbia_hem_closeup_tape | edges: radius 3, tight levels | IoU 0.9980 BF 0.846 bandMAE 0.141 missed 0.0006 kept 0.0013 dE 7.63 dE95 29.28 grad 6.65 conn 44.70 | 9.82s
+R_columbia_hem_closeup_tape | edges: radius 8, finer eps | IoU 0.9979 BF 0.814 bandMAE 0.163 missed 0.0006 kept 0.0015 dE 9.08 dE95 30.69 grad 6.49 conn 54.49 | 7.11s
 NOTES R_columbia_hem_closeup_tape: areaFraction=0.751 backgroundSampleFraction=0.000391 colourEvidence=0 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 zoomed=0
-R_columbia_hem_closeup_tape | new | IoU 0.9980 BF 0.837 bandMAE 0.162 missed 0.0006 kept 0.0014 dE 9.05 dE95 29.49 grad 6.36 conn 51.63 | 7.39s
-R_columbia_side_closeup_tape | Apple model only | IoU 0.6632 BF 0.475 bandMAE 0.219 missed 0.3348 kept 0.0031 dE 12.01 dE95 38.25 grad 8.73 conn 1390.89 | 0.27s
-R_columbia_side_closeup_tape | previous app | IoU 0.6663 BF 0.465 bandMAE 0.217 missed 0.3317 kept 0.0031 dE 12.52 dE95 40.49 grad 14.50 conn 1381.64 | 2.28s
-R_columbia_side_closeup_tape | BiRefNet only | IoU 0.4647 BF 0.201 bandMAE 0.246 missed 0.5348 kept 0.0009 dE 11.71 dE95 47.96 grad 26.73 conn 2206.35 | 3.27s
-R_columbia_side_closeup_tape | edges: tight levels | IoU 0.4697 BF 0.262 bandMAE 0.245 missed 0.5297 kept 0.0013 dE 12.18 dE95 46.53 grad 21.29 conn 2173.13 | 6.88s
-R_columbia_side_closeup_tape | edges: radius 3 | IoU 0.4704 BF 0.324 bandMAE 0.251 missed 0.5290 kept 0.0013 dE 12.83 dE95 46.46 grad 18.34 conn 2180.69 | 8.30s
-R_columbia_side_closeup_tape | edges: radius 3, tight levels | IoU 0.4704 BF 0.324 bandMAE 0.250 missed 0.5290 kept 0.0013 dE 12.10 dE95 47.03 grad 20.50 conn 2172.64 | 8.27s
-R_columbia_side_closeup_tape | edges: radius 8, finer eps | IoU 0.4681 BF 0.195 bandMAE 0.247 missed 0.5312 kept 0.0014 dE 13.05 dE95 45.65 grad 21.44 conn 2186.81 | 7.98s
+R_columbia_hem_closeup_tape | new | IoU 0.9980 BF 0.837 bandMAE 0.162 missed 0.0006 kept 0.0014 dE 9.05 dE95 29.49 grad 6.36 conn 51.63 | 7.40s
+R_columbia_side_closeup_tape | Apple model only | IoU 0.6632 BF 0.475 bandMAE 0.219 missed 0.3348 kept 0.0031 dE 12.01 dE95 38.25 grad 8.73 conn 1390.89 | 0.48s
+R_columbia_side_closeup_tape | previous app | IoU 0.6663 BF 0.465 bandMAE 0.217 missed 0.3317 kept 0.0031 dE 12.52 dE95 40.49 grad 14.50 conn 1381.64 | 2.24s
+R_columbia_side_closeup_tape | BiRefNet only | IoU 0.4647 BF 0.201 bandMAE 0.246 missed 0.5348 kept 0.0009 dE 11.71 dE95 47.96 grad 26.73 conn 2206.35 | 4.05s
+R_columbia_side_closeup_tape | edges: tight levels | IoU 0.4697 BF 0.262 bandMAE 0.245 missed 0.5297 kept 0.0013 dE 12.18 dE95 46.53 grad 21.29 conn 2173.13 | 9.15s
+R_columbia_side_closeup_tape | edges: radius 3 | IoU 0.4704 BF 0.324 bandMAE 0.251 missed 0.5290 kept 0.0013 dE 12.83 dE95 46.46 grad 18.34 conn 2180.69 | 10.17s
+R_columbia_side_closeup_tape | edges: radius 3, tight levels | IoU 0.4704 BF 0.324 bandMAE 0.250 missed 0.5290 kept 0.0013 dE 12.10 dE95 47.03 grad 20.50 conn 2172.64 | 10.13s
+R_columbia_side_closeup_tape | edges: radius 8, finer eps | IoU 0.4681 BF 0.195 bandMAE 0.247 missed 0.5312 kept 0.0014 dE 13.05 dE95 45.65 grad 21.44 conn 2186.81 | 9.13s
 NOTES R_columbia_side_closeup_tape: areaFraction=0.284 backgroundLeftInside=0.00686 backgroundNoise=0.0149 backgroundSampleFraction=0.356 carvedPx=1.52e+03 colourEvidence=1 components=1 falseHolesFilledPx=2.43e+03 instances=1 islandsRemovedPx=683 recoveredPx=6.95e+03 separation=33.3 zoomed=0
-R_columbia_side_closeup_tape | new | IoU 0.4697 BF 0.262 bandMAE 0.246 missed 0.5297 kept 0.0013 dE 12.94 dE95 45.85 grad 19.14 conn 2187.01 | 7.67s
-R_michigan_cuff_tape | Apple model only | IoU 0.9848 BF 0.464 bandMAE 0.242 missed 0.0037 kept 0.0118 dE 12.33 dE95 31.15 grad 7.02 conn 43.61 | 0.42s
-R_michigan_cuff_tape | previous app | IoU 0.9913 BF 0.686 bandMAE 0.166 missed 0.0039 kept 0.0049 dE 11.08 dE95 30.74 grad 6.35 conn 30.19 | 1.92s
-R_michigan_cuff_tape | BiRefNet only | IoU 0.9905 BF 0.900 bandMAE 0.118 missed 0.0054 kept 0.0041 dE 7.16 dE95 22.03 grad 3.23 conn 26.81 | 5.27s
-R_michigan_cuff_tape | edges: tight levels | IoU 0.9927 BF 0.779 bandMAE 0.143 missed 0.0048 kept 0.0025 dE 8.92 dE95 27.70 grad 6.24 conn 24.66 | 8.91s
-R_michigan_cuff_tape | edges: radius 3 | IoU 0.9923 BF 0.770 bandMAE 0.141 missed 0.0050 kept 0.0027 dE 10.09 dE95 27.30 grad 5.62 conn 24.78 | 9.55s
-R_michigan_cuff_tape | edges: radius 3, tight levels | IoU 0.9923 BF 0.770 bandMAE 0.142 missed 0.0050 kept 0.0027 dE 8.95 dE95 27.70 grad 6.38 conn 25.21 | 10.64s
-R_michigan_cuff_tape | edges: radius 8, finer eps | IoU 0.9924 BF 0.760 bandMAE 0.146 missed 0.0050 kept 0.0027 dE 10.06 dE95 27.57 grad 5.54 conn 25.18 | 9.47s
+R_columbia_side_closeup_tape | new | IoU 0.4697 BF 0.262 bandMAE 0.246 missed 0.5297 kept 0.0013 dE 12.94 dE95 45.85 grad 19.14 conn 2187.01 | 9.44s
+R_michigan_cuff_tape | Apple model only | IoU 0.9848 BF 0.464 bandMAE 0.242 missed 0.0037 kept 0.0118 dE 12.33 dE95 31.15 grad 7.02 conn 43.61 | 0.65s
+R_michigan_cuff_tape | previous app | IoU 0.9913 BF 0.686 bandMAE 0.166 missed 0.0039 kept 0.0049 dE 11.08 dE95 30.74 grad 6.35 conn 30.19 | 2.25s
+R_michigan_cuff_tape | BiRefNet only | IoU 0.9905 BF 0.900 bandMAE 0.118 missed 0.0054 kept 0.0041 dE 7.16 dE95 22.03 grad 3.23 conn 26.81 | 8.21s
+R_michigan_cuff_tape | edges: tight levels | IoU 0.9927 BF 0.779 bandMAE 0.143 missed 0.0048 kept 0.0025 dE 8.92 dE95 27.70 grad 6.24 conn 24.66 | 12.21s
+R_michigan_cuff_tape | edges: radius 3 | IoU 0.9923 BF 0.770 bandMAE 0.141 missed 0.0050 kept 0.0027 dE 10.09 dE95 27.30 grad 5.62 conn 24.78 | 13.08s
+R_michigan_cuff_tape | edges: radius 3, tight levels | IoU 0.9923 BF 0.770 bandMAE 0.142 missed 0.0050 kept 0.0027 dE 8.95 dE95 27.70 grad 6.38 conn 25.21 | 10.74s
+R_michigan_cuff_tape | edges: radius 8, finer eps | IoU 0.9924 BF 0.760 bandMAE 0.146 missed 0.0050 kept 0.0027 dE 10.06 dE95 27.57 grad 5.54 conn 25.18 | 10.20s
 NOTES R_michigan_cuff_tape: areaFraction=0.314 backgroundLeftInside=0 backgroundNoise=0.012 backgroundSampleFraction=0.302 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=5 instances=1 islandsRemovedPx=27 recoveredPx=475 separation=42.6 zoomed=1
-R_michigan_cuff_tape | new | IoU 0.9927 BF 0.779 bandMAE 0.143 missed 0.0048 kept 0.0025 dE 10.15 dE95 27.33 grad 5.44 conn 24.29 | 9.62s
+R_michigan_cuff_tape | new | IoU 0.9927 BF 0.779 bandMAE 0.143 missed 0.0048 kept 0.0025 dE 10.15 dE95 27.33 grad 5.44 conn 24.29 | 10.69s
 R_michigan_front_closeup_tape Apple model only: no result
 R_michigan_front_closeup_tape previous app: no result
-R_michigan_front_closeup_tape | BiRefNet only | IoU 0.9948 BF 0.664 bandMAE 0.132 missed 0.0012 kept 0.0040 dE 9.64 dE95 36.82 grad 7.51 conn 29.15 | 5.55s
-R_michigan_front_closeup_tape | edges: tight levels | IoU 0.9949 BF 0.693 bandMAE 0.143 missed 0.0009 kept 0.0042 dE 11.53 dE95 45.50 grad 9.14 conn 28.25 | 7.60s
-R_michigan_front_closeup_tape | edges: radius 3 | IoU 0.9950 BF 0.707 bandMAE 0.143 missed 0.0009 kept 0.0041 dE 11.81 dE95 44.23 grad 8.49 conn 30.51 | 8.75s
-R_michigan_front_closeup_tape | edges: radius 3, tight levels | IoU 0.9950 BF 0.707 bandMAE 0.139 missed 0.0009 kept 0.0041 dE 11.28 dE95 45.35 grad 9.25 conn 27.69 | 10.29s
-R_michigan_front_closeup_tape | edges: radius 8, finer eps | IoU 0.9948 BF 0.681 bandMAE 0.148 missed 0.0011 kept 0.0042 dE 12.07 dE95 44.18 grad 8.34 conn 33.73 | 10.02s
+R_michigan_front_closeup_tape | BiRefNet only | IoU 0.9948 BF 0.664 bandMAE 0.132 missed 0.0012 kept 0.0040 dE 9.64 dE95 36.82 grad 7.51 conn 29.15 | 9.41s
+R_michigan_front_closeup_tape | edges: tight levels | IoU 0.9949 BF 0.693 bandMAE 0.143 missed 0.0009 kept 0.0042 dE 11.53 dE95 45.50 grad 9.14 conn 28.25 | 8.45s
+R_michigan_front_closeup_tape | edges: radius 3 | IoU 0.9950 BF 0.707 bandMAE 0.143 missed 0.0009 kept 0.0041 dE 11.81 dE95 44.23 grad 8.49 conn 30.51 | 9.27s
+R_michigan_front_closeup_tape | edges: radius 3, tight levels | IoU 0.9950 BF 0.707 bandMAE 0.139 missed 0.0009 kept 0.0041 dE 11.28 dE95 45.35 grad 9.25 conn 27.69 | 10.36s
+R_michigan_front_closeup_tape | edges: radius 8, finer eps | IoU 0.9948 BF 0.681 bandMAE 0.148 missed 0.0011 kept 0.0042 dE 12.07 dE95 44.18 grad 8.34 conn 33.73 | 7.94s
 NOTES R_michigan_front_closeup_tape: areaFraction=0.58 backgroundSampleFraction=0 colourEvidence=0 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 zoomed=0
-R_michigan_front_closeup_tape | new | IoU 0.9949 BF 0.693 bandMAE 0.147 missed 0.0009 kept 0.0042 dE 12.13 dE95 44.22 grad 8.37 conn 32.22 | 9.84s
-R_michigan_jacket_back_concrete | Apple model only | IoU 0.9836 BF 0.512 bandMAE 0.165 missed 0.0094 kept 0.0072 dE 11.84 dE95 32.92 grad 9.50 conn 53.18 | 0.52s
-R_michigan_jacket_back_concrete | previous app | IoU 0.9910 BF 0.545 bandMAE 0.174 missed 0.0033 kept 0.0058 dE 12.61 dE95 44.30 grad 12.01 conn 32.55 | 2.11s
-R_michigan_jacket_back_concrete | BiRefNet only | IoU 0.9935 BF 0.623 bandMAE 0.118 missed 0.0028 kept 0.0037 dE 9.07 dE95 35.96 grad 9.01 conn 22.36 | 4.10s
-R_michigan_jacket_back_concrete | edges: tight levels | IoU 0.9918 BF 0.578 bandMAE 0.155 missed 0.0035 kept 0.0047 dE 11.25 dE95 44.82 grad 12.51 conn 28.81 | 7.85s
-R_michigan_jacket_back_concrete | edges: radius 3 | IoU 0.9921 BF 0.587 bandMAE 0.155 missed 0.0035 kept 0.0045 dE 11.63 dE95 44.01 grad 11.71 conn 28.00 | 9.33s
-R_michigan_jacket_back_concrete | edges: radius 3, tight levels | IoU 0.9921 BF 0.587 bandMAE 0.149 missed 0.0035 kept 0.0045 dE 10.99 dE95 44.64 grad 12.51 conn 27.74 | 10.78s
-R_michigan_jacket_back_concrete | edges: radius 8, finer eps | IoU 0.9916 BF 0.568 bandMAE 0.165 missed 0.0036 kept 0.0048 dE 12.07 dE95 44.27 grad 11.80 conn 30.91 | 9.42s
+R_michigan_front_closeup_tape | new | IoU 0.9949 BF 0.693 bandMAE 0.147 missed 0.0009 kept 0.0042 dE 12.13 dE95 44.22 grad 8.37 conn 32.22 | 8.83s
+R_michigan_jacket_back_concrete | Apple model only | IoU 0.9836 BF 0.512 bandMAE 0.165 missed 0.0094 kept 0.0072 dE 11.84 dE95 32.92 grad 9.50 conn 53.18 | 0.50s
+R_michigan_jacket_back_concrete | previous app | IoU 0.9910 BF 0.545 bandMAE 0.174 missed 0.0033 kept 0.0058 dE 12.61 dE95 44.30 grad 12.01 conn 32.55 | 2.36s
+R_michigan_jacket_back_concrete | BiRefNet only | IoU 0.9935 BF 0.623 bandMAE 0.118 missed 0.0028 kept 0.0037 dE 9.07 dE95 35.96 grad 9.01 conn 22.36 | 4.93s
+R_michigan_jacket_back_concrete | edges: tight levels | IoU 0.9918 BF 0.578 bandMAE 0.155 missed 0.0035 kept 0.0047 dE 11.25 dE95 44.82 grad 12.51 conn 28.81 | 9.13s
+R_michigan_jacket_back_concrete | edges: radius 3 | IoU 0.9921 BF 0.587 bandMAE 0.155 missed 0.0035 kept 0.0045 dE 11.63 dE95 44.01 grad 11.71 conn 28.00 | 9.88s
+R_michigan_jacket_back_concrete | edges: radius 3, tight levels | IoU 0.9921 BF 0.587 bandMAE 0.149 missed 0.0035 kept 0.0045 dE 10.99 dE95 44.64 grad 12.51 conn 27.74 | 11.00s
+R_michigan_jacket_back_concrete | edges: radius 8, finer eps | IoU 0.9916 BF 0.568 bandMAE 0.165 missed 0.0036 kept 0.0048 dE 12.07 dE95 44.27 grad 11.80 conn 30.91 | 8.38s
 NOTES R_michigan_jacket_back_concrete: areaFraction=0.399 backgroundLeftInside=0.000227 backgroundNoise=0.012 backgroundSampleFraction=0.284 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=1.14e+03 instances=1 islandsRemovedPx=0 recoveredPx=96 separation=46.5 zoomed=1
-R_michigan_jacket_back_concrete | new | IoU 0.9918 BF 0.578 bandMAE 0.162 missed 0.0035 kept 0.0047 dE 12.02 dE95 44.28 grad 11.75 conn 29.76 | 7.69s
-R_michigan_jacket_front_open_collar | Apple model only | IoU 0.9897 BF 0.337 bandMAE 0.211 missed 0.0001 kept 0.0103 dE 13.26 dE95 36.61 grad 9.75 conn 37.13 | 0.54s
-R_michigan_jacket_front_open_collar | previous app | IoU 0.9920 BF 0.582 bandMAE 0.163 missed 0.0005 kept 0.0076 dE 12.60 dE95 46.46 grad 10.71 conn 30.42 | 2.21s
-R_michigan_jacket_front_open_collar | BiRefNet only | IoU 0.9949 BF 0.771 bandMAE 0.110 missed 0.0001 kept 0.0050 dE 8.82 dE95 34.23 grad 6.45 conn 18.87 | 6.02s
-R_michigan_jacket_front_open_collar | edges: tight levels | IoU 0.9938 BF 0.663 bandMAE 0.142 missed 0.0004 kept 0.0058 dE 11.31 dE95 46.08 grad 10.45 conn 23.34 | 9.65s
-R_michigan_jacket_front_open_collar | edges: radius 3 | IoU 0.9939 BF 0.668 bandMAE 0.144 missed 0.0004 kept 0.0057 dE 11.77 dE95 45.66 grad 9.78 conn 22.78 | 10.41s
-R_michigan_jacket_front_open_collar | edges: radius 3, tight levels | IoU 0.9939 BF 0.668 bandMAE 0.139 missed 0.0004 kept 0.0057 dE 11.20 dE95 46.05 grad 10.46 conn 23.03 | 9.67s
-R_michigan_jacket_front_open_collar | edges: radius 8, finer eps | IoU 0.9938 BF 0.656 bandMAE 0.149 missed 0.0005 kept 0.0058 dE 11.95 dE95 45.67 grad 9.88 conn 24.31 | 12.72s
+R_michigan_jacket_back_concrete | new | IoU 0.9918 BF 0.578 bandMAE 0.162 missed 0.0035 kept 0.0047 dE 12.02 dE95 44.28 grad 11.75 conn 29.76 | 7.77s
+R_michigan_jacket_front_open_collar | Apple model only | IoU 0.9897 BF 0.337 bandMAE 0.211 missed 0.0001 kept 0.0103 dE 13.26 dE95 36.61 grad 9.75 conn 37.13 | 0.32s
+R_michigan_jacket_front_open_collar | previous app | IoU 0.9920 BF 0.582 bandMAE 0.163 missed 0.0005 kept 0.0076 dE 12.60 dE95 46.46 grad 10.71 conn 30.42 | 2.60s
+R_michigan_jacket_front_open_collar | BiRefNet only | IoU 0.9949 BF 0.771 bandMAE 0.110 missed 0.0001 kept 0.0050 dE 8.82 dE95 34.23 grad 6.45 conn 18.87 | 7.20s
+R_michigan_jacket_front_open_collar | edges: tight levels | IoU 0.9938 BF 0.663 bandMAE 0.142 missed 0.0004 kept 0.0058 dE 11.31 dE95 46.08 grad 10.45 conn 23.34 | 12.33s
+R_michigan_jacket_front_open_collar | edges: radius 3 | IoU 0.9939 BF 0.668 bandMAE 0.144 missed 0.0004 kept 0.0057 dE 11.77 dE95 45.66 grad 9.78 conn 22.78 | 11.88s
+R_michigan_jacket_front_open_collar | edges: radius 3, tight levels | IoU 0.9939 BF 0.668 bandMAE 0.139 missed 0.0004 kept 0.0057 dE 11.20 dE95 46.05 grad 10.46 conn 23.03 | 10.81s
+R_michigan_jacket_front_open_collar | edges: radius 8, finer eps | IoU 0.9938 BF 0.656 bandMAE 0.149 missed 0.0005 kept 0.0058 dE 11.95 dE95 45.67 grad 9.88 conn 24.31 | 9.88s
 NOTES R_michigan_jacket_front_open_collar: areaFraction=0.418 backgroundLeftInside=0.000354 backgroundNoise=0.012 backgroundSampleFraction=0.294 carvedPx=0 colourEvidence=1 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=2 recoveredPx=225 separation=44.3 zoomed=1
-R_michigan_jacket_front_open_collar | new | IoU 0.9938 BF 0.663 bandMAE 0.148 missed 0.0004 kept 0.0058 dE 11.97 dE95 45.60 grad 9.79 conn 23.61 | 11.72s
+R_michigan_jacket_front_open_collar | new | IoU 0.9938 BF 0.663 bandMAE 0.148 missed 0.0004 kept 0.0058 dE 11.97 dE95 45.60 grad 9.79 conn 23.61 | 12.27s
 R_michigan_sleeve_stripes_tape Apple model only: no result
 R_michigan_sleeve_stripes_tape previous app: no result
-R_michigan_sleeve_stripes_tape | BiRefNet only | IoU 0.3204 BF 0.565 bandMAE 0.246 missed 0.6792 kept 0.0009 dE 11.85 dE95 47.27 grad 10.16 conn 3446.32 | 5.65s
-R_michigan_sleeve_stripes_tape | edges: tight levels | IoU 0.2982 BF 0.609 bandMAE 0.249 missed 0.7016 kept 0.0005 dE 12.77 dE95 47.77 grad 10.65 conn 3558.71 | 9.74s
-R_michigan_sleeve_stripes_tape | edges: radius 3 | IoU 0.2982 BF 0.606 bandMAE 0.252 missed 0.7017 kept 0.0006 dE 13.25 dE95 47.77 grad 10.18 conn 3559.20 | 11.84s
-R_michigan_sleeve_stripes_tape | edges: radius 3, tight levels | IoU 0.2982 BF 0.606 bandMAE 0.252 missed 0.7017 kept 0.0006 dE 12.71 dE95 47.77 grad 11.12 conn 3559.15 | 11.99s
-R_michigan_sleeve_stripes_tape | edges: radius 8, finer eps | IoU 0.2983 BF 0.619 bandMAE 0.246 missed 0.7016 kept 0.0004 dE 13.23 dE95 47.67 grad 9.50 conn 3558.50 | 10.02s
+R_michigan_sleeve_stripes_tape | BiRefNet only | IoU 0.3204 BF 0.565 bandMAE 0.246 missed 0.6792 kept 0.0009 dE 11.85 dE95 47.27 grad 10.16 conn 3446.32 | 6.04s
+R_michigan_sleeve_stripes_tape | edges: tight levels | IoU 0.2982 BF 0.609 bandMAE 0.249 missed 0.7016 kept 0.0005 dE 12.77 dE95 47.77 grad 10.65 conn 3558.71 | 9.55s
+R_michigan_sleeve_stripes_tape | edges: radius 3 | IoU 0.2982 BF 0.606 bandMAE 0.252 missed 0.7017 kept 0.0006 dE 13.25 dE95 47.77 grad 10.18 conn 3559.20 | 8.33s
+R_michigan_sleeve_stripes_tape | edges: radius 3, tight levels | IoU 0.2982 BF 0.606 bandMAE 0.252 missed 0.7017 kept 0.0006 dE 12.71 dE95 47.77 grad 11.12 conn 3559.15 | 8.69s
+R_michigan_sleeve_stripes_tape | edges: radius 8, finer eps | IoU 0.2983 BF 0.619 bandMAE 0.246 missed 0.7016 kept 0.0004 dE 13.23 dE95 47.67 grad 9.50 conn 3558.50 | 8.88s
 NOTES R_michigan_sleeve_stripes_tape: areaFraction=0.225 backgroundNoise=0.386 backgroundSampleFraction=0.524 colourEvidence=0 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 separation=1.13 zoomed=1
-R_michigan_sleeve_stripes_tape | new | IoU 0.2982 BF 0.609 bandMAE 0.252 missed 0.7016 kept 0.0005 dE 13.45 dE95 47.74 grad 9.66 conn 3558.90 | 10.66s
+R_michigan_sleeve_stripes_tape | new | IoU 0.2982 BF 0.609 bandMAE 0.252 missed 0.7016 kept 0.0005 dE 13.45 dE95 47.74 grad 9.66 conn 3558.90 | 13.55s
 R_michigan_underarm_closeup Apple model only: no result
 R_michigan_underarm_closeup previous app: no result
-R_michigan_underarm_closeup | BiRefNet only | IoU 0.3466 BF 0.619 bandMAE 0.129 missed 0.6529 kept 0.0014 dE 6.66 dE95 27.93 grad 6.63 conn 2568.37 | 8.45s
-R_michigan_underarm_closeup | edges: tight levels | IoU 0.3465 BF 0.701 bandMAE 0.101 missed 0.6533 kept 0.0007 dE 6.94 dE95 28.90 grad 7.29 conn 2567.99 | 8.64s
-R_michigan_underarm_closeup | edges: radius 3 | IoU 0.3464 BF 0.698 bandMAE 0.118 missed 0.6533 kept 0.0009 dE 7.88 dE95 29.32 grad 6.98 conn 2568.61 | 9.42s
-R_michigan_underarm_closeup | edges: radius 3, tight levels | IoU 0.3464 BF 0.698 bandMAE 0.112 missed 0.6533 kept 0.0009 dE 7.11 dE95 29.34 grad 7.98 conn 2568.57 | 9.83s
-R_michigan_underarm_closeup | edges: radius 8, finer eps | IoU 0.3465 BF 0.702 bandMAE 0.101 missed 0.6533 kept 0.0006 dE 7.99 dE95 28.62 grad 5.97 conn 2567.82 | 9.51s
+R_michigan_underarm_closeup | BiRefNet only | IoU 0.3466 BF 0.619 bandMAE 0.129 missed 0.6529 kept 0.0014 dE 6.66 dE95 27.93 grad 6.63 conn 2568.37 | 7.15s
+R_michigan_underarm_closeup | edges: tight levels | IoU 0.3465 BF 0.701 bandMAE 0.101 missed 0.6533 kept 0.0007 dE 6.94 dE95 28.90 grad 7.29 conn 2567.99 | 10.73s
+R_michigan_underarm_closeup | edges: radius 3 | IoU 0.3464 BF 0.698 bandMAE 0.118 missed 0.6533 kept 0.0009 dE 7.88 dE95 29.32 grad 6.98 conn 2568.61 | 9.16s
+R_michigan_underarm_closeup | edges: radius 3, tight levels | IoU 0.3464 BF 0.698 bandMAE 0.112 missed 0.6533 kept 0.0009 dE 7.11 dE95 29.34 grad 7.98 conn 2568.57 | 8.85s
+R_michigan_underarm_closeup | edges: radius 8, finer eps | IoU 0.3465 BF 0.702 bandMAE 0.101 missed 0.6533 kept 0.0006 dE 7.99 dE95 28.62 grad 5.97 conn 2567.82 | 9.59s
 NOTES R_michigan_underarm_closeup: areaFraction=0.203 backgroundNoise=0.245 backgroundSampleFraction=0.361 colourEvidence=0 components=1 falseHolesFilledPx=0 instances=1 islandsRemovedPx=0 separation=1.87 zoomed=1
-R_michigan_underarm_closeup | new | IoU 0.3465 BF 0.701 bandMAE 0.107 missed 0.6533 kept 0.0007 dE 7.92 dE95 29.00 grad 6.26 conn 2568.13 | 11.07s
+R_michigan_underarm_closeup | new | IoU 0.3465 BF 0.701 bandMAE 0.107 missed 0.6533 kept 0.0007 dE 7.92 dE95 29.00 grad 6.26 conn 2568.13 | 9.64s
 # Cutout quality report
 
-Cutout network: BiRefNet Lite 1024 (Core ML, CPU), loaded in 8.3 s.
+Cutout network: BiRefNet Lite 1024 (Core ML, CPU), loaded in 6.6 s.
 
-Network probe on 01_navy_shirt_on_white: raw output -23.969 to 22.359, mean -4.666; item area 25.6%; one pass 2.34 s.
+Network probe on 01_navy_shirt_on_white: raw output -23.969 to 22.359, mean -4.666; item area 25.6%; one pass 2.45 s.
 
-Generated 2026-11-27T21:35:26Z. Lower is better for errors; higher for IoU and boundary F.
+Generated 2026-11-27T22:49:29Z. Lower is better for errors; higher for IoU and boundary F.
 
 
 ## Full-resolution export check
 
-11_red_shirt_24mp: 5712 x 4284 in, 5712 x 4284 out (same size), cutout 12.14 s, compositing and JPEG 4.49 s, JPEG 4.3 MB, peak memory so far 7120 MB.
+11_red_shirt_24mp: 5712 x 4284 in, 5712 x 4284 out (same size), cutout 11.66 s, compositing and JPEG 4.27 s, JPEG 4.3 MB, peak memory so far 7198 MB.
 ## Shipping method by scene
 
 | Scene | IoU | Boundary F | Edge alpha error | Missed item | Kept background | Edge ΔE | Edge ΔE 95% | Gradient | Connectivity | Time | Confidence |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 01_navy_shirt_on_white | 0.9992 | 1.000 | 0.063 | 0.00% | 0.08% | 4.04 | 8.85 | 0.95 | 5.06 | 8.89 s | good |
-| 02_white_on_white | 0.9976 | 0.997 | 0.170 | 0.24% | 0.00% | 10.47 | 21.08 | 2.05 | 8.50 | 6.27 s | good |
-| 03_black_on_dark_wood | 0.9996 | 1.000 | 0.089 | 0.03% | 0.02% | 10.14 | 27.06 | 0.71 | 3.22 | 9.34 s | check: Item and background are similar in colour, so edges may be soft |
-| 04_watch_thin_straps | 0.9985 | 1.000 | 0.017 | 0.00% | 0.15% | 2.37 | 7.05 | 0.10 | 0.39 | 9.06 s | good |
-| 06_mug_handle_gap | 0.9997 | 1.000 | 0.023 | 0.03% | 0.00% | 1.66 | 5.53 | 0.12 | 0.29 | 6.48 s | good |
-| 07_reflective_bottle | 0.9956 | 0.975 | 0.107 | 0.04% | 0.40% | 5.62 | 17.14 | 1.45 | 4.55 | 8.65 s | good |
-| 08_fuzzy_knit_edge | 0.9985 | 0.998 | 0.047 | 0.12% | 0.02% | 3.56 | 13.14 | 0.29 | 1.26 | 6.78 s | good |
-| 09_sunglasses_gaps | 0.9744 | 0.786 | 0.138 | 2.31% | 0.26% | 8.67 | 62.17 | 4.16 | 9.03 | 9.35 s | good |
-| 10_comb_narrow_teeth | 0.9129 | 0.916 | 0.101 | 4.47% | 4.65% | 6.62 | 32.64 | 7.45 | 51.53 | 8.88 s | check: Some background may be left between parts of the item |
-| 11_red_shirt_24mp | 0.9994 | 1.000 | 0.083 | 0.00% | 0.06% | 4.82 | 10.02 | 1.67 | 11.87 | 13.91 s | good |
-| 12_striped_shirt_on_carpet | 0.9976 | 0.919 | 0.103 | 0.12% | 0.11% | 8.62 | 30.21 | 6.40 | 23.43 | 5.87 s | good |
-| 13_leather_vest_cropped_lining | 0.7945 | 0.335 | 0.390 | 0.00% | 25.87% | 17.88 | 42.92 | 14.15 | 2382.77 | 8.26 s | check: The item fills almost the whole frame |
-| R_columbia_anorak_arms_out_concrete | 0.9890 | 0.604 | 0.227 | 0.05% | 1.06% | 13.32 | 41.97 | 12.64 | 32.06 | 17.41 s | good |
+| 01_navy_shirt_on_white | 0.9992 | 1.000 | 0.063 | 0.00% | 0.08% | 4.04 | 8.85 | 0.95 | 5.06 | 7.09 s | good |
+| 02_white_on_white | 0.9976 | 0.997 | 0.170 | 0.24% | 0.00% | 10.47 | 21.08 | 2.05 | 8.50 | 5.04 s | good |
+| 03_black_on_dark_wood | 0.9996 | 1.000 | 0.089 | 0.03% | 0.02% | 10.14 | 27.06 | 0.71 | 3.22 | 7.08 s | check: Item and background are similar in colour, so edges may be soft |
+| 04_watch_thin_straps | 0.9985 | 1.000 | 0.017 | 0.00% | 0.15% | 2.37 | 7.05 | 0.10 | 0.39 | 8.98 s | good |
+| 06_mug_handle_gap | 0.9997 | 1.000 | 0.023 | 0.03% | 0.00% | 1.66 | 5.53 | 0.12 | 0.29 | 7.91 s | good |
+| 07_reflective_bottle | 0.9956 | 0.975 | 0.107 | 0.04% | 0.40% | 5.62 | 17.14 | 1.45 | 4.55 | 11.39 s | good |
+| 08_fuzzy_knit_edge | 0.9985 | 0.998 | 0.047 | 0.12% | 0.02% | 3.56 | 13.14 | 0.29 | 1.26 | 6.13 s | good |
+| 09_sunglasses_gaps | 0.9744 | 0.786 | 0.138 | 2.31% | 0.26% | 8.67 | 62.17 | 4.16 | 9.03 | 8.29 s | good |
+| 10_comb_narrow_teeth | 0.9129 | 0.916 | 0.101 | 4.47% | 4.65% | 6.62 | 32.64 | 7.45 | 51.53 | 7.12 s | check: Some background may be left between parts of the item |
+| 11_red_shirt_24mp | 0.9994 | 1.000 | 0.083 | 0.00% | 0.06% | 4.82 | 10.02 | 1.67 | 11.87 | 13.01 s | good |
+| 12_striped_shirt_on_carpet | 0.9976 | 0.919 | 0.103 | 0.12% | 0.11% | 8.62 | 30.21 | 6.40 | 23.43 | 7.25 s | good |
+| 13_leather_vest_cropped_lining | 0.7945 | 0.335 | 0.390 | 0.00% | 25.87% | 17.88 | 42.92 | 14.15 | 2382.77 | 9.28 s | check: The item fills almost the whole frame |
+| R_columbia_anorak_arms_out_concrete | 0.9890 | 0.604 | 0.227 | 0.05% | 1.06% | 13.32 | 41.97 | 12.64 | 32.06 | 10.97 s | good |
 | R_columbia_anorak_front_concrete | 0.9871 | 0.709 | 0.199 | 0.63% | 0.67% | 12.67 | 42.95 | 11.86 | 40.01 | 7.30 s | good |
-| R_columbia_cuff_closeup_tape | 0.9326 | 0.353 | 0.303 | 5.06% | 1.80% | 15.12 | 43.16 | 20.05 | 212.38 | 9.70 s | good |
-| R_columbia_hem_closeup_tape | 0.9980 | 0.837 | 0.162 | 0.06% | 0.14% | 9.05 | 29.49 | 6.36 | 51.63 | 7.39 s | good |
-| R_columbia_side_closeup_tape | 0.4697 | 0.262 | 0.246 | 52.97% | 0.13% | 12.94 | 45.85 | 19.14 | 2187.01 | 7.67 s | good |
-| R_michigan_cuff_tape | 0.9927 | 0.779 | 0.143 | 0.48% | 0.25% | 10.15 | 27.33 | 5.44 | 24.29 | 9.62 s | good |
-| R_michigan_front_closeup_tape | 0.9949 | 0.693 | 0.147 | 0.09% | 0.42% | 12.13 | 44.22 | 8.37 | 32.22 | 9.84 s | good |
-| R_michigan_jacket_back_concrete | 0.9918 | 0.578 | 0.162 | 0.35% | 0.47% | 12.02 | 44.28 | 11.75 | 29.76 | 7.69 s | good |
-| R_michigan_jacket_front_open_collar | 0.9938 | 0.663 | 0.148 | 0.04% | 0.58% | 11.97 | 45.60 | 9.79 | 23.61 | 11.72 s | good |
-| R_michigan_sleeve_stripes_tape | 0.2982 | 0.609 | 0.252 | 70.16% | 0.05% | 13.45 | 47.74 | 9.66 | 3558.90 | 10.66 s | check: Item and background are similar in colour, so edges may be soft |
-| R_michigan_underarm_closeup | 0.3465 | 0.701 | 0.107 | 65.33% | 0.07% | 7.92 | 29.00 | 6.26 | 2568.13 | 11.07 s | check: Item and background are similar in colour, so edges may be soft |
+| R_columbia_cuff_closeup_tape | 0.9326 | 0.353 | 0.303 | 5.06% | 1.80% | 15.12 | 43.16 | 20.05 | 212.38 | 9.24 s | good |
+| R_columbia_hem_closeup_tape | 0.9980 | 0.837 | 0.162 | 0.06% | 0.14% | 9.05 | 29.49 | 6.36 | 51.63 | 7.40 s | good |
+| R_columbia_side_closeup_tape | 0.4697 | 0.262 | 0.246 | 52.97% | 0.13% | 12.94 | 45.85 | 19.14 | 2187.01 | 9.44 s | good |
+| R_michigan_cuff_tape | 0.9927 | 0.779 | 0.143 | 0.48% | 0.25% | 10.15 | 27.33 | 5.44 | 24.29 | 10.69 s | good |
+| R_michigan_front_closeup_tape | 0.9949 | 0.693 | 0.147 | 0.09% | 0.42% | 12.13 | 44.22 | 8.37 | 32.22 | 8.83 s | good |
+| R_michigan_jacket_back_concrete | 0.9918 | 0.578 | 0.162 | 0.35% | 0.47% | 12.02 | 44.28 | 11.75 | 29.76 | 7.77 s | good |
+| R_michigan_jacket_front_open_collar | 0.9938 | 0.663 | 0.148 | 0.04% | 0.58% | 11.97 | 45.60 | 9.79 | 23.61 | 12.27 s | good |
+| R_michigan_sleeve_stripes_tape | 0.2982 | 0.609 | 0.252 | 70.16% | 0.05% | 13.45 | 47.74 | 9.66 | 3558.90 | 13.55 s | check: Item and background are similar in colour, so edges may be soft |
+| R_michigan_underarm_closeup | 0.3465 | 0.701 | 0.107 | 65.33% | 0.07% | 7.92 | 29.00 | 6.26 | 2568.13 | 9.64 s | check: Item and background are similar in colour, so edges may be soft |
 
 ## Methods compared (mean over scenes)
 
@@ -300,94 +300,94 @@ Generated 2026-11-27T21:35:26Z. Lower is better for errors; higher for IoU and b
 
 **No cutout produced** (Apple's model found no subject; the app keeps these as originals and flags them): 05_fine_chain_on_marble, 14_shirt_closeup_fills_frame, 15_shirt_cut_off_by_frame, 16_vest_closeup_corners. Not included in the means above.
 
-Peak memory of the whole benchmark process: 7120 MB.
+Peak memory of the whole benchmark process: 7198 MB.
 
 ## Real photos (no reference mask)
 
 | Photo | Item area | Soft edge share | Edge width | Pieces | Time | Confidence |
 |---|---|---|---|---|---|---|
-| web_03_0.jpg | 50.1% | 28.9% | 8.8 px | 1 | 8.93 s | check: Item and background are similar in colour, so edges may be soft |
-| web_03_1.jpg | 54.6% | 53.6% | 11.7 px | 1 | 4.12 s | good |
+| web_03_0.jpg | 50.1% | 28.9% | 8.8 px | 1 | 6.66 s | check: Item and background are similar in colour, so edges may be soft |
+| web_03_1.jpg | 54.6% | 53.6% | 11.7 px | 1 | 4.28 s | good |
 | web_04_0.jpg | none | | | | | Nothing to remove, the item fills the photo |
-| web_04_1.jpg | 73.3% | 59.2% | 8.4 px | 1 | 4.23 s | check: Item and background are similar in colour, so edges may be soft |
-| web_05_0.jpg | 46.1% | 27.6% | 6.8 px | 1 | 4.68 s | good |
-| web_05_1.jpg | 78.2% | 43.8% | 7.6 px | 1 | 4.35 s | check: Some background may be left between parts of the item |
-| web_09_0.jpg | 59.9% | 32.7% | 6.9 px | 1 | 5.84 s | good |
-| web_09_1.jpg | 60.6% | 32.2% | 11.9 px | 1 | 5.35 s | good |
-| web_10_0.jpg | 38.3% | 46.5% | 10.2 px | 1 | 3.07 s | good |
-| web_10_1.jpg | 36.2% | 34.5% | 7.2 px | 1 | 5.38 s | check: Some background may be left between parts of the item |
-| web_11_0.jpg | 11.9% | 58.3% | 12.0 px | 1 | 8.07 s | check: Item and background are similar in colour, so edges may be soft |
-| web_11_1.jpg | 23.3% | 61.0% | 9.7 px | 2 | 6.47 s | check: Item and background are similar in colour, so edges may be soft |
-| web_12_0.jpg | 58.7% | 41.4% | 9.7 px | 1 | 6.38 s | check: Item and background are similar in colour, so edges may be soft |
-| web_12_1.jpg | 65.6% | 49.9% | 8.9 px | 1 | 3.61 s | check: Some background may be left between parts of the item |
-| web_14_0.jpg | 38.4% | 39.3% | 9.0 px | 1 | 7.82 s | good |
-| web_14_1.jpg | 17.6% | 37.9% | 6.5 px | 4 | 5.77 s | check: Some background may be left between parts of the item |
-| web_15_0.jpg | 72.1% | 38.7% | 6.4 px | 1 | 5.26 s | check: Some background may be left between parts of the item |
-| web_15_1.jpg | 8.9% | 36.6% | 9.0 px | 1 | 7.51 s | check: Some background may be left between parts of the item |
-| web_16_0.jpg | 0.3% | 43.0% | 4.8 px | 4 | 7.17 s | check: Item and background are similar in colour, so edges may be soft |
-| web_16_1.jpg | 17.9% | 45.6% | 9.9 px | 1 | 5.37 s | check: Item and background are similar in colour, so edges may be soft |
-| web_19_0.jpg | 26.9% | 34.8% | 6.8 px | 1 | 5.95 s | good |
-| web_19_1.jpg | 22.0% | 58.5% | 10.4 px | 3 | 5.98 s | good |
-| web_20_0.jpg | 16.3% | 51.6% | 10.2 px | 1 | 6.85 s | good |
-| web_20_1.jpg | 59.3% | 34.2% | 7.2 px | 1 | 3.34 s | good |
-| web_21_0.jpg | 42.4% | 61.0% | 12.9 px | 1 | 4.57 s | check: Item and background are similar in colour, so edges may be soft |
-| web_21_1.jpg | 86.8% | 45.6% | 19.1 px | 1 | 4.15 s | good |
-| web_22_0.jpg | 42.7% | 22.7% | 5.7 px | 1 | 4.14 s | good |
-| web_22_1.jpg | 38.4% | 15.8% | 4.2 px | 1 | 4.25 s | good |
-| web_23_0.jpg | 66.2% | 66.7% | 16.4 px | 2 | 7.38 s | good |
-| web_23_1.jpg | 31.0% | 48.6% | 10.8 px | 1 | 8.82 s | check: Item and background are similar in colour, so edges may be soft |
-| web_24_0.jpg | 26.2% | 41.4% | 8.5 px | 1 | 6.77 s | check: Item and background are similar in colour, so edges may be soft |
-| web_24_1.jpg | 10.9% | 37.7% | 8.2 px | 1 | 7.37 s | check: Item and background are similar in colour, so edges may be soft |
-| web_25_0.jpg | 18.0% | 23.5% | 5.1 px | 1 | 6.63 s | check: Item and background are similar in colour, so edges may be soft |
-| web_25_1.jpg | 18.5% | 23.9% | 5.4 px | 1 | 7.60 s | check: Item and background are similar in colour, so edges may be soft |
-| web_27_0.jpg | 72.8% | 49.6% | 10.4 px | 1 | 7.15 s | check: Some background may be left between parts of the item |
-| web_27_1.jpg | 17.7% | 37.4% | 8.1 px | 1 | 5.60 s | check: Item and background are similar in colour, so edges may be soft |
-| web_28_0.jpg | 39.7% | 21.6% | 4.5 px | 1 | 4.07 s | check: Item and background are similar in colour, so edges may be soft |
-| web_28_1.jpg | 32.3% | 42.5% | 9.4 px | 1 | 6.25 s | check: Item and background are similar in colour, so edges may be soft |
-| web_30_0.jpg | 27.7% | 41.8% | 8.9 px | 1 | 6.94 s | check: Item and background are similar in colour, so edges may be soft |
-| web_30_1.jpg | 28.1% | 15.5% | 3.6 px | 1 | 6.56 s | good |
-| web_31_0.jpg | 83.1% | 51.7% | 17.1 px | 1 | 6.21 s | good |
-| web_31_1.jpg | 21.8% | 41.5% | 8.6 px | 1 | 4.18 s | good |
-| web_33_0.jpg | 7.6% | 40.1% | 8.9 px | 2 | 8.34 s | good |
-| web_33_1.jpg | 32.9% | 27.8% | 6.0 px | 1 | 3.33 s | good |
-| web_35_0.jpg | 26.6% | 13.0% | 2.7 px | 1 | 5.90 s | check: Item and background are similar in colour, so edges may be soft |
-| web_35_1.jpg | 10.5% | 40.8% | 9.1 px | 1 | 10.82 s | check: Some background may be left between parts of the item |
-| web_37_0.jpg | 39.0% | 55.7% | 6.5 px | 3 | 5.55 s | check: Some background may be left between parts of the item |
-| web_37_1.jpg | 17.2% | 41.5% | 8.2 px | 1 | 8.47 s | check: Some background may be left between parts of the item |
-| web_38_0.jpg | 28.3% | 38.4% | 8.5 px | 1 | 5.63 s | check: Item and background are similar in colour, so edges may be soft |
-| web_38_1.jpg | 44.4% | 29.3% | 6.7 px | 1 | 3.52 s | check: Item and background are similar in colour, so edges may be soft |
-| web_39_0.jpg | 44.3% | 40.1% | 8.4 px | 3 | 6.19 s | check: Some background may be left between parts of the item |
-| web_39_1.jpg | 32.3% | 31.1% | 6.5 px | 3 | 4.02 s | check: Item and background are similar in colour, so edges may be soft |
-| web_40_0.jpg | 22.6% | 50.4% | 6.8 px | 5 | 4.91 s | good |
-| web_40_1.jpg | 4.5% | 26.9% | 5.5 px | 1 | 9.48 s | good |
+| web_04_1.jpg | 73.3% | 59.2% | 8.4 px | 1 | 3.33 s | check: Item and background are similar in colour, so edges may be soft |
+| web_05_0.jpg | 46.1% | 27.6% | 6.8 px | 1 | 2.98 s | good |
+| web_05_1.jpg | 78.2% | 43.8% | 7.6 px | 1 | 3.31 s | check: Some background may be left between parts of the item |
+| web_09_0.jpg | 59.9% | 32.7% | 6.9 px | 1 | 5.24 s | good |
+| web_09_1.jpg | 60.6% | 32.2% | 11.9 px | 1 | 5.37 s | good |
+| web_10_0.jpg | 38.3% | 46.5% | 10.2 px | 1 | 3.45 s | good |
+| web_10_1.jpg | 36.2% | 34.5% | 7.2 px | 1 | 6.40 s | check: Some background may be left between parts of the item |
+| web_11_0.jpg | 11.9% | 58.3% | 12.0 px | 1 | 8.76 s | check: Item and background are similar in colour, so edges may be soft |
+| web_11_1.jpg | 23.3% | 61.0% | 9.7 px | 2 | 6.38 s | check: Item and background are similar in colour, so edges may be soft |
+| web_12_0.jpg | 58.7% | 41.4% | 9.7 px | 1 | 6.44 s | check: Item and background are similar in colour, so edges may be soft |
+| web_12_1.jpg | 65.6% | 49.9% | 8.9 px | 1 | 3.14 s | check: Some background may be left between parts of the item |
+| web_14_0.jpg | 38.4% | 39.3% | 9.0 px | 1 | 6.83 s | good |
+| web_14_1.jpg | 17.6% | 37.9% | 6.5 px | 4 | 5.88 s | check: Some background may be left between parts of the item |
+| web_15_0.jpg | 72.1% | 38.7% | 6.4 px | 1 | 4.77 s | check: Some background may be left between parts of the item |
+| web_15_1.jpg | 8.9% | 36.6% | 9.0 px | 1 | 6.10 s | check: Some background may be left between parts of the item |
+| web_16_0.jpg | 0.3% | 43.0% | 4.8 px | 4 | 6.09 s | check: Item and background are similar in colour, so edges may be soft |
+| web_16_1.jpg | 17.9% | 45.6% | 9.9 px | 1 | 4.33 s | check: Item and background are similar in colour, so edges may be soft |
+| web_19_0.jpg | 26.9% | 34.8% | 6.8 px | 1 | 4.74 s | good |
+| web_19_1.jpg | 22.0% | 58.5% | 10.4 px | 3 | 5.14 s | good |
+| web_20_0.jpg | 16.3% | 51.6% | 10.2 px | 1 | 4.50 s | good |
+| web_20_1.jpg | 59.3% | 34.2% | 7.2 px | 1 | 3.14 s | good |
+| web_21_0.jpg | 42.4% | 61.0% | 12.9 px | 1 | 2.63 s | check: Item and background are similar in colour, so edges may be soft |
+| web_21_1.jpg | 86.8% | 45.6% | 19.1 px | 1 | 3.17 s | good |
+| web_22_0.jpg | 42.7% | 22.7% | 5.7 px | 1 | 2.77 s | good |
+| web_22_1.jpg | 38.4% | 15.8% | 4.2 px | 1 | 2.73 s | good |
+| web_23_0.jpg | 66.2% | 66.7% | 16.4 px | 2 | 5.05 s | good |
+| web_23_1.jpg | 31.0% | 48.6% | 10.8 px | 1 | 6.35 s | check: Item and background are similar in colour, so edges may be soft |
+| web_24_0.jpg | 26.2% | 41.4% | 8.5 px | 1 | 5.10 s | check: Item and background are similar in colour, so edges may be soft |
+| web_24_1.jpg | 10.9% | 37.7% | 8.2 px | 1 | 6.42 s | check: Item and background are similar in colour, so edges may be soft |
+| web_25_0.jpg | 18.0% | 23.5% | 5.1 px | 1 | 4.98 s | check: Item and background are similar in colour, so edges may be soft |
+| web_25_1.jpg | 18.5% | 23.9% | 5.4 px | 1 | 4.71 s | check: Item and background are similar in colour, so edges may be soft |
+| web_27_0.jpg | 72.8% | 49.6% | 10.4 px | 1 | 4.66 s | check: Some background may be left between parts of the item |
+| web_27_1.jpg | 17.7% | 37.4% | 8.1 px | 1 | 2.85 s | check: Item and background are similar in colour, so edges may be soft |
+| web_28_0.jpg | 39.7% | 21.6% | 4.5 px | 1 | 2.81 s | check: Item and background are similar in colour, so edges may be soft |
+| web_28_1.jpg | 32.3% | 42.5% | 9.4 px | 1 | 5.95 s | check: Item and background are similar in colour, so edges may be soft |
+| web_30_0.jpg | 27.7% | 41.8% | 8.9 px | 1 | 4.77 s | check: Item and background are similar in colour, so edges may be soft |
+| web_30_1.jpg | 28.1% | 15.5% | 3.6 px | 1 | 5.94 s | good |
+| web_31_0.jpg | 83.1% | 51.7% | 17.1 px | 1 | 5.28 s | good |
+| web_31_1.jpg | 21.8% | 41.5% | 8.6 px | 1 | 3.15 s | good |
+| web_33_0.jpg | 7.6% | 40.1% | 8.9 px | 2 | 6.10 s | good |
+| web_33_1.jpg | 32.9% | 27.8% | 6.0 px | 1 | 2.56 s | good |
+| web_35_0.jpg | 26.6% | 13.0% | 2.7 px | 1 | 4.31 s | check: Item and background are similar in colour, so edges may be soft |
+| web_35_1.jpg | 10.5% | 40.8% | 9.1 px | 1 | 5.87 s | check: Some background may be left between parts of the item |
+| web_37_0.jpg | 39.0% | 55.7% | 6.5 px | 3 | 2.68 s | check: Some background may be left between parts of the item |
+| web_37_1.jpg | 17.2% | 41.5% | 8.2 px | 1 | 6.21 s | check: Some background may be left between parts of the item |
+| web_38_0.jpg | 28.3% | 38.4% | 8.5 px | 1 | 6.11 s | check: Item and background are similar in colour, so edges may be soft |
+| web_38_1.jpg | 44.4% | 29.3% | 6.7 px | 1 | 4.02 s | check: Item and background are similar in colour, so edges may be soft |
+| web_39_0.jpg | 44.3% | 40.1% | 8.4 px | 3 | 6.76 s | check: Some background may be left between parts of the item |
+| web_39_1.jpg | 32.3% | 31.1% | 6.5 px | 3 | 4.68 s | check: Item and background are similar in colour, so edges may be soft |
+| web_40_0.jpg | 22.6% | 50.4% | 6.8 px | 5 | 4.28 s | good |
+| web_40_1.jpg | 4.5% | 26.9% | 5.5 px | 1 | 8.89 s | good |
 | web_41_0.jpg | none | | | | | Nothing to remove, the item fills the photo |
-| web_42_0.jpg | 35.9% | 38.3% | 6.3 px | 2 | 4.03 s | good |
-| web_43_0.jpg | 43.4% | 24.0% | 5.2 px | 1 | 4.59 s | good |
-| web_43_1.jpg | 49.7% | 42.6% | 8.3 px | 1 | 4.08 s | good |
-| web_44_0.jpg | 42.4% | 41.4% | 5.6 px | 5 | 6.23 s | check: Some background may be left between parts of the item |
-| web_44_1.jpg | 36.7% | 33.3% | 6.7 px | 1 | 5.88 s | check: Item and background are similar in colour, so edges may be soft |
-| web_45_0.jpg | 21.9% | 33.2% | 8.2 px | 2 | 3.69 s | check: Item and background are similar in colour, so edges may be soft |
-| web_45_1.jpg | 34.4% | 46.1% | 8.2 px | 1 | 6.38 s | check: Some background may be left between parts of the item |
-| web_46_0.jpg | 29.6% | 20.4% | 5.1 px | 1 | 3.39 s | good |
-| web_46_1.jpg | 45.6% | 35.1% | 6.4 px | 2 | 5.72 s | check: Some background may be left between parts of the item |
+| web_42_0.jpg | 35.9% | 38.3% | 6.3 px | 2 | 3.36 s | good |
+| web_43_0.jpg | 43.4% | 24.0% | 5.2 px | 1 | 3.66 s | good |
+| web_43_1.jpg | 49.7% | 42.6% | 8.3 px | 1 | 3.72 s | good |
+| web_44_0.jpg | 42.4% | 41.4% | 5.6 px | 5 | 6.16 s | check: Some background may be left between parts of the item |
+| web_44_1.jpg | 36.7% | 33.3% | 6.7 px | 1 | 5.77 s | check: Item and background are similar in colour, so edges may be soft |
+| web_45_0.jpg | 21.9% | 33.2% | 8.2 px | 2 | 3.87 s | check: Item and background are similar in colour, so edges may be soft |
+| web_45_1.jpg | 34.4% | 46.1% | 8.2 px | 1 | 6.08 s | check: Some background may be left between parts of the item |
+| web_46_0.jpg | 29.6% | 20.4% | 5.1 px | 1 | 4.04 s | good |
+| web_46_1.jpg | 45.6% | 35.1% | 6.4 px | 2 | 7.57 s | check: Some background may be left between parts of the item |
 | web_47_0.jpg | none | | | | | Nothing to remove, the item fills the photo |
 | web_47_1.jpg | none | | | | | Nothing to remove, the item fills the photo |
-| web_48_0.jpg | 11.0% | 18.2% | 3.8 px | 1 | 7.64 s | good |
-| web_48_1.jpg | 31.9% | 30.7% | 6.5 px | 1 | 5.09 s | good |
-| web_49_0.jpg | 18.7% | 39.2% | 7.4 px | 2 | 9.15 s | check: Some background may be left between parts of the item |
-| web_49_1.jpg | 27.4% | 42.9% | 8.8 px | 1 | 7.61 s | good |
-| web_50_0.jpg | 2.9% | 20.8% | 4.4 px | 1 | 9.82 s | good |
-| web_50_1.jpg | 32.9% | 30.3% | 8.0 px | 4 | 5.95 s | check: Item and background are similar in colour, so edges may be soft |
-| web_51_0.jpg | 29.3% | 35.5% | 7.7 px | 1 | 5.91 s | check: Some background may be left between parts of the item |
-| web_52_0.jpg | 68.9% | 48.4% | 9.9 px | 1 | 6.34 s | check: Item and background are similar in colour, so edges may be soft |
-| web_52_1.jpg | 9.9% | 46.2% | 8.0 px | 1 | 8.02 s | check: Item and background are similar in colour, so edges may be soft |
-| web_53_0.jpg | 46.2% | 56.3% | 11.9 px | 1 | 6.13 s | check: Item and background are similar in colour, so edges may be soft |
-| web_53_1.jpg | 15.0% | 50.4% | 10.0 px | 1 | 5.18 s | check: Item and background are similar in colour, so edges may be soft |
-| web_54_0.jpg | 33.2% | 11.4% | 2.4 px | 1 | 5.91 s | good |
-| web_54_1.jpg | 44.0% | 37.9% | 8.0 px | 1 | 7.47 s | good |
-| web_58_0.jpg | 59.0% | 60.3% | 12.6 px | 1 | 8.66 s | good |
-| web_60_0.jpg | 13.2% | 40.0% | 8.5 px | 1 | 9.18 s | check: Item and background are similar in colour, so edges may be soft |
-| web_60_1.jpg | 19.2% | 37.6% | 7.5 px | 1 | 5.82 s | good |
+| web_48_0.jpg | 11.0% | 18.2% | 3.8 px | 1 | 7.14 s | good |
+| web_48_1.jpg | 31.9% | 30.7% | 6.5 px | 1 | 4.91 s | good |
+| web_49_0.jpg | 18.7% | 39.2% | 7.4 px | 2 | 7.38 s | check: Some background may be left between parts of the item |
+| web_49_1.jpg | 27.4% | 42.9% | 8.8 px | 1 | 6.12 s | good |
+| web_50_0.jpg | 2.9% | 20.8% | 4.4 px | 1 | 11.70 s | good |
+| web_50_1.jpg | 32.9% | 30.3% | 8.0 px | 4 | 8.97 s | check: Item and background are similar in colour, so edges may be soft |
+| web_51_0.jpg | 29.3% | 35.5% | 7.7 px | 1 | 7.70 s | check: Some background may be left between parts of the item |
+| web_52_0.jpg | 68.9% | 48.4% | 9.9 px | 1 | 7.64 s | check: Item and background are similar in colour, so edges may be soft |
+| web_52_1.jpg | 9.9% | 46.2% | 8.0 px | 1 | 7.54 s | check: Item and background are similar in colour, so edges may be soft |
+| web_53_0.jpg | 46.2% | 56.3% | 11.9 px | 1 | 5.44 s | check: Item and background are similar in colour, so edges may be soft |
+| web_53_1.jpg | 15.0% | 50.4% | 10.0 px | 1 | 5.39 s | check: Item and background are similar in colour, so edges may be soft |
+| web_54_0.jpg | 33.2% | 11.4% | 2.4 px | 1 | 5.20 s | good |
+| web_54_1.jpg | 44.0% | 37.9% | 8.0 px | 1 | 5.51 s | good |
+| web_58_0.jpg | 59.0% | 60.3% | 12.6 px | 1 | 7.89 s | good |
+| web_60_0.jpg | 13.2% | 40.0% | 8.5 px | 1 | 8.38 s | check: Item and background are similar in colour, so edges may be soft |
+| web_60_1.jpg | 19.2% | 37.6% | 7.5 px | 1 | 6.61 s | good |
 
 **Regression check: FAILED**
 
