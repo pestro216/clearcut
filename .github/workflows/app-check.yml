@@ -46,34 +46,45 @@ jobs:
           python3 QA/make_testset.py "$RUNNER_TEMP/testset" > /dev/null
           mkdir -p "$RUNNER_TEMP/demo"
           for d in 01_navy_shirt_on_white 04_watch_thin_straps 06_mug_handle_gap 07_reflective_bottle 05_fine_chain_on_marble 10_comb_narrow_teeth; do cp "$RUNNER_TEMP/testset/$d/photo.jpg" "$RUNNER_TEMP/demo/$d.jpg"; done
-      - name: Launch, load a batch, take screenshots
+      - name: Launch, load a batch, take screenshots (iPhone, then iPad)
         run: |
           set -x
           mkdir -p shots
-          # The newest iOS runtime's plain iPhone (iPhone 17 on Xcode 26), else any iPhone on it.
-          DEV=$(xcrun simctl list devices available -j | python3 -c "
+          APP=$(find build/Build/Products/Debug-iphonesimulator -name Clearcut.app -maxdepth 1)
+          # The newest iOS runtime's plain model of a kind (iPhone 17, iPad (A16) on Xcode 26),
+          # else any device of that kind on it.
+          pick() {
+            xcrun simctl list devices available -j | python3 -c "
           import json, re, sys
+          kind = sys.argv[1]
           d = json.load(sys.stdin)['devices']
           ios = sorted((k for k in d if 'iOS' in k and d[k]), key=lambda k: [int(n) for n in re.findall(r'\d+', k.split('iOS')[-1])])
-          phones = [x for x in d[ios[-1]] if x['name'].startswith('iPhone')]
-          plain = [x for x in phones if re.fullmatch(r'iPhone \d+', x['name'])]
-          print((plain or phones)[0]['udid'])")
-          xcrun simctl boot "$DEV"
-          xcrun simctl bootstatus "$DEV" -b
-          APP=$(find build/Build/Products/Debug-iphonesimulator -name Clearcut.app -maxdepth 1)
-          xcrun simctl install "$DEV" "$APP"
-          xcrun simctl launch "$DEV" app.clearcut.photos; sleep 6
-          xcrun simctl io "$DEV" screenshot shots/1_home.png
-          xcrun simctl terminate "$DEV" app.clearcut.photos
-          SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" xcrun simctl launch "$DEV" app.clearcut.photos; sleep 75
-          xcrun simctl io "$DEV" screenshot shots/2_batch.png
-          xcrun simctl terminate "$DEV" app.clearcut.photos
-          SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=background xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
-          xcrun simctl io "$DEV" screenshot shots/3_background.png
-          xcrun simctl terminate "$DEV" app.clearcut.photos
-          SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=shadow xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
-          xcrun simctl io "$DEV" screenshot shots/4_shadow.png
-          xcrun simctl spawn "$DEV" log show --last 6m --predicate 'process == "Clearcut"' --style compact 2>/dev/null | grep -iE "error|crash|fault" | tail -40 > shots/log.txt || true
+          devs = [x for x in d[ios[-1]] if x['name'].startswith(kind)]
+          plain = [x for x in devs if re.fullmatch(kind + r' (\d+|\(A\d+\))', x['name'])]
+          print((plain or devs)[0]['udid'])" "$1"
+          }
+          # shoot DEVICE PREFIX: four screenshots and the app's errors, named PREFIX1_home.png and so on.
+          shoot() {
+            DEV="$1"; P="$2"
+            xcrun simctl boot "$DEV"
+            xcrun simctl bootstatus "$DEV" -b
+            xcrun simctl install "$DEV" "$APP"
+            xcrun simctl launch "$DEV" app.clearcut.photos; sleep 6
+            xcrun simctl io "$DEV" screenshot "shots/${P}1_home.png"
+            xcrun simctl terminate "$DEV" app.clearcut.photos
+            SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" xcrun simctl launch "$DEV" app.clearcut.photos; sleep 75
+            xcrun simctl io "$DEV" screenshot "shots/${P}2_batch.png"
+            xcrun simctl terminate "$DEV" app.clearcut.photos
+            SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=background xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
+            xcrun simctl io "$DEV" screenshot "shots/${P}3_background.png"
+            xcrun simctl terminate "$DEV" app.clearcut.photos
+            SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=shadow xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
+            xcrun simctl io "$DEV" screenshot "shots/${P}4_shadow.png"
+            xcrun simctl spawn "$DEV" log show --last 6m --predicate 'process == "Clearcut"' --style compact 2>/dev/null | grep -iE "error|crash|fault" | tail -40 > "shots/${P}log.txt" || true
+            xcrun simctl shutdown "$DEV"
+          }
+          shoot "$(pick iPhone)" ""
+          shoot "$(pick iPad)" "ipad_"
       - name: Publish screenshots
         if: always()
         run: QA/publish.sh shots "app-check" "App check ${{ github.run_number }}"

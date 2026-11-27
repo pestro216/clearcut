@@ -22,6 +22,12 @@ targets:
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
+        # iPad: upright only and always full screen for now, because the camera and its level
+        # are written for an upright device. (Apple is phasing out full-screen-only on iPad.)
+        UISupportedInterfaceOrientations~ipad:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationPortraitUpsideDown
+        UIRequiresFullScreen: true
         NSPhotoLibraryAddUsageDescription: Clearcut saves your finished photos to your library.
         NSCameraUsageDescription: Clearcut's camera photographs your items one after another for cutting out. Photos stay on your phone.
         BGTaskSchedulerPermittedIdentifiers:
@@ -31,7 +37,7 @@ targets:
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.clearcut.photos
-        TARGETED_DEVICE_FAMILY: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
         # Apple Intelligence (iOS 26 only) must not stop the app opening on iOS 17 and 18.
         OTHER_LDFLAGS: ["$(inherited)", "-weak_framework", "FoundationModels"]
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
