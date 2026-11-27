@@ -340,7 +340,7 @@ final class BatchStore: ObservableObject {
             items[i].gridPhoto = r.gridPhoto
             items[i].gridAlpha = r.gridAlpha
             items[i].status = r.status
-            items[i].removed = r.alphaURL != nil
+            if case .failed = r.status { items[i].removed = false } else { items[i].removed = r.alphaURL != nil }
             renderGrid(items[i])
         } else {
             items[i].status = .failed("This photo couldn't be opened")
@@ -376,9 +376,28 @@ final class BatchStore: ObservableObject {
             if let pcg = preview.makeOpaqueCGImage(), let d = ImageIOHelpers.encode(pcg, type: .jpeg, quality: 0.9) { try? d.write(to: previewURL) }
             let gridPhoto = preview.resized(width: gw.0, height: gw.1)
 
+            // When the automatic cutout gives up, a starting matte is still saved so the photo can be
+            // cut out by hand (Use cutout, then Touch up) instead of being a dead end. It starts from
+            // what the network saw, or from the whole photo when it saw nothing.
+            func fallback(_ why: String, prob: Plane?, learned: SurfaceModel? = nil) -> Processed {
+                let w = photo.width, h = photo.height
+                var full = [UInt8](repeating: 255, count: w * h)
+                if let prob, prob.data.contains(where: { $0 > 0.5 }) {
+                    full = prob.resized(width: w, height: h).toBytes()
+                }
+                let alphaURL = dir.appendingPathComponent("\(id.uuidString)-alpha.png")
+                let previewAlphaURL = dir.appendingPathComponent("\(id.uuidString)-preview-alpha.png")
+                writeAlpha(full, w, h, to: alphaURL)
+                let plane = Plane(bytes: full, width: w, height: h)
+                full = []
+                writeAlpha(plane.resized(width: pw.0, height: pw.1).toBytes(), pw.0, pw.1, to: previewAlphaURL)
+                return Processed(size: size, alphaURL: alphaURL, previewPhotoURL: previewURL, previewAlphaURL: previewAlphaURL,
+                                 gridPhoto: gridPhoto, gridAlpha: plane.resized(width: gw.0, height: gw.1).toBytes(),
+                                 status: .failed(why), learned: learned)
+            }
+
             guard let seg = try? Segmenter.segment(cg, network: BatchStore.network) else {
-                return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
-                                 gridPhoto: gridPhoto, gridAlpha: nil, status: .failed("No item found, kept as the original"))
+                return fallback("No item found", prob: nil)
             }
             var options = MatteOptions()
             options.surface = surface
@@ -386,9 +405,7 @@ final class BatchStore: ObservableObject {
             let matte = Matting.refine(full: photo, segmentation: seg, options: options)
             Diagnostics.note("matting done")
             if case .failed(let why) = matte.confidence {
-                return Processed(size: size, alphaURL: nil, previewPhotoURL: previewURL, previewAlphaURL: nil,
-                                 gridPhoto: gridPhoto, gridAlpha: nil, status: .failed(why + ", kept as the original"),
-                                 learned: matte.learnedSurface)
+                return fallback(why, prob: seg.prob, learned: matte.learnedSurface)
             }
             let alphaURL = dir.appendingPathComponent("\(id.uuidString)-alpha.png")
             let previewAlphaURL = dir.appendingPathComponent("\(id.uuidString)-preview-alpha.png")
@@ -526,13 +543,19 @@ final class BatchStore: ObservableObject {
     func setRemoved(_ id: UUID, _ removed: Bool) {
         guard let i = items.firstIndex(where: { $0.id == id }), items[i].canRemove else { return }
         items[i].removed = removed
+        // Choosing the cutout for a photo the app gave up on means it has been looked at.
+        if removed, case .failed = items[i].status { items[i].status = .ready }
         lookVersion += 1
         PreviewRenderer.gate.set(lookVersion)
         renderGrid(items[i])
     }
 
     func setAllRemoved(_ removed: Bool) {
-        for i in items.indices where items[i].canRemove { items[i].removed = removed }
+        for i in items.indices where items[i].canRemove {
+            // Photos the app gave up on are only switched on one at a time, after a look.
+            if removed, case .failed = items[i].status { continue }
+            items[i].removed = removed
+        }
         lookVersion += 1
         PreviewRenderer.gate.set(lookVersion)
         refreshGrid()

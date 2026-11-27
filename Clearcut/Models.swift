@@ -53,7 +53,7 @@ struct BatchItem: Identifiable, @unchecked Sendable {
         case processing
         case ready
         case check(String)      // cut out, but worth a look
-        case failed(String)     // couldn't be cut out; kept as the original
+        case failed(String)     // the app gave up; the original is used unless a starting cutout is chosen
     }
 
     let id: UUID
@@ -85,7 +85,9 @@ struct BatchItem: Identifiable, @unchecked Sendable {
     var statusNote: String? {
         switch status {
         case .check(let s): return s
-        case .failed(let s): return s
+        case .failed(let s):
+            // A starting cutout is kept even when the app gives up, so say what can still be done.
+            return canRemove ? s + ". Tap Use cutout to try it, then Touch up to fix it." : s
         default: return nil
         }
     }
