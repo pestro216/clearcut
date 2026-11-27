@@ -56,7 +56,8 @@ jobs:
           zip -qr Clearcut.ipa Payload
 
       # Mathew's own version: the same app plus listings written by Gemini (PERSONAL flag).
-      # Not for the App Store. Same bundle id, so it installs over the store version.
+      # Not for the App Store. Its own bundle id and name ("My Clearcut"), so it installs next to
+      # the store version and both can be tested on one phone.
       - name: Build personal app
         run: |
           xcodebuild \
@@ -67,6 +68,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath build-personal \
             SWIFT_ACTIVE_COMPILATION_CONDITIONS=PERSONAL \
+            PRODUCT_BUNDLE_IDENTIFIER=app.clearcut.photos.personal \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build > build-personal.log 2>&1 || {
               echo "::group::Errors"
@@ -80,6 +82,8 @@ jobs:
         run: |
           rm -rf Payload && mkdir -p Payload
           cp -R build-personal/Build/Products/Release-iphoneos/Clearcut.app Payload/
+          /usr/libexec/PlistBuddy -c "Set :CFBundleDisplayName My Clearcut" Payload/Clearcut.app/Info.plist
+          /usr/libexec/PlistBuddy -c "Print :CFBundleIdentifier" Payload/Clearcut.app/Info.plist
           zip -qr Clearcut-personal.ipa Payload
 
       - uses: actions/upload-artifact@v4
@@ -96,4 +100,4 @@ jobs:
           gh release delete latest --yes --cleanup-tag || true
           gh release create latest Clearcut.ipa Clearcut-personal.ipa \
             --title "Clearcut build ${{ github.run_number }}" \
-            --notes "Clearcut-personal.ipa is Mathew's own version, with listings written by Gemini. Clearcut.ipa is the App Store version, without listings. Install either with SideStore."
+            --notes "Clearcut-personal.ipa installs as My Clearcut (Mathew's own version, with listings written by Gemini). Clearcut.ipa is the App Store version, without listings. They install side by side."
