@@ -2,14 +2,12 @@ import SwiftUI
 import AVFoundation
 import CoreMotion
 
-/// A camera for photographing a rail of stock one item after another. With Auto on, it takes
-/// the photo by itself once the phone is steady and the scene has changed since the last
-/// photo (the next item, or the same item turned over). Photos are cut out when you tap Done,
-/// not while shooting, so the camera and the cutout engine never compete for memory.
-final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate, AVCaptureVideoDataOutputSampleBufferDelegate {
+/// A camera for photographing a rail of stock one item after another: a frame guide in the
+/// listing shape and a level. You press the shutter for each photo. Photos are cut out when you
+/// tap Done, not while shooting, so the camera and the cutout engine never compete for memory.
+final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegate {
     let session = AVCaptureSession()
     private let photoOutput = AVCapturePhotoOutput()
-    private let videoOutput = AVCaptureVideoDataOutput()
     private let queue = DispatchQueue(label: "app.clearcut.camera")
     private let motion = CMMotionManager()
 
@@ -17,12 +15,10 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
     @Published var state = Phase.starting
     @Published var shots: [URL] = []
     @Published var lastShot: UIImage?
-    @Published var auto = true { didSet { setAuto(auto) } }
     /// Side-to-side tilt in degrees when held upright; nil when held flat (shooting from above).
     @Published var roll: Double?
     /// How far from level when held flat, as an offset for the bubble (-1...1 each way).
     @Published var bubble = CGSize.zero
-    @Published var steady = false
     @Published var flash = false
 
     /// Photos the batch still has room for.
@@ -32,18 +28,6 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
     private var configured = false
     private var capturing = false
     private var taken = 0
-    private var autoOn = true
-    private var previous: [Float]?
-    private var atLastShot: [Float]?
-    private var stillSince: Date?
-    private var lastCapture = Date.distantPast
-    private let steadyLock = NSLock()
-    private var steadyNow = false
-    private var isSteady: Bool {
-        get { steadyLock.lock(); defer { steadyLock.unlock() }; return steadyNow }
-        set { steadyLock.lock(); steadyNow = newValue; steadyLock.unlock() }
-    }
-
     /// Where photos wait until the batch takes them.
     static var folder: URL {
         let fm = FileManager.default
@@ -95,10 +79,6 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
         }
         session.addInput(input)
         session.addOutput(photoOutput)
-        videoOutput.videoSettings = [kCVPixelBufferPixelFormatTypeKey as String: kCVPixelFormatType_32BGRA]
-        videoOutput.alwaysDiscardsLateVideoFrames = true
-        videoOutput.setSampleBufferDelegate(self, queue: queue)
-        if session.canAddOutput(videoOutput) { session.addOutput(videoOutput) }
         session.commitConfiguration()
         // Set once the camera's format is settled. About 12 megapixels at most: plenty for
         // listings, and kinder on memory than 48. Only sizes the camera lists are used.
@@ -117,15 +97,7 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
         return true
     }
 
-    private func setAuto(_ on: Bool) {
-        queue.async {
-            self.autoOn = on
-            // Turning Auto on doesn't photograph what's already been photographed.
-            if on { self.atLastShot = self.atLastShot ?? self.previous }
-        }
-    }
-
-    // MARK: Level and steadiness
+    // MARK: Level
 
     private func startMotion() {
         guard motion.isDeviceMotionAvailable, !motion.isDeviceMotionActive else { return }
@@ -139,63 +111,7 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
             } else {
                 self.roll = atan2(g.x, -g.y) * 180 / .pi
             }
-            let r = m.rotationRate
-            let still = (r.x * r.x + r.y * r.y + r.z * r.z).squareRoot() < 0.12
-            if still != self.steady { self.steady = still }
-            self.isSteady = still
         }
-    }
-
-    // MARK: Auto capture
-
-    func captureOutput(_ output: AVCaptureOutput, didOutput sampleBuffer: CMSampleBuffer, from connection: AVCaptureConnection) {
-        guard let buffer = CMSampleBufferGetImageBuffer(sampleBuffer), let sig = RailCamera.signature(buffer) else { return }
-        defer { previous = sig }
-        guard autoOn, !capturing, taken < limit else { stillSince = nil; return }
-        let calm = previous.map { RailCamera.difference($0, sig) < 0.025 } ?? false
-        guard calm, isSteady else { stillSince = nil; return }
-        let now = Date()
-        if stillSince == nil { stillSince = now }
-        // Something new in front of the camera since the last photo, held still for a moment.
-        let changed = atLastShot.map { RailCamera.difference($0, sig) > 0.08 } ?? true
-        if changed, now.timeIntervalSince(stillSince!) > 0.7, now.timeIntervalSince(lastCapture) > 1.2 {
-            atLastShot = sig
-            takePhoto()
-        }
-    }
-
-    /// A tiny greyscale picture of the frame (24 x 32), for telling still from moving and new from old.
-    static func signature(_ buffer: CVPixelBuffer) -> [Float]? {
-        CVPixelBufferLockBaseAddress(buffer, .readOnly)
-        defer { CVPixelBufferUnlockBaseAddress(buffer, .readOnly) }
-        guard let base = CVPixelBufferGetBaseAddress(buffer) else { return nil }
-        let w = CVPixelBufferGetWidth(buffer), h = CVPixelBufferGetHeight(buffer), row = CVPixelBufferGetBytesPerRow(buffer)
-        let p = base.assumingMemoryBound(to: UInt8.self)
-        let cols = 32, rows = 24
-        var out = [Float](repeating: 0, count: cols * rows)
-        for j in 0..<rows {
-            for i in 0..<cols {
-                // A few pixels per cell, spread out.
-                var sum: Float = 0
-                for (dx, dy) in [(0.25, 0.25), (0.75, 0.25), (0.25, 0.75), (0.75, 0.75)] {
-                    let x = min(w - 1, Int((Double(i) + dx) * Double(w) / Double(cols)))
-                    let y = min(h - 1, Int((Double(j) + dy) * Double(h) / Double(rows)))
-                    let o = y * row + x * 4
-                    sum += 0.114 * Float(p[o]) + 0.587 * Float(p[o + 1]) + 0.299 * Float(p[o + 2])
-                }
-                out[j * cols + i] = sum / (4 * 255)
-            }
-        }
-        return out
-    }
-
-    /// Average change between two signatures (0...1), ignoring an overall brightness shift.
-    static func difference(_ a: [Float], _ b: [Float]) -> Float {
-        guard a.count == b.count, !a.isEmpty else { return 1 }
-        let ma = a.reduce(0, +) / Float(a.count), mb = b.reduce(0, +) / Float(b.count)
-        var d: Float = 0
-        for i in a.indices { d += abs((a[i] - ma) - (b[i] - mb)) }
-        return d / Float(a.count)
     }
 
     // MARK: Taking photos
@@ -203,7 +119,6 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
     func shutter() {
         queue.async {
             guard self.taken < self.limit else { return }
-            self.atLastShot = self.previous
             self.takePhoto()
         }
     }
@@ -212,7 +127,6 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
     private func takePhoto() {
         guard !capturing, configured, session.isRunning else { return }
         capturing = true
-        lastCapture = Date()
         let settings = AVCapturePhotoSettings()
         settings.maxPhotoDimensions = photoOutput.maxPhotoDimensions
         settings.photoQualityPrioritization = .balanced
@@ -346,29 +260,15 @@ struct RailCameraScreen: View {
             .accessibilityLabel("Take photo")
             .disabled(camera.state != .running || camera.shots.count >= camera.limit)
             Spacer()
-            Button { camera.auto.toggle() } label: {
-                Text("Auto")
-                    .font(.system(size: 15, weight: .semibold))
-                    .frame(width: 60, height: 36)
-                    .background(camera.auto ? Color.white : Color.white.opacity(0.15))
-                    .foregroundStyle(camera.auto ? Color.black : Color.white)
-                    .clipShape(Capsule())
-            }
-            .accessibilityLabel(camera.auto ? "Automatic photos on" : "Automatic photos off")
+            Color.clear.frame(width: 52, height: 52)
         }
         .padding(.horizontal, 28)
         .padding(.bottom, 8)
         .overlay(alignment: .top) {
-            Text(hint).font(.system(size: 14)).foregroundStyle(.white.opacity(0.85))
-                .multilineTextAlignment(.center)
-                .offset(y: -40)
+            if camera.shots.count >= camera.limit {
+                Text("The batch is full").font(.system(size: 14)).foregroundStyle(.white.opacity(0.85)).offset(y: -40)
+            }
         }
-    }
-
-    private var hint: String {
-        if camera.shots.count >= camera.limit { return "The batch is full" }
-        if camera.auto { return camera.steady ? "Hold still for the photo" : "Hold the phone steady" }
-        return ""
     }
 
     /// A 4:5 frame (the listing shape most sites use) to keep each item the same size.

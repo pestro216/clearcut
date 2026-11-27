@@ -23,7 +23,7 @@ public struct ListingFacts: Codable, Equatable {
         return t.count <= 80 ? t : String(t.prefix(80))
     }
 
-    /// A plain description from the facts alone.
+    /// A plain description from the facts alone, ready to paste.
     public var text: String {
         var lines: [String] = []
         let what = [colour, kind].filter { !$0.isEmpty }.joined(separator: " ")
@@ -32,11 +32,7 @@ public struct ListingFacts: Codable, Equatable {
         }
         if !size.isEmpty { lines.append("Size: \(size)") }
         if !materials.isEmpty { lines.append("Material: \(materials)") }
-        var m: [String] = []
-        if !length.isEmpty { m.append("length \(length)") }
-        if !width.isEmpty { m.append("width \(width)") }
-        if !m.isEmpty { lines.append("Measured laid flat: " + m.joined(separator: ", ") + ".") }
-        lines.append("Condition: \(condition)")
+        if !condition.isEmpty { lines.append("Condition: \(condition)") }
         return lines.joined(separator: "\n")
     }
 }
