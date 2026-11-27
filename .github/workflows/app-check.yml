@@ -99,7 +99,7 @@ jobs:
           xcodebuild test -project Clearcut.xcodeproj -scheme Clearcut \
             -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
             -test-timeouts-enabled YES -default-test-execution-time-allowance 120 \
-            -derivedDataPath build-test CODE_SIGNING_ALLOWED=NO > test.log 2>&1 || {
+            -derivedDataPath build-test CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=- CODE_SIGN_STYLE=Manual > test.log 2>&1 || {
               grep -E "error:|failed|XCTAssert" test.log | sort -u | head -40
               tail -30 test.log
               exit 1
