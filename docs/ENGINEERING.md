@@ -290,3 +290,27 @@ What carried over:
 Not adopted: any matting network (non-commercial or unclear weights; MODNet is for portraits).
 Training a garment model on Fashionpedia (CC BY 4.0 annotations) needs a GPU and per-image licence
 checks: a later project.
+
+## 14. Real-photo test set and method, 27 November 2026
+
+Build 42 (section 13) felt worse on Mathew's photos while passing the made-up scenes, as builds
+40 and 42 both did. The research list's main lesson is methodological: matting moved from
+synthetic composites (Composition-1k) to real-photo benchmarks (AIM-500, PPM-100, AM-2K) because
+synthetic scores don't transfer. So the engine went back to build 39 (`Matting.swift`,
+`Segmenter.swift` restored from tag `build-39`; their section 13 tests removed) and changes are
+now judged on real photos first.
+
+- `tools/add_real_photo.py ORIGINAL REFERENCE.png NAME "what"`: turns a photo and its reference
+  cutout (a transparent PNG of the same photo, e.g. Clearcut's export after touch-up) into a scene
+  in `QA/realset/NAME/` (photo.jpg upright, max 3024 px, no EXIF; alpha.png; fg.png; meta.json).
+  HEIC needs pillow-heif. Pillow comes from the scratch `pip3 install --target` folder on this PC.
+- `QA/real_scenes.py` copies every realset scene into the quality run as `R_NAME`, so the bench
+  scores real photos with every measure, including Gradient (feathering) and Connectivity
+  (blotches). Not gated until a first run gives their baseline.
+- `tools/compare_runs.py A B`: two quality runs side by side (finished renders and all measures,
+  real photos first) as `QA/compare/A-vs-B/index.html` (not in git). Tried on runs 35 and 36.
+- Getting photos: the iPhone on USB is reachable with `afcclient` (camera roll, DCIM), only with
+  Mathew's say-so and only the photos he picks.
+- Next method steps (from MODNet, GFM): measure the whole-shape part and the edge part separately;
+  log where Apple's model and the network disagree on real batches to find failure classes before
+  changing rules; one change at a time, each shown against build 39 on the real set.

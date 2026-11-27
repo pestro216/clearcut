@@ -215,5 +215,21 @@ def main(out):
     save_case(out, "16_vest_closeup_corners", img, at, fg, {"what": "detail shot: leather fills the frame, carpet in the corners"})
 
 
+def copy_realset(out):
+    """Real photos with reference cutouts (QA/realset/, added with tools/add_real_photo.py) join
+    the scored scenes as R_<name>, so every quality run measures them like the made-up ones."""
+    import shutil
+    src = os.path.join(ROOT, "QA", "realset")
+    if not os.path.isdir(src):
+        return
+    for name in sorted(os.listdir(src)):
+        d = os.path.join(src, name)
+        if all(os.path.isfile(os.path.join(d, f)) for f in ("photo.jpg", "alpha.png", "fg.png")):
+            shutil.copytree(d, os.path.join(out, "R_" + name), dirs_exist_ok=True)
+            print("real", name, flush=True)
+
+
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "QA/testset")
+    out = sys.argv[1] if len(sys.argv) > 1 else "QA/testset"
+    main(out)
+    copy_realset(out)

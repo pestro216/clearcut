@@ -278,73 +278,6 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(prob.data[5 * w + 5], 0, "outside untouched")
     }
 
-    /// Draws a test scene: grey floor, then rectangles of colour with network and Apple values.
-    private struct Scene {
-        let w: Int, h: Int
-        var R: Plane, G: Plane, B: Plane, prob: Plane, solid: Plane
-        init(_ w: Int, _ h: Int) {
-            self.w = w; self.h = h
-            R = Plane(width: w, height: h, value: 0.5); G = R; B = R
-            prob = Plane(width: w, height: h, value: 0); solid = prob
-        }
-        mutating func paint(_ ys: Range<Int>, _ xs: Range<Int>, _ c: (Float, Float, Float), _ pv: Float?, _ sv: Float?) {
-            for y in ys { for x in xs {
-                let i = y * w + x
-                R.data[i] = c.0; G.data[i] = c.1; B.data[i] = c.2
-                if let pv { prob.data[i] = pv }
-                if let sv { solid.data[i] = sv }
-            } }
-        }
-    }
-
-    func testAppleSolidInsideFillsLeakingPatchButNotASeparateObject() {
-        // A dark item with a lighter patch of its own material that leaks out to the floor
-        // through a thin channel (so it is not enclosed), and a separate red object beside it
-        // that Apple's outline includes but the network left out.
-        var sc = Scene(170, 160)
-        sc.paint(30..<130, 30..<130, (0.12, 0.11, 0.10), 1, 1)
-        sc.paint(60..<80, 50..<80, (0.18, 0.16, 0.14), 0.3, nil)
-        sc.paint(68..<71, 30..<50, (0.18, 0.16, 0.14), 0.3, nil)
-        sc.paint(40..<60, 140..<156, (0.6, 0.1, 0.1), 0, 1)
-        let w = sc.w
-
-        var plain = sc.prob, fgPlain = sc.prob.data.map { $0 > 0.5 }
-        _ = Matting.fillFalseHoles(R: sc.R, G: sc.G, B: sc.B, prob: &plain, fg: &fgPlain)
-        XCTAssertLessThan(plain.data[70 * w + 65], 0.5, "without Apple's outline a leaking patch isn't enclosed")
-
-        var prob = sc.prob, fg = sc.prob.data.map { $0 > 0.5 }
-        _ = Matting.fillFalseHoles(R: sc.R, G: sc.G, B: sc.B, prob: &prob, fg: &fg, solid: sc.solid, band: 4)
-        XCTAssertEqual(prob.data[70 * w + 65], 1, "patch deep inside the item filled")
-        XCTAssertEqual(prob.data[50 * w + 148], 0, "separate object not added")
-        XCTAssertEqual(prob.data[5 * w + 5], 0, "floor untouched")
-    }
-
-    func testSoftEdgeIsNotWidenedWhenApplesOutlineIsLarger() {
-        // Apple's outline takes in a margin of floor around the item (as with a soft shadow);
-        // the item's own soft edge, two pixels of mixed colour, must stay as the network drew it.
-        var sc = Scene(160, 160)
-        sc.paint(25..<135, 25..<135, (0.5, 0.5, 0.5), nil, 1)
-        sc.paint(38..<122, 38..<122, (0.3, 0.29, 0.28), 0.5, nil)
-        sc.paint(40..<120, 40..<120, (0.12, 0.11, 0.10), 1, nil)
-        let w = sc.w
-        var prob = sc.prob, fg = sc.prob.data.map { $0 > 0.5 }
-        _ = Matting.fillFalseHoles(R: sc.R, G: sc.G, B: sc.B, prob: &prob, fg: &fg, solid: sc.solid, band: 6)
-        XCTAssertEqual(prob.data[80 * w + 38], 0.5, "soft edge kept")
-        XCTAssertEqual(prob.data[80 * w + 30], 0, "floor inside Apple's outline kept as floor")
-    }
-
-    func testOnlyAppleSubjectsOnTheItemAreKept() {
-        // Apple's labels: 1 is the item, 2 a hanger beside it. The network found the item only.
-        let w = 40, h = 20
-        var labels = [UInt8](repeating: 0, count: w * h)
-        var item = Plane(width: w, height: h, value: 0)
-        for y in 5..<15 { for x in 5..<18 { labels[y * w + x] = 1; item.data[y * w + x] = 1 } }
-        for y in 5..<15 { for x in 25..<35 { labels[y * w + x] = 2 } }
-        XCTAssertEqual(Segmenter.chooseInstances(labels: labels, width: w, height: h, all: [1, 2], item: item), [1])
-        let nothing = Plane(width: w, height: h, value: 0)
-        XCTAssertEqual(Segmenter.chooseInstances(labels: labels, width: w, height: h, all: [1, 2], item: nothing), [1, 2])
-    }
-
     func testGradientAndConnectivityCatchFeatheringAndBlotches() {
         let w = 80, h = 80
         var truth = [UInt8](repeating: 0, count: w * h)
@@ -354,13 +287,9 @@ final class CoreTests: XCTestCase {
         // Feathered: the same square, blurred.
         let feathered = Plane(bytes: truth, width: w, height: h).boxBlurred(radius: 4).toBytes()
         XCTAssertGreaterThan(Metrics.gradientError(feathered, truth, w, h), 0.001)
-        // Blotched: a half-transparent patch inside the item.
-        var blotched = truth
-        for y in 35..<45 { for x in 35..<45 { blotched[y * w + x] = 90 } }
         // A separate solid speck outside the item, disconnected from it.
         var speck = truth
         for y in 5..<9 { for x in 5..<9 { speck[y * w + x] = 255 } }
         XCTAssertGreaterThan(Metrics.connectivityError(speck, truth, w, h), 0)
-        XCTAssertGreaterThan(Metrics.gradientError(blotched, truth, w, h), 0.001)
     }
 }
