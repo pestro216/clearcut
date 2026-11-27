@@ -14,11 +14,18 @@ struct ListingScreen: View {
     @State private var written: String?
     @State private var working = false
     @State private var copied: String?
+    /// The online version, when asked for.
+    @State private var online: OnlineWriter.Listing?
+    @State private var usePhone = false
+    @State private var onlineBusy = false
+    @State private var onlineError: String?
+    @State private var keySheet = false
 
     /// The chosen photos in batch order.
     private var ordered: [UUID] { store.items.map(\.id).filter { chosen.contains($0) } }
-    private var title: String { facts.title }
-    private var description: String { written ?? facts.text }
+    private var showingOnline: Bool { online != nil && !usePhone }
+    private var title: String { showingOnline ? online!.title : facts.title }
+    private var description: String { showingOnline ? online!.description : (written ?? facts.text) }
 
     var body: some View {
         NavigationStack {
@@ -38,6 +45,7 @@ struct ListingScreen: View {
                         card("Title", title)
                         card("Description", description)
                     }
+                    onlineSection
                 }
                 .padding(20)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -49,7 +57,56 @@ struct ListingScreen: View {
         }
         .onAppear(perform: setUp)
         .onDisappear { store.listings[id] = facts }
-        .onChange(of: chosen) { _, _ in make() }
+        .onChange(of: chosen) { _, _ in make(); online = nil; onlineError = nil }
+        .sheet(isPresented: $keySheet) { KeySheet { if OnlineWriter.hasKey { describeOnline() } } }
+    }
+
+    @ViewBuilder private var onlineSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if online != nil {
+                Button(usePhone ? "Show the AI version" : "Show the phone's version") { usePhone.toggle(); copied = nil }
+                    .font(.system(size: 15, weight: .medium))
+            }
+            Button {
+                if OnlineWriter.hasKey { describeOnline() } else { keySheet = true }
+            } label: {
+                HStack(spacing: 10) {
+                    if onlineBusy { ProgressView() }
+                    Text(onlineBusy ? "Claude is looking at the photos" : online == nil ? "Describe with AI" : "Describe again with AI")
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .frame(maxWidth: .infinity).padding(.vertical, 13)
+                .background(Color.white).foregroundStyle(Theme.ink)
+                .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(Theme.line))
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+            }
+            .disabled(onlineBusy || ordered.isEmpty)
+            if let onlineError {
+                Text(onlineError).font(.system(size: 14)).foregroundStyle(Theme.warning)
+            }
+            Text("Sends the chosen photos to Anthropic's Claude, which recognises the item and can search the web for its exact name. Nothing else in Clearcut goes online. Costs about 1p per item on your Anthropic account.")
+                .font(.system(size: 13)).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
+            if OnlineWriter.hasKey {
+                Button("Change API key") { keySheet = true }.font(.system(size: 13))
+            }
+        }
+    }
+
+    private func describeOnline() {
+        let picked = ordered.compactMap { id in store.items.first { $0.id == id } }
+        let photos = picked.map(\.originalURL)
+        let hints = facts, want = ordered
+        onlineBusy = true
+        onlineError = nil
+        Task {
+            do {
+                let result = try await OnlineWriter.describe(photos: photos, hints: hints)
+                if want == ordered { online = result; usePhone = false; copied = nil }
+            } catch {
+                onlineError = error.localizedDescription
+            }
+            onlineBusy = false
+        }
     }
 
     private func card(_ heading: String, _ text: String) -> some View {
@@ -122,6 +179,39 @@ struct ListingScreen: View {
             guard want == ordered else { return }
             written = better
             working = false
+        }
+    }
+}
+
+/// Where the Anthropic API key is typed in. It is kept in the iPhone's Keychain, on this phone only.
+private struct KeySheet: View {
+    @Environment(\.dismiss) private var dismiss
+    let saved: () -> Void
+    @State private var key = ""
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section {
+                    SecureField("Anthropic API key", text: $key)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                } footer: {
+                    Text("Make a key at console.anthropic.com, under API keys, and paste it here. It is kept in this iPhone's Keychain and only sent to Anthropic.")
+                }
+                if OnlineWriter.hasKey {
+                    Section { Button("Remove the saved key", role: .destructive) { OnlineWriter.saveKey(""); dismiss() } }
+                }
+            }
+            .navigationTitle("Describe with AI")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") { OnlineWriter.saveKey(key); dismiss(); saved() }
+                        .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
         }
     }
 }
