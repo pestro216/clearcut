@@ -58,12 +58,17 @@ enum Copyright {
     static let year = "2026"
 }
 
-/// A looping demonstration on the home screen: a shirt photographed on a busy floor, then a line
-/// sweeps across and leaves it on a clean surface with a soft shadow, a different one each time.
-/// Holds still on the finished look when Reduce Motion is on.
+/// A looping demonstration on the home screen: an item as photographed, then a line sweeps across
+/// and leaves it on a clean surface with a soft shadow, a different one each time. Holds still on
+/// the finished look when Reduce Motion is on.
+///
+/// With a real photo bundled (`demo-photo.jpg` and its Clearcut cutout `demo-cutout.png`, the
+/// same size, in Clearcut/Demo), the demo uses them. Without, it draws a shirt symbol on a floor.
 struct HomeDemo: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var images: [String: UIImage] = [:]
+    @State private var photo: UIImage?
+    @State private var cutout: UIImage?
 
     /// The "photo" surface, then the finished looks it changes into, in turn.
     private let before = "laminate_floor_02"
@@ -105,6 +110,33 @@ struct HomeDemo: View {
     @ViewBuilder
     private func scene(original: Bool, look: Look, size: CGSize) -> some View {
         let item = min(size.width, size.height) * 0.56
+        if let photo, let cutout {
+            ZStack {
+                if original {
+                    fill(photo, size)
+                } else {
+                    if case .surface(let id) = look { backdrop(id) } else { Checkerboard() }
+                    if case .surface = look {
+                        fill(cutout, size).colorMultiply(.black).opacity(0.38)
+                            .offset(x: item * 0.03, y: item * 0.05).blur(radius: item * 0.05)
+                    }
+                    fill(cutout, size)
+                }
+            }
+            .frame(width: size.width, height: size.height)
+            .clipped()
+        } else {
+            drawn(original: original, look: look, size: size, item: item)
+        }
+    }
+
+    /// An image filling the card, centred; the photo and its cutout line up exactly.
+    private func fill(_ img: UIImage, _ size: CGSize) -> some View {
+        Image(uiImage: img).resizable().scaledToFill().frame(width: size.width, height: size.height).clipped()
+    }
+
+    @ViewBuilder
+    private func drawn(original: Bool, look: Look, size: CGSize, item: CGFloat) -> some View {
         ZStack {
             if original {
                 backdrop(before).overlay(Color.black.opacity(0.12))
@@ -140,6 +172,11 @@ struct HomeDemo: View {
     }
 
     private func load() {
+        if photo == nil, let p = Bundle.main.url(forResource: "demo-photo", withExtension: "jpg"),
+           let c = Bundle.main.url(forResource: "demo-cutout", withExtension: "png"),
+           let pi = UIImage(contentsOfFile: p.path), let ci = UIImage(contentsOfFile: c.path), pi.size == ci.size {
+            photo = pi; cutout = ci
+        }
         var ids = [before]
         for l in looks { if case .surface(let id) = l { ids.append(id) } }
         for id in ids where images[id] == nil {

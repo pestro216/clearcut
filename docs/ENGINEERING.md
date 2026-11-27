@@ -242,3 +242,17 @@ well inside the item), and be compared against build 39 on Mathew's photos befor
 
 **Reverting**: tags `build-38` and `build-39` on GitHub; their apps are in `builds/` (not in git,
 checksums in `builds/SHA256SUMS`), installable with SideStore.
+
+## 12. Icon and home demo photo, 27 November 2026
+
+- **Icon** (`tools/make_icon.py`, v2): a terracotta T-shirt cut by a white diagonal; top left as
+  photographed on speckled carpet (harsh off-centre shadow, slightly duller fabric), bottom right
+  cut out on the transparency checkerboard with a soft shadow. Checked at 120 px. Rendered with
+  Pillow and numpy installed to a scratch folder (`pip3 install --target`), since neither is on
+  this PC's Python.
+- **Home demo photo**: `HomeDemo` uses `demo-photo.jpg` and `demo-cutout.png` from the bundle (put
+  them in `Clearcut/Demo/`; same pixel size; the cutout is Clearcut's own transparent export of
+  that photo). Without them it draws the shirt symbol. `Library` skips `demo-*` files so the photo
+  never shows up as a backdrop. Wikimedia Commons searched for CC0 garments on 27 Nov: the best
+  candidates (a hoodie on carpet, a work jacket on a blanket) carry a clothing brand or a company
+  logo, the rest have price tags or are museum pieces on grey. None used.

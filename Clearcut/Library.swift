@@ -51,7 +51,7 @@ final class BackgroundLibrary: ObservableObject {
         // Unlisted bundled photos (e.g. your-timber.jpg) appear under "Yours".
         for u in Bundle.main.urls(forResourcesWithExtension: "jpg", subdirectory: nil) ?? [] {
             let name = u.deletingPathExtension().lastPathComponent
-            if name.hasPrefix("thumb-") || listed.contains(name) { continue }
+            if name.hasPrefix("thumb-") || name.hasPrefix("demo-") || listed.contains(name) { continue }
             let title = name.replacingOccurrences(of: "-", with: " ").replacingOccurrences(of: "_", with: " ").capitalized
             list.append(Surface(id: name, title: title, group: "Yours", url: u,
                                 thumbURL: Bundle.main.url(forResource: "thumb-\(name)", withExtension: "jpg"),
