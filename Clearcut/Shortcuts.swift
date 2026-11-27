@@ -12,7 +12,7 @@ final class AppRouter: ObservableObject {
 /// Action button or the Lock Screen.
 struct ShootBatchIntent: AppIntent {
     static var title: LocalizedStringResource = "Shoot a batch"
-    static var description = IntentDescription("Opens Clearcut's camera, ready to photograph items one after another.")
+    static var description = IntentDescription("Opens the camera, ready to photograph items one after another.")
     static var openAppWhenRun: Bool = true
 
     @MainActor

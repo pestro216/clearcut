@@ -85,7 +85,7 @@ struct ItemEditor: View {
         #if PERSONAL
         .sheet(isPresented: $listing) { ListingScreen(id: id) }
         #endif
-        .alert("Clearcut", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
+        .alert(AppName.display, isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
             Button("OK", role: .cancel) { notice = nil }
         } message: {
             Text(notice ?? "")

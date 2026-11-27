@@ -662,7 +662,7 @@ final class BatchStore: ObservableObject {
         Task {
             let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
             guard status == .authorized || status == .limited else {
-                message = "Clearcut needs permission to add photos. Open Settings, then Clearcut, then Photos, and allow Add Photos Only."
+                message = "\(AppName.display) needs permission to add photos. Open Settings, then \(AppName.display), then Photos, and allow Add Photos Only."
                 return
             }
             let list = exportable

@@ -8,6 +8,8 @@ settings:
     SWIFT_VERSION: "5.0"
     MARKETING_VERSION: "1.0"
     CURRENT_PROJECT_VERSION: "1"
+    # The name under the icon and in the app's own text. Change it here when the store name is chosen.
+    APP_DISPLAY_NAME: Clearcut
 targets:
   Clearcut:
     type: application
@@ -18,7 +20,7 @@ targets:
     info:
       path: Clearcut/Info.plist
       properties:
-        CFBundleDisplayName: Clearcut
+        CFBundleDisplayName: $(APP_DISPLAY_NAME)
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -28,8 +30,8 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationPortraitUpsideDown
         UIRequiresFullScreen: true
-        NSPhotoLibraryAddUsageDescription: Clearcut saves your finished photos to your library.
-        NSCameraUsageDescription: Clearcut's camera photographs your items one after another for cutting out. Photos stay on your phone.
+        NSPhotoLibraryAddUsageDescription: $(APP_DISPLAY_NAME) saves your finished photos to your library.
+        NSCameraUsageDescription: $(APP_DISPLAY_NAME)'s camera photographs your items one after another for cutting out. Photos stay on your phone.
         BGTaskSchedulerPermittedIdentifiers:
           - $(PRODUCT_BUNDLE_IDENTIFIER).batch
         ITSAppUsesNonExemptEncryption: false

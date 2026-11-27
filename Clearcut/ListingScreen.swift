@@ -86,7 +86,7 @@ struct ListingScreen: View {
             if let onlineError {
                 Text(onlineError).font(.system(size: 14)).foregroundStyle(Theme.warning)
             }
-            Text("Sends the chosen photos to Google's Gemini, which recognises the item and can check Google Search for its exact name. Nothing else in Clearcut goes online. Free within Google's daily limit.")
+            Text("Sends the chosen photos to Google's Gemini, which recognises the item and can check Google Search for its exact name. Nothing else in \(AppName.display) goes online. Free within Google's daily limit.")
                 .font(.system(size: 13)).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             if GeminiWriter.hasKey {
                 Button("Change API key") { keySheet = true }.font(.system(size: 13))

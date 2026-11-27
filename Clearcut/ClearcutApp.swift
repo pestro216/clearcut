@@ -53,7 +53,7 @@ struct ContentView: View {
                 demoTool = tool
             }
         }
-        .alert("Clearcut", isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
+        .alert(AppName.display, isPresented: Binding(get: { store.message != nil }, set: { if !$0 { store.message = nil } })) {
             Button("OK", role: .cancel) { store.message = nil }
         } message: {
             Text(store.message ?? "")

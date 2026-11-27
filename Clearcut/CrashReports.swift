@@ -56,7 +56,7 @@ struct CrashReportsSection: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Crash reports").font(.system(size: 17, weight: .semibold))
             Text(files.isEmpty
-                 ? "None so far. If Clearcut closes unexpectedly, iOS gives it a report, usually the next day. Reports stay on your phone unless you send them."
+                 ? "None so far. If \(AppName.display) closes unexpectedly, iOS gives it a report, usually the next day. Reports stay on your phone unless you send them."
                  : "\(crashes == 1 ? "1 crash report" : "\(crashes) crash reports") and \(files.count - crashes) daily summaries from iOS. They stay on your phone unless you send them, and hold no photos.")
                 .font(.system(size: 15)).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
             if !files.isEmpty {

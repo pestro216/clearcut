@@ -188,7 +188,7 @@ struct RailCameraScreen: View {
             Color.black.ignoresSafeArea()
             switch camera.state {
             case .denied:
-                notice("Clearcut needs the camera. Open Settings, then Clearcut, and turn on Camera.")
+                notice("\(AppName.display) needs the camera. Open Settings, then \(AppName.display), and turn on Camera.")
             case .unavailable:
                 notice("No camera is available on this device.")
             default:
