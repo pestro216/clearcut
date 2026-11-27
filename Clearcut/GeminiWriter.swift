@@ -11,12 +11,12 @@ enum GeminiWriter {
     struct Listing: Equatable { var title: String; var description: String }
 
     enum Failure: LocalizedError {
-        case noKey, badKey, limit, declined, network(String), unreadable
+        case noKey, badKey, limit(String), declined, network(String), unreadable
         var errorDescription: String? {
             switch self {
             case .noKey: return "Add your Gemini API key first."
             case .badKey: return "Google didn't accept the API key. Check it with Change API key."
-            case .limit: return "Gemini's free limit is used up for now. Try again later or tomorrow."
+            case .limit(let s): return "Google turned this down for every free Gemini model it offers your key. Google said: " + s
             case .declined: return "Gemini declined to describe these photos."
             case .network(let s): return "Couldn't reach Gemini: \(s)"
             case .unreadable: return "Gemini's answer couldn't be read. Try again."
@@ -24,8 +24,11 @@ enum GeminiWriter {
         }
     }
 
-    /// Google's alias for its current Flash model, so the app keeps working as models change.
-    static let model = "gemini-flash-latest"
+    /// Google's aliases for its current Flash models, tried first. Which models a free key may use
+    /// changes over time (some get a free limit of zero), so the key's own model list is tried
+    /// after these, and the one that worked is remembered.
+    static let preferred = ["gemini-flash-latest", "gemini-flash-lite-latest"]
+    private static let workedKey = "gemini.model.v1"
 
     static let instructions = """
     You write listings for second-hand clothing, shoes and accessories on Vinted, eBay and Depop. \
@@ -103,15 +106,51 @@ enum GeminiWriter {
         if !hints.text.isEmpty { ask += " Text the phone read from its labels (may contain mistakes):\n" + hints.text }
         parts.append(["text": ask])
 
-        do {
-            return try await send(parts: parts, key: key, search: true)
-        } catch Failure.network(_) {
-            // Search grounding isn't on every key or model; one more try without it.
-            return try await send(parts: parts, key: key, search: false)
+        var models: [String] = []
+        if let w = UserDefaults.standard.string(forKey: workedKey) { models.append(w) }
+        models += preferred
+        models += await listFlashModels(key: key)
+        var seen = Set<String>()
+        models = models.filter { seen.insert($0).inserted }
+
+        var last: Failure = .limit("no model answered")
+        for model in models.prefix(6) {
+            // Google Search first (better names); without it if that part isn't allowed on this key.
+            for search in [true, false] {
+                do {
+                    let listing = try await send(parts: parts, key: key, model: model, search: search)
+                    UserDefaults.standard.set(model, forKey: workedKey)
+                    return listing
+                } catch let f as Failure {
+                    switch f {
+                    case .limit, .network: last = f; continue
+                    default: throw f
+                    }
+                }
+            }
         }
+        throw last
     }
 
-    private static func send(parts: [[String: Any]], key: String, search: Bool) async throws -> Listing {
+    /// Flash models this key can use for writing, newest first, from Google's own list.
+    private static func listFlashModels(key: String) async -> [String] {
+        var request = URLRequest(url: URL(string: "https://generativelanguage.googleapis.com/v1beta/models?pageSize=200")!)
+        request.setValue(key, forHTTPHeaderField: "x-goog-api-key")
+        request.timeoutInterval = 30
+        guard let result = try? await URLSession.shared.data(for: request),
+              let json = (try? JSONSerialization.jsonObject(with: result.0)) as? [String: Any],
+              let list = json["models"] as? [[String: Any]] else { return [] }
+        let skip = ["image", "tts", "audio", "live", "embedding", "thinking", "exp", "preview"]
+        let names = list.compactMap { m -> String? in
+            guard let name = (m["name"] as? String)?.replacingOccurrences(of: "models/", with: ""),
+                  let methods = m["supportedGenerationMethods"] as? [String], methods.contains("generateContent"),
+                  name.contains("flash"), !skip.contains(where: { name.contains($0) }) else { return nil }
+            return name
+        }
+        return names.sorted(by: >)
+    }
+
+    private static func send(parts: [[String: Any]], key: String, model: String, search: Bool) async throws -> Listing {
         var body: [String: Any] = [
             "system_instruction": ["parts": [["text": instructions]]],
             "contents": [["role": "user", "parts": parts]],
@@ -133,7 +172,7 @@ enum GeminiWriter {
         let message = error?["message"] as? String ?? ""
         switch status {
         case 200: break
-        case 429: throw Failure.limit
+        case 429: throw Failure.limit(message.isEmpty ? "too many requests" : String(message.prefix(300)))
         case 401, 403: throw Failure.badKey
         case 400 where message.localizedCaseInsensitiveContains("api key"): throw Failure.badKey
         default: throw Failure.network(message.isEmpty ? "error \(status)" : message)
