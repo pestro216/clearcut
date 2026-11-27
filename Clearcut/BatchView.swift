@@ -8,6 +8,8 @@ struct BatchView: View {
     @State private var confirmClose = false
     @State private var morePicks: [PhotosPickerItem] = []
     @State private var onlyAttention = false
+    @State private var askUnlock = false
+    @ObservedObject private var unlock = Unlock.shared
     // Two across on every iPhone; four on an 11-inch iPad, more on a 13-inch.
     // Two across on a phone; on an iPad's wider screen as many as fit at least 240 points wide.
     private let columns = [GridItem(.adaptive(minimum: 170, maximum: 320), spacing: 8)]
@@ -46,6 +48,12 @@ struct BatchView: View {
         .fullScreenCover(item: $editing) { target in ItemEditor(id: target.id) }
         .sheet(item: $store.exportResult) { result in
             ExportDoneView(result: result).presentationDetents([.medium])
+        }
+        .sheet(isPresented: $askUnlock) {
+            UnlockView(waiting: store.exportable.filter { $0.removed && $0.canRemove && !store.freeSavedIDs.contains($0.id) }.count) {
+                store.exportAll(onlyUnsaved: true)
+            }
+            .presentationDetents([.medium, .large])
         }
         .confirmationDialog("Close this batch?", isPresented: $confirmClose, titleVisibility: .visible) {
             Button("Close batch", role: .destructive) { store.clear() }
@@ -94,7 +102,11 @@ struct BatchView: View {
 
     private var bottomBar: some View {
         VStack(spacing: 10) {
-            Button { store.exportAll() } label: {
+            Button {
+                // Out of free saves with cutouts still to save: offer the unlock first.
+                let cutouts = store.exportable.filter { $0.removed && $0.canRemove && !store.freeSavedIDs.contains($0.id) }
+                if !unlock.unlocked && unlock.freeLeft == 0 && !cutouts.isEmpty { askUnlock = true } else { store.exportAll() }
+            } label: {
                 Group {
                     if let p = store.exportProgress {
                         Text("Saving \(p.done) of \(p.total)")
@@ -208,6 +220,7 @@ struct ExportDoneView: View {
     @EnvironmentObject var store: BatchStore
     @Environment(\.dismiss) private var dismiss
     let result: BatchStore.ExportResult
+    @State private var showUnlock = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
@@ -219,6 +232,19 @@ struct ExportDoneView: View {
                 .foregroundStyle(Theme.muted)
             if !result.failures.isEmpty {
                 ForEach(result.failures, id: \.self) { Text($0).font(.system(size: 14)).foregroundStyle(Theme.warning) }
+            }
+            if result.waitingForUnlock > 0 {
+                Text(result.waitingForUnlock == 1 ? "1 more cutout is waiting: your free saves are used up."
+                     : "\(result.waitingForUnlock) more cutouts are waiting: your free saves are used up.")
+                    .font(.system(size: 15)).foregroundStyle(Theme.warning)
+                    .fixedSize(horizontal: false, vertical: true)
+                Button { showUnlock = true } label: {
+                    Text("Unlock to save the rest")
+                        .font(.system(size: 17, weight: .semibold))
+                        .frame(maxWidth: .infinity).padding(.vertical, 14)
+                        .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Theme.ink, lineWidth: 1.5))
+                        .foregroundStyle(Theme.ink)
+                }
             }
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 6) {
@@ -243,5 +269,12 @@ struct ExportDoneView: View {
         }
         .padding(24)
         .background(Theme.paper.ignoresSafeArea())
+        .sheet(isPresented: $showUnlock) {
+            UnlockView(waiting: result.waitingForUnlock) {
+                dismiss()
+                store.exportAll(onlyUnsaved: true)
+            }
+            .presentationDetents([.medium, .large])
+        }
     }
 }

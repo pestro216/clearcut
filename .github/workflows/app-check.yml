@@ -3,7 +3,7 @@ name: App check on simulator
 on:
   push:
     branches: [main]
-    paths: ['Clearcut/**', 'Core/**', 'project.yml', '.github/workflows/app-check.yml']
+    paths: ['Clearcut/**', 'Core/**', 'QA/AppTests/**', 'project.yml', '.github/workflows/app-check.yml']
   workflow_dispatch:
 
 jobs:
@@ -80,6 +80,9 @@ jobs:
             xcrun simctl terminate "$DEV" app.clearcut.photos
             SIMCTL_CHILD_CLEARCUT_DEMO_DIR="$RUNNER_TEMP/demo" SIMCTL_CHILD_CLEARCUT_DEMO_TOOL=shadow xcrun simctl launch "$DEV" app.clearcut.photos; sleep 90
             xcrun simctl io "$DEV" screenshot "shots/${P}4_shadow.png"
+            xcrun simctl terminate "$DEV" app.clearcut.photos
+            SIMCTL_CHILD_CLEARCUT_DEMO_UNLOCK=1 xcrun simctl launch "$DEV" app.clearcut.photos; sleep 8
+            xcrun simctl io "$DEV" screenshot "shots/${P}5_unlock.png"
             xcrun simctl spawn "$DEV" log show --last 6m --predicate 'process == "Clearcut"' --style compact 2>/dev/null | grep -iE "error|crash|fault" | tail -40 > "shots/${P}log.txt" || true
             xcrun simctl shutdown "$DEV"
           }
@@ -88,3 +91,16 @@ jobs:
       - name: Publish screenshots
         if: always()
         run: QA/publish.sh shots "app-check" "App check ${{ github.run_number }}"
+      # The unlock purchase, bought, restored and refunded against Apple's local test store
+      # (QA/AppTests/Clearcut.storekit). No developer account or real money involved.
+      - name: App tests (unlock purchase)
+        run: |
+          xcodebuild test -project Clearcut.xcodeproj -scheme Clearcut \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -derivedDataPath build-test CODE_SIGNING_ALLOWED=NO > test.log 2>&1 || {
+              grep -E "error:|failed|XCTAssert" test.log | sort -u | head -40
+              tail -30 test.log
+              exit 1
+            }
+          grep -E "Test Case .* (passed|failed)|Executed" test.log | tail -8
+

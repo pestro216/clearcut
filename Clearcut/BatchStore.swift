@@ -58,7 +58,13 @@ final class BatchStore: ObservableObject {
         let skipped: Int
         let failures: [String]
         let thumbs: [UIImage]
+        /// Cutouts left unsaved because the free saves ran out.
+        var waitingForUnlock = 0
     }
+
+    /// Cutouts already saved free in this batch, so they aren't saved twice (or counted twice)
+    /// when the rest are saved after unlocking.
+    private(set) var freeSavedIDs: Set<UUID> = []
 
     nonisolated static let previewSide = 1100
     nonisolated static let gridSide = 340
@@ -644,6 +650,7 @@ final class BatchStore: ObservableObject {
     }
 
     func clear() {
+        freeSavedIDs = []
         gridTask?.cancel()
         refineQueue = []
         items = []
@@ -657,16 +664,31 @@ final class BatchStore: ObservableObject {
 
     // MARK: Export
 
-    func exportAll() {
+    /// Saves the batch. While locked, cutouts are limited to the free saves left (photos kept as
+    /// originals are always saved); `onlyUnsaved` leaves out cutouts already saved free.
+    func exportAll(onlyUnsaved: Bool = false) {
         guard !exportable.isEmpty, exportProgress == nil else { return }
+        let unlock = Unlock.shared
         Task {
             let status = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
             guard status == .authorized || status == .limited else {
                 message = "\(AppName.display) needs permission to add photos. Open Settings, then \(AppName.display), then Photos, and allow Add Photos Only."
                 return
             }
-            let list = exportable
-            let skipped = items.count - list.count
+            let isCutout: (BatchItem) -> Bool = { $0.removed && $0.canRemove }
+            var list = exportable
+            if onlyUnsaved || !unlock.unlocked { list.removeAll { isCutout($0) && self.freeSavedIDs.contains($0.id) } }
+            var waiting = 0
+            if !unlock.unlocked {
+                var allowed = unlock.freeLeft
+                list = list.filter { item in
+                    guard isCutout(item) else { return true }
+                    if allowed > 0 { allowed -= 1; return true }
+                    waiting += 1
+                    return false
+                }
+            }
+            let skipped = items.count - exportable.count
             let look = self.look, url = surfaceURL(look)
             exportProgress = (0, list.count)
             var saved = 0
@@ -683,6 +705,10 @@ final class BatchStore: ObservableObject {
                             request.addResource(with: .photo, data: result.data, options: nil)
                         }
                         saved += 1
+                        if isCutout(item) && !unlock.unlocked {
+                            unlock.recordSaves(1)
+                            freeSavedIDs.insert(item.id)
+                        }
                         if thumbs.count < 20, let t = grid[item.id] { thumbs.append(t) }
                     } catch {
                         failures.append("Photo \(n + 1): Photos refused to save it")
@@ -693,7 +719,7 @@ final class BatchStore: ObservableObject {
                 exportProgress = (n + 1, list.count)
             }
             exportProgress = nil
-            exportResult = ExportResult(saved: saved, skipped: skipped, failures: failures, thumbs: thumbs)
+            exportResult = ExportResult(saved: saved, skipped: skipped, failures: failures, thumbs: thumbs, waitingForUnlock: waiting)
         }
     }
 

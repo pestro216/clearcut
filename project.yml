@@ -46,3 +46,22 @@ targets:
         CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGNING_REQUIRED: "NO"
         CODE_SIGN_IDENTITY: ""
+    scheme:
+      testTargets:
+        - ClearcutTests
+      storeKitConfiguration: QA/AppTests/Clearcut.storekit
+  # Checks of the app itself on a simulator (the unlock purchase, against Apple's local test store).
+  ClearcutTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: QA/AppTests
+        excludes: ["*.storekit"]
+      - path: QA/AppTests/Clearcut.storekit
+        buildPhase: resources
+    dependencies:
+      - target: Clearcut
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: "YES"
+        CODE_SIGNING_ALLOWED: "NO"

@@ -27,6 +27,7 @@ struct ContentView: View {
     @EnvironmentObject var store: BatchStore
     @ObservedObject private var router = AppRouter.shared
     @State private var demoTool: Tool?
+    @State private var demoUnlock = false
 
     var body: some View {
         Group {
@@ -37,12 +38,15 @@ struct ContentView: View {
             }
         }
         .fullScreenCover(item: $demoTool) { t in ToolScreen(tool: t, startID: nil) }
+        .sheet(isPresented: $demoUnlock) { UnlockView().presentationDetents([.medium, .large]) }
         .fullScreenCover(isPresented: $router.openCamera) { RailCameraScreen() }
         .onChange(of: store.importing == nil) { _, idle in BackgroundBatch.update(store: store, idle: idle) }
         .onChange(of: store.importing?.done) { _, _ in BackgroundBatch.update(store: store, idle: store.importing == nil) }
+        .task { Unlock.shared.start() }
         .task {
             // Automated simulator check only: load a folder of photos and optionally open a tool.
             let env = ProcessInfo.processInfo.environment
+            if env["CLEARCUT_DEMO_UNLOCK"] == "1" { try? await Task.sleep(nanoseconds: 1_000_000_000); demoUnlock = true }
             guard let dir = env["CLEARCUT_DEMO_DIR"] else { return }
             let urls = ((try? FileManager.default.contentsOfDirectory(atPath: dir)) ?? []).sorted()
                 .filter { $0.hasSuffix(".jpg") }.map { URL(fileURLWithPath: dir).appendingPathComponent($0) }

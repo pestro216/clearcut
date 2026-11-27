@@ -5,6 +5,7 @@ struct HomeView: View {
     @EnvironmentObject var store: BatchStore
     @State private var picks: [PhotosPickerItem] = []
     @State private var about = false
+    @ObservedObject private var unlock = Unlock.shared
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -34,7 +35,7 @@ struct HomeView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
             .padding(.top, 10)
-            Text("Up to \(BatchStore.maxPerBatch) photos at a time")
+            Text(homeNote)
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
                 .frame(maxWidth: .infinity)
@@ -69,13 +70,23 @@ enum AppName {
     static let display = Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String ?? "Clearcut"
 }
 
+extension HomeView {
+    /// Under the buttons: the batch size, and while locked, the free saves left.
+    var homeNote: String {
+        let size = "Up to \(BatchStore.maxPerBatch) photos at a time"
+        let u = unlock
+        guard !u.unlocked else { return size }
+        return size + (u.freeLeft == 1 ? ". 1 free save left" : ". \(u.freeLeft) free saves left")
+    }
+}
+
 enum Copyright {
     static let owner = "Woolfall"
     static let year = "2026"
     #if PERSONAL
     static let privacy = "Your photos stay on your phone. \(AppName.display) has no accounts and no tracking, and every cutout is made on the phone itself. The one exception is Describe with Gemini in a listing: only when you tap it, that item's photos are sent to Google to write the listing. Finished photos are only added to your library when you tap Save."
     #else
-    static let privacy = "Your photos never leave your phone. \(AppName.display) has no accounts, no tracking and no internet connection: every cutout is made on the phone itself. Finished photos are only added to your library when you tap Save."
+    static let privacy = "Your photos never leave your phone. \(AppName.display) has no accounts and no tracking, and every cutout is made on the phone itself. The only connection it makes is to Apple's App Store, for the unlock purchase. Finished photos are only added to your library when you tap Save."
     #endif
 }
 
@@ -239,6 +250,9 @@ struct AboutView: View {
                     section("Privacy", Copyright.privacy)
                     section("Cutout model", "BiRefNet (Zheng et al., 2024), MIT licence, converted for iPhone by the birefnet-lite-coreml project, MIT licence. Full licence texts are below.")
                     section("Surfaces", "Surface photos from Poly Haven (polyhaven.com), CC0.")
+                    #if !PERSONAL
+                    UnlockSection()
+                    #endif
                     CrashReportsSection()
                     section("Licences", Licences.text)
                 }
