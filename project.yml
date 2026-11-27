@@ -25,13 +25,15 @@ targets:
         NSPhotoLibraryAddUsageDescription: Clearcut saves your finished photos to your library.
         NSCameraUsageDescription: Clearcut's camera photographs your items one after another for cutting out. Photos stay on your phone.
         BGTaskSchedulerPermittedIdentifiers:
-          - app.clearcut.photos.batch
+          - $(PRODUCT_BUNDLE_IDENTIFIER).batch
         ITSAppUsesNonExemptEncryption: false
         NSHumanReadableCopyright: "© 2026 Woolfall. All rights reserved."
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: app.clearcut.photos
         TARGETED_DEVICE_FAMILY: "1"
+        # Apple Intelligence (iOS 26 only) must not stop the app opening on iOS 17 and 18.
+        OTHER_LDFLAGS: ["$(inherited)", "-weak_framework", "FoundationModels"]
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         CODE_SIGNING_ALLOWED: "NO"
         CODE_SIGNING_REQUIRED: "NO"

@@ -6,7 +6,17 @@ import BackgroundTasks
 /// that, and on older iOS, a batch pauses when you leave and carries on when you come back.
 @MainActor
 enum BackgroundBatch {
-    static let identifier = "app.clearcut.photos.batch"
+    /// "<bundle id>.batch": iOS only accepts a continued-processing name that starts with the
+    /// app's own bundle id, so the store app and My Clearcut each get their own. Nil (and the batch
+    /// just pauses in the background) if Info.plist doesn't list it, for example when an installer
+    /// such as SideStore has changed the bundle id; registering an unlisted name would crash.
+    static let identifier: String? = {
+        guard let bundle = Bundle.main.bundleIdentifier,
+              let allowed = Bundle.main.object(forInfoDictionaryKey: "BGTaskSchedulerPermittedIdentifiers") as? [String]
+        else { return nil }
+        let id = bundle + ".batch"
+        return allowed.contains(id) ? id : nil
+    }()
 
     #if compiler(>=6.2)
     private static var task: AnyObject?
@@ -38,9 +48,9 @@ enum BackgroundBatch {
             running.updateTitle("Cutting out photos", subtitle: subtitle)
             return
         }
-        guard !submitted else { return }
+        guard !submitted, let id = Self.identifier else { return }
         if !registered {
-            registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: identifier, using: .main) { t in
+            registered = BGTaskScheduler.shared.register(forTaskWithIdentifier: id, using: .main) { t in
                 guard let t = t as? BGContinuedProcessingTask else { t.setTaskCompleted(success: false); return }
                 // If iOS needs the time back, the batch simply resumes next time the app opens.
                 t.expirationHandler = { t.setTaskCompleted(success: false) }
@@ -51,7 +61,7 @@ enum BackgroundBatch {
             }
         }
         guard registered else { return }
-        let request = BGContinuedProcessingTaskRequest(identifier: identifier, title: "Cutting out photos", subtitle: subtitle)
+        let request = BGContinuedProcessingTaskRequest(identifier: id, title: "Cutting out photos", subtitle: subtitle)
         request.strategy = .fail
         submitted = (try? BGTaskScheduler.shared.submit(request)) != nil
     }

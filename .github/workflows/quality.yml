@@ -8,11 +8,18 @@ on:
 
 jobs:
   quality:
-    runs-on: macos-15
+    runs-on: macos-26
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      # Apple requires uploads built with Xcode 26 and the iOS 26 SDK. Pinned so a new default
+      # Xcode on GitHub's machine can't change the build without a commit here.
+      - name: Use Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
 
       - name: Cutout model cache
         uses: actions/cache@v4

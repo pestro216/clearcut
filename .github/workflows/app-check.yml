@@ -8,11 +8,18 @@ on:
 
 jobs:
   simulator:
-    runs-on: macos-15
+    runs-on: macos-26
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
+
+      # Apple requires uploads built with Xcode 26 and the iOS 26 SDK. Pinned so a new default
+      # Xcode on GitHub's machine can't change the build without a commit here.
+      - name: Use Xcode 26.6
+        run: |
+          sudo xcode-select -s /Applications/Xcode_26.6.app
+          xcodebuild -version
 
       - name: Cutout model cache
         uses: actions/cache@v4
@@ -43,7 +50,14 @@ jobs:
         run: |
           set -x
           mkdir -p shots
-          DEV=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print([x['udid'] for k,v in d.items() if 'iOS' in k for x in v if 'iPhone 16' in x['name'] or 'iPhone 15' in x['name']][0])")
+          # The newest iOS runtime's plain iPhone (iPhone 17 on Xcode 26), else any iPhone on it.
+          DEV=$(xcrun simctl list devices available -j | python3 -c "
+          import json, re, sys
+          d = json.load(sys.stdin)['devices']
+          ios = sorted((k for k in d if 'iOS' in k and d[k]), key=lambda k: [int(n) for n in re.findall(r'\d+', k.split('iOS')[-1])])
+          phones = [x for x in d[ios[-1]] if x['name'].startswith('iPhone')]
+          plain = [x for x in phones if re.fullmatch(r'iPhone \d+', x['name'])]
+          print((plain or phones)[0]['udid'])")
           xcrun simctl boot "$DEV"
           xcrun simctl bootstatus "$DEV" -b
           APP=$(find build/Build/Products/Debug-iphonesimulator -name Clearcut.app -maxdepth 1)

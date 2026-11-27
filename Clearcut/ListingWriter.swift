@@ -1,14 +1,15 @@
 import Foundation
-#if canImport(FoundationModels)
+#if PERSONAL && canImport(FoundationModels)
 import FoundationModels
 #endif
 
 /// Writes a listing description with Apple's on-phone language model (iOS 26, Apple Intelligence
 /// phones). Nothing leaves the phone. Only compiled when the app is built with the iOS 26 SDK;
 /// otherwise, and on phones without Apple Intelligence, the plain description is used.
+/// Personal build only: the App Store version has no listings.
 enum ListingWriter {
     static var available: Bool {
-        #if canImport(FoundationModels)
+        #if PERSONAL && canImport(FoundationModels)
         if #available(iOS 26.0, *) { return SystemLanguageModel.default.isAvailable }
         #endif
         return false
@@ -23,7 +24,7 @@ enum ListingWriter {
 
     /// A description written from the facts, or nil if the model isn't there or declines.
     static func write(_ facts: ListingFacts) async -> String? {
-        #if canImport(FoundationModels)
+        #if PERSONAL && canImport(FoundationModels)
         if #available(iOS 26.0, *) {
             guard SystemLanguageModel.default.isAvailable else { return nil }
             let session = LanguageModelSession(instructions: instructions)
