@@ -63,6 +63,10 @@ struct BatchItem: Identifiable, @unchecked Sendable {
     var edited: Bool = false
     /// Whether the cutout was attempted with a known surface.
     var triedWithSurface = false
+    /// The hanger's hook has been cleared from the cutout (the matte before is kept to put it back).
+    var hangerRemoved = false
+    /// Taken with Clearcut's camera, so not in the photo library yet.
+    var fromCamera = false
     var originalURL: URL
     var pixelSize: CGSize = .zero
     /// Full-resolution alpha matte (greyscale PNG).

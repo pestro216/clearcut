@@ -9,6 +9,7 @@ struct ClearcutApp: App {
         let lib = BackgroundLibrary()
         _library = StateObject(wrappedValue: lib)
         _store = StateObject(wrappedValue: BatchStore(library: lib))
+        CrashReports.shared.start()
     }
 
     var body: some Scene {
@@ -24,6 +25,7 @@ struct ClearcutApp: App {
 
 struct ContentView: View {
     @EnvironmentObject var store: BatchStore
+    @ObservedObject private var router = AppRouter.shared
     @State private var demoTool: Tool?
 
     var body: some View {
@@ -35,6 +37,9 @@ struct ContentView: View {
             }
         }
         .fullScreenCover(item: $demoTool) { t in ToolScreen(tool: t, startID: nil) }
+        .fullScreenCover(isPresented: $router.openCamera) { RailCameraScreen() }
+        .onChange(of: store.importing == nil) { _, idle in BackgroundBatch.update(store: store, idle: idle) }
+        .onChange(of: store.importing?.done) { _, _ in BackgroundBatch.update(store: store, idle: store.importing == nil) }
         .task {
             // Automated simulator check only: load a folder of photos and optionally open a tool.
             let env = ProcessInfo.processInfo.environment

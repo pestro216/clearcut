@@ -23,6 +23,17 @@ struct HomeView: View {
                     .foregroundStyle(.white)
                     .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
             }
+            Button { AppRouter.shared.openCamera = true } label: {
+                Text("Shoot with the camera")
+                    .font(.system(size: 17, weight: .semibold))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 15)
+                    .background(Color.white)
+                    .foregroundStyle(Theme.ink)
+                    .overlay(RoundedRectangle(cornerRadius: 14, style: .continuous).stroke(Theme.line))
+                    .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+            }
+            .padding(.top, 10)
             Text("Up to \(BatchStore.maxPerBatch) photos at a time")
                 .font(.system(size: 13))
                 .foregroundStyle(Theme.muted)
@@ -218,6 +229,7 @@ struct AboutView: View {
                     section("Privacy", "Your photos never leave your phone. Clearcut has no accounts, no tracking and no internet connection: every cutout is made on the phone itself. Finished photos are only added to your library when you tap Save.")
                     section("Cutout model", "BiRefNet (Zheng et al., 2024), MIT licence, converted for iPhone by the birefnet-lite-coreml project, MIT licence. Full licence texts are below.")
                     section("Surfaces", "Surface photos from Poly Haven (polyhaven.com), CC0.")
+                    CrashReportsSection()
                     section("Licences", Licences.text)
                 }
                 .padding(20)

@@ -4,7 +4,10 @@ import SwiftUI
 struct ItemEditor: View {
     @EnvironmentObject var store: BatchStore
     @Environment(\.dismiss) private var dismiss
-    let id: UUID
+    /// The photo shown. Changes when moving on to the next photo that needs a look.
+    @State private var id: UUID
+
+    init(id: UUID) { _id = State(initialValue: id) }
 
     @State private var image: UIImage?
     /// A sharper render, fetched the first time you zoom in.
@@ -22,6 +25,9 @@ struct ItemEditor: View {
     /// While the compare button is held, the original photo is shown.
     @State private var comparing = false
     @State private var original: UIImage?
+    @State private var listing = false
+    @State private var hangerBusy = false
+    @State private var notice: String?
 
     private var item: BatchItem? { store.items.first { $0.id == id } }
 
@@ -64,23 +70,34 @@ struct ItemEditor: View {
                 .onTapGesture(count: 2) { withAnimation(.easeOut(duration: 0.2)) { resetZoom() } }
                 .onAppear { box = CGSize(width: w, height: h); container = geo.size }
                 .onChange(of: geo.size) { _, g in container = g; box = CGSize(width: w, height: h) }
+                .onChange(of: id) { _, _ in box = CGSize(width: w, height: h) }
             }
             .clipped()
             controls.padding(.horizontal, 20).padding(.bottom, 12)
         }
         .background(Theme.paper.ignoresSafeArea())
-        .task(id: "\(store.lookVersion)-\(item?.removed ?? false)") {
+        .task(id: "\(id)-\(store.lookVersion)-\(item?.removed ?? false)") {
             if let img = await store.renderPreview(id), !Task.isCancelled { image = img }
             if zoom > 1.4 { loadDetail() }
         }
         .fullScreenCover(item: $tool) { t in ToolScreen(tool: t, startID: id) }
         .background(Color.clear.fullScreenCover(isPresented: $touchUp) { TouchUpScreen(id: id) })
+        .sheet(isPresented: $listing) { ListingScreen(id: id) }
+        .alert("Clearcut", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
+            Button("OK", role: .cancel) { notice = nil }
+        } message: {
+            Text(notice ?? "")
+        }
     }
 
     private var topBar: some View {
         HStack {
             Button("Done") { dismiss() }.font(.system(size: 17, weight: .semibold))
             Spacer()
+            if let next = nextToCheck {
+                Button("Next to check") { show(next) }.font(.system(size: 16, weight: .medium))
+                Spacer()
+            }
             Button(role: .destructive) { store.delete(id); dismiss() } label: {
                 Image(systemName: "trash").font(.system(size: 17))
             }
@@ -109,6 +126,13 @@ struct ItemEditor: View {
                             pill("Shadow") { tool = .shadow }
                         }
                     }
+                    HStack(spacing: 10) {
+                        pill("Listing") { listing = true }
+                        if item.removed {
+                            pill(hangerBusy ? "Working" : item.hangerRemoved ? "Put hook back" : "Remove hook") { toggleHanger(item) }
+                                .disabled(hangerBusy)
+                        }
+                    }
                     Button { store.setRemoved(id, !item.removed) } label: {
                         Text(item.removed ? "Use original photo" : "Use cutout")
                             .font(.system(size: 17, weight: .semibold))
@@ -119,6 +143,35 @@ struct ItemEditor: View {
                             .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
                     }
                 }
+            }
+        }
+    }
+
+    /// The next photo after this one (wrapping round) that is flagged for a look.
+    private var nextToCheck: UUID? {
+        let all = store.items
+        guard let i = all.firstIndex(where: { $0.id == id }), all.count > 1 else { return nil }
+        for k in 1..<all.count {
+            let other = all[(i + k) % all.count]
+            if other.needsAttention { return other.id }
+        }
+        return nil
+    }
+
+    private func show(_ next: UUID) {
+        image = nil; detail = nil; detailVersion = -1; original = nil; comparing = false
+        resetZoom()
+        id = next
+    }
+
+    private func toggleHanger(_ item: BatchItem) {
+        let on = !item.hangerRemoved
+        hangerBusy = true
+        Task {
+            let done = await store.setHangerRemoved(item.id, on)
+            hangerBusy = false
+            if !done && on {
+                notice = "No hanger hook found at the top of this cutout. This only works when the hook sticks up above the item."
             }
         }
     }

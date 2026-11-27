@@ -23,6 +23,9 @@ targets:
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
         NSPhotoLibraryAddUsageDescription: Clearcut saves your finished photos to your library.
+        NSCameraUsageDescription: Clearcut's camera photographs your items one after another for cutting out. Photos stay on your phone.
+        BGTaskSchedulerPermittedIdentifiers:
+          - app.clearcut.photos.batch
         ITSAppUsesNonExemptEncryption: false
         NSHumanReadableCopyright: "© 2026 Woolfall. All rights reserved."
     settings:

@@ -75,6 +75,11 @@ struct BatchView: View {
                 }
             }
             Spacer()
+            Button { AppRouter.shared.openCamera = true } label: {
+                Image(systemName: "camera").font(.system(size: 17, weight: .semibold)).frame(width: 40, height: 40)
+            }
+            .accessibilityLabel("Shoot more with the camera")
+            .disabled(store.exportProgress != nil || store.room == 0)
             PhotosPicker(selection: $morePicks, maxSelectionCount: max(1, store.room), selectionBehavior: .ordered, matching: .images) {
                 Image(systemName: "plus").font(.system(size: 18, weight: .semibold)).frame(width: 40, height: 40)
             }

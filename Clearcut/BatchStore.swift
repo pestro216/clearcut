@@ -39,6 +39,10 @@ final class BatchStore: ObservableObject {
     @Published var exportProgress: (done: Int, total: Int)?
     @Published var exportResult: ExportResult?
     @Published var message: String?
+    /// Listing details per photo, kept while the batch is open.
+    @Published var listings: [UUID: ListingFacts] = [:]
+    /// While the camera is open, full cutouts wait, so the two never compete for memory.
+    var cameraOpen = false
 
     let library: BackgroundLibrary
 
@@ -81,6 +85,8 @@ final class BatchStore: ObservableObject {
         rv.isExcludedFromBackup = true
         try? batchDir.setResourceValues(rv)
         dir = batchDir
+        // Camera photos the batch never took in (the app was closed first) are left over; clear them.
+        for u in (try? fm.contentsOfDirectory(at: RailCamera.folder, includingPropertiesForKeys: nil)) ?? [] { try? fm.removeItem(at: u) }
         var initial = Look()
         if let d = UserDefaults.standard.data(forKey: Look.storageKey), let saved = try? JSONDecoder().decode(Look.self, from: d) {
             initial = saved
@@ -109,6 +115,8 @@ final class BatchStore: ObservableObject {
         var alpha: String?
         var previewPhoto: String?
         var previewAlpha: String?
+        var hanger: Bool?
+        var camera: Bool?
     }
 
     private var manifestURL: URL { dir.appendingPathComponent("batch.json") }
@@ -121,7 +129,7 @@ final class BatchStore: ObservableObject {
             Saved(id: i.id, status: i.status, removed: i.removed, edited: i.edited, triedWithSurface: i.triedWithSurface,
                   original: i.originalURL.lastPathComponent, width: Double(i.pixelSize.width), height: Double(i.pixelSize.height),
                   alpha: i.alphaURL?.lastPathComponent, previewPhoto: i.previewPhotoURL?.lastPathComponent,
-                  previewAlpha: i.previewAlphaURL?.lastPathComponent)
+                  previewAlpha: i.previewAlphaURL?.lastPathComponent, hanger: i.hangerRemoved, camera: i.fromCamera)
         }
         if let d = try? JSONEncoder().encode(saved) { try? d.write(to: manifestURL, options: .atomic) }
     }
@@ -152,6 +160,8 @@ final class BatchStore: ObservableObject {
             item.alphaURL = url(s.alpha)
             item.previewPhotoURL = url(s.previewPhoto)
             item.previewAlphaURL = url(s.previewAlpha)
+            item.hangerRemoved = s.hanger ?? false
+            item.fromCamera = s.camera ?? false
             if s.id == crashed {
                 item.status = .failed("Skipped: the phone ran out of memory on this photo, kept as the original")
                 item.removed = false
@@ -197,7 +207,8 @@ final class BatchStore: ObservableObject {
     var transparent: Bool { if case .transparent = look.backdrop { return true }; return false }
     var attentionCount: Int { items.filter { $0.needsAttention }.count }
     /// Photos that will be saved: those using a cutout. Originals are already in Photos.
-    var exportable: [BatchItem] { items.filter { $0.removed && $0.canRemove } }
+    /// Camera photos kept as originals are saved too: they aren't in the library yet.
+    var exportable: [BatchItem] { items.filter { ($0.removed && $0.canRemove) || ($0.fromCamera && $0.status != .processing) } }
     var anyRemoved: Bool { items.contains { $0.removed && $0.canRemove } }
 
     // MARK: Import
@@ -234,15 +245,21 @@ final class BatchStore: ObservableObject {
                     let source = queue.removeFirst()
                     let id = UUID()
                     let loaded: Data?
+                    var camera = false
                     switch source {
                     case .pick(let p): loaded = try? await p.loadTransferable(type: Data.self)
-                    case .file(let u): loaded = try? Data(contentsOf: u)
+                    case .file(let u):
+                        loaded = try? Data(contentsOf: u)
+                        camera = u.deletingLastPathComponent().standardizedFileURL == RailCamera.folder.standardizedFileURL
                     }
                     var added = false
                     if let data = loaded {
                         let original = dir.appendingPathComponent("\(id.uuidString)-original")
                         if (try? data.write(to: original)) != nil {
-                            items.append(BatchItem(id: id, originalURL: original))
+                            if case .file(let u) = source, camera { try? FileManager.default.removeItem(at: u) }
+                            var item = BatchItem(id: id, originalURL: original)
+                            item.fromCamera = camera
+                            items.append(item)
                             await quickLook(id: id, data: data)
                             refineQueue.append(id)
                             added = true
@@ -250,6 +267,8 @@ final class BatchStore: ObservableObject {
                     }
                     if !added, let p = importing { importing = (p.done + 1, p.total) }
                 } else {
+                    while cameraOpen { try? await Task.sleep(nanoseconds: 400_000_000) }
+                    guard !refineQueue.isEmpty else { continue }
                     let id = refineQueue.removeFirst()
                     if let item = items.first(where: { $0.id == id }), let data = try? Data(contentsOf: item.originalURL) {
                         // Remembered until done: if iOS closes the app on this photo, it is skipped on reopening.
@@ -568,14 +587,60 @@ final class BatchStore: ObservableObject {
         renderGrid(items[j])
     }
 
+    /// Clears a hanger's hook from the top of the cutout (an experiment), or puts it back as it
+    /// was. False when no hook is found, or there is nothing to put back.
+    func setHangerRemoved(_ id: UUID, _ on: Bool) async -> Bool {
+        guard let i = items.firstIndex(where: { $0.id == id }), let au = items[i].alphaURL,
+              let pau = items[i].previewAlphaURL else { return false }
+        let size = items[i].pixelSize
+        let grid = items[i].gridPhoto.map { ($0.width, $0.height) }
+        let backup = dir.appendingPathComponent("\(id.uuidString)-alpha-hook.png")
+        let result = await Task.detached(priority: .userInitiated) { () -> Box<[UInt8]?>? in
+            autoreleasepool { () -> Box<[UInt8]?>? in
+                let w = Int(size.width), h = Int(size.height)
+                let fm = FileManager.default
+                let alpha: [UInt8]
+                if on {
+                    guard let a = BatchStore.readAlpha(au, width: w, height: h),
+                          let cleared = Hanger.removed(alpha: a, width: w, height: h) else { return nil }
+                    try? fm.removeItem(at: backup)
+                    guard (try? fm.copyItem(at: au, to: backup)) != nil else { return nil }
+                    BatchStore.writeAlpha(cleared, w, h, to: au)
+                    alpha = cleared
+                } else {
+                    guard fm.fileExists(atPath: backup.path), let a = BatchStore.readAlpha(backup, width: w, height: h) else { return nil }
+                    try? fm.removeItem(at: au)
+                    guard (try? fm.moveItem(at: backup, to: au)) != nil else { BatchStore.writeAlpha(a, w, h, to: au); return nil }
+                    alpha = a
+                }
+                let full = Plane(bytes: alpha, width: w, height: h)
+                let p = BatchStore.scaled(w, h, BatchStore.previewSide)
+                BatchStore.writeAlpha(full.resized(width: p.0, height: p.1).toBytes(), p.0, p.1, to: pau)
+                guard let grid else { return Box(nil) }
+                return Box(full.resized(width: grid.0, height: grid.1).toBytes())
+            }
+        }.value
+        guard let result, let j = items.firstIndex(where: { $0.id == id }) else { return false }
+        if let g = result.value { items[j].gridAlpha = g }
+        items[j].hangerRemoved = on
+        items[j].edited = true
+        await PreviewRenderer.shared.forget(id)
+        lookVersion += 1
+        PreviewRenderer.gate.set(lookVersion)
+        renderGrid(items[j])
+        return true
+    }
+
     func delete(_ id: UUID) {
         if let item = items.first(where: { $0.id == id }) {
             for u in [item.originalURL, item.alphaURL, item.previewPhotoURL, item.previewAlphaURL].compactMap({ $0 }) {
                 try? FileManager.default.removeItem(at: u)
             }
         }
+        try? FileManager.default.removeItem(at: dir.appendingPathComponent("\(id.uuidString)-alpha-hook.png"))
         items.removeAll { $0.id == id }
         grid[id] = nil
+        listings[id] = nil
     }
 
     func clear() {
@@ -583,6 +648,7 @@ final class BatchStore: ObservableObject {
         refineQueue = []
         items = []
         grid = [:]
+        listings = [:]
         exportResult = nil
         let fm = FileManager.default
         for u in (try? fm.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil)) ?? [] { try? fm.removeItem(at: u) }
@@ -637,6 +703,7 @@ final class BatchStore: ObservableObject {
     nonisolated static func exportData(item: BatchItem, look: Look, surfaceURL: URL?) -> Exported? {
         autoreleasepool {
             guard let data = try? Data(contentsOf: item.originalURL) else { return nil }
+            if item.fromCamera && !(item.removed && item.alphaURL != nil) { return Exported(data: data) }
             guard item.removed, item.alphaURL != nil, let cg = ImageIOHelpers.loadOriented(data), let photo = RGBAImage(cgImage: cg),
                   let au = item.alphaURL, let alpha = readAlpha(au, width: photo.width, height: photo.height) else { return nil }
             let source = backdropSource(look, surfaceURL: surfaceURL, maxPixel: nil)
