@@ -38,10 +38,10 @@ final class RailCamera: NSObject, ObservableObject, AVCapturePhotoCaptureDelegat
     private var stillSince: Date?
     private var lastCapture = Date.distantPast
     private let steadyLock = NSLock()
-    private var _steady = false
+    private var steadyNow = false
     private var isSteady: Bool {
-        get { steadyLock.lock(); defer { steadyLock.unlock() }; return _steady }
-        set { steadyLock.lock(); _steady = newValue; steadyLock.unlock() }
+        get { steadyLock.lock(); defer { steadyLock.unlock() }; return steadyNow }
+        set { steadyLock.lock(); steadyNow = newValue; steadyLock.unlock() }
     }
 
     /// Where photos wait until the batch takes them.
