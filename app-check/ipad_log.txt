@@ -1,40 +1,40 @@
-2026-11-27 14:04:44.334 Df Clearcut[37135:19e4a] [com.apple.UIKit:KeyWindow] Setting default evaluation strategy for UIUserInterfaceIdiomPad to LastOneWins
-2026-11-27 14:04:44.334 Df Clearcut[37135:19e4a] [com.apple.UIKit:KeyWindow] Scene target of keyboard event deferring environment did change: 1; scene: UIWindowScene: 0x105e69d70; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
-2026-11-27 14:04:44.336 Df Clearcut[37135:19e4a] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x105e69d70; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
-2026-11-27 14:04:44.336 Df Clearcut[37135:19e4a] [com.apple.UIKit:KeyWindow] Setting default evaluation strategy for UIUserInterfaceIdiomPad to SystemShellManaged
-2026-11-27 14:04:44.351 Df Clearcut[37135:19e4a] [com.apple.FileURL:default] kExcludedFromBackupXattrName set on path: /Users/runner/Library/Developer/CoreSimulator/Devices/F7ED61EB-BBA5-471A-B043-E52322C2AA1C/data/Containers/Data/Application/5A2E20FD-4656-4820-A61E-00BB9028BC62/Library/Application Support/ClearcutBatch
-2026-11-27 14:04:44.494 Df Clearcut[37135:19e4a] [com.apple.UIKit:KeyWindow] Window did become application key: UIWindow: 0x106610400; contextId: 0x1D9AD678; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
-2026-11-27 14:04:44.497 Df Clearcut[37135:19e54] [com.apple.BackBoard:EventDelivery] policyStatus:<BKSHIDEventDeliveryPolicyObserver: 0x106460540; token: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default; status: ancestor> was:target
-2026-11-27 14:04:44.501 Df Clearcut[37135:19e4a] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: 11F258FD-830A-4F96-9E76-91ECE030F664
-2026-11-27 14:04:44.772 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.772 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.773 Df Clearcut[37135:19e4a] [PrototypeTools:domain] Not observing PTDefaults on customer install.
-2026-11-27 14:04:44.779 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.779 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.780 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.780 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.782 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.782 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.826 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.826 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.827 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.827 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:44.874 Df Clearcut[37135:19e4a] [com.apple.BackgroundTasks:Framework] submitTaskRequest: <BGContinuedProcessingTaskRequest: app.clearcut.photos.batch, (title: Cutting out photos, subtitle: 1 of 6, resources: Default, submissionStrategy: Fail)>
-2026-11-27 14:04:44.875 Df Clearcut[37135:19e4a] [com.apple.BackgroundTasks:Framework] submitTaskRequest: <BGContinuedProcessingTaskRequest: app.clearcut.photos.batch, (title: Cutting out photos, subtitle: 1 of 6, resources: Default, submissionStrategy: Fail)>
-2026-11-27 14:04:44.880 Df Clearcut[37135:19e5b] [com.apple.BoardServices:XPCErrors] [C:3] Alloc com.apple.PointerUI.pointeruid.service
-2026-11-27 14:04:45.006 Df Clearcut[37135:19e4a] [com.apple.network:activity] Create activity from XPC object <nw_activity 50:1 [099CBDA3-67F3-4A0D-A638-D752712032DF] (reporting strategy default)>
-2026-11-27 14:04:45.006 Df Clearcut[37135:19e4a] [com.apple.network:activity] Create activity from XPC object <nw_activity 50:2 [033808AC-E02C-4235-9494-3E890CB3CC78] (reporting strategy default)>
-2026-11-27 14:04:45.006 Df Clearcut[37135:19e4a] [com.apple.network:activity] Set activity <nw_activity 50:1 [099CBDA3-67F3-4A0D-A638-D752712032DF] (reporting strategy default)> as the global parent
-2026-11-27 14:04:45.017 Df Clearcut[37135:19e4a] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: 11F258FD-830A-4F96-9E76-91ECE030F664
-2026-11-27 14:04:45.024 Df Clearcut[37135:19e4a] [com.apple.UIKit:KeyWindow] Scene became target of keyboard event deferring environment: UIWindowScene: 0x105e69d70; scene identity: com.apple.frontboard.systemappservices/FBSceneManager:sceneID%3Aapp.clearcut.photos-default
-2026-11-27 14:04:45.086 Df Clearcut[37135:19e4a] [com.apple.UIKit:AppLifecycle] sceneOfRecord: sceneID: sceneID:app.clearcut.photos-default  persistentID: 11F258FD-830A-4F96-9E76-91ECE030F664
-2026-11-27 14:04:45.185 Df Clearcut[37135:19e4a] [com.apple.network:activity] <nw_activity 50:1 [099CBDA3-67F3-4A0D-A638-D752712032DF] (global parent) (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 8612ms
-2026-11-27 14:04:45.186 Df Clearcut[37135:19e4a] [com.apple.network:activity] <nw_activity 50:2 [033808AC-E02C-4235-9494-3E890CB3CC78] (reporting strategy default) complete (reason success)> complete with reason 2 (success), duration 8612ms
-2026-11-27 14:04:45.186 Df Clearcut[37135:19e4a] [com.apple.network:activity] Unsetting the global parent activity <nw_activity 50:1 [099CBDA3-67F3-4A0D-A638-D752712032DF] (global parent) (reporting strategy default) complete (reason success)>
-2026-11-27 14:04:46.065 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:46.065 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:46.247 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:46.247 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:46.366 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:46.367 Df Clearcut[37135:19e4a] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
-2026-11-27 14:04:57.121 Df Clearcut[37135:19e57] [com.apple.xpc:connection] [0x10902c140] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-11-27 15:04:03.800 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:03.800 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:03.946 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:03.946 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.154 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.155 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.248 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.248 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.357 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.357 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.471 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.471 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.606 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.606 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.720 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:04.720 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.034 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.034 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.037 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.037 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.855 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.855 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.856 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:05.856 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:06.649 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:06.649 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:06.651 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:06.651 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:07.387 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:07.387 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:07.388 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:07.388 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:08.126 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:08.126 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:08.128 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:08.128 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:08.952 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:04:08.953 Df Clearcut[29251:15454] [com.apple.UIKit:_UIVisualStyleRegistry] Note: no default visual style class registered as fallback for stylable class UIActivityIndicatorView
+2026-11-27 15:05:14.446 Df Clearcut[29251:1546f] [com.apple.xpc:connection] [0x103ff9680] failed to do a bootstrap look-up: xpc_error=[3: No such process]
+2026-11-27 15:05:38.330 Df Clearcut[29251:15454] [com.apple.BackgroundTasks:Framework] submitTaskRequest: <BGContinuedProcessingTaskRequest: app.clearcut.photos.batch, (title: Cutting out photos, subtitle: 2 of 9, resources: Default, submissionStrategy: Fail)>
