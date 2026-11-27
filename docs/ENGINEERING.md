@@ -314,3 +314,15 @@ now judged on real photos first.
 - Next method steps (from MODNet, GFM): measure the whole-shape part and the edge part separately;
   log where Apple's model and the network disagree on real batches to find failure classes before
   changing rules; one change at a time, each shown against build 39 on the real set.
+- 27 Nov, first batch: 54 latest camera-roll items copied from the phone (Mathew's instruction)
+  to `QA/incoming/2026-11-27/` (not in git). `tools/photoroom_reference.py` turns
+  white-background Photoroom exports into references: SIFT + RANSAC similarity finds each one's
+  original (Photoroom only scaled by 0.595, no reframing), colours matched, alpha solved against
+  white, warped back to the original; near-white item pixels counted as unknown (under 0.2%).
+  11 clean pairs in `realset-draft/` (Columbia and Michigan jackets: whole shots, close-ups,
+  tape measures), each checked by eye. Caution learned: JPEGs on parquet in the camera roll are
+  Clearcut exports, not originals (pale rim, library parquet); only HEICs on concrete are
+  camera originals. Not usable yet: cream bag (only screenshots), collar close-up 3213 and two
+  front shots (originals not in the batch), the vest (no reference). Six shipping-label
+  screenshots with other people's details were left out. Waiting on Mathew's decision about
+  the public repo before moving the drafts into `QA/realset/`.
