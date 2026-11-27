@@ -846,48 +846,48 @@
       },
       "edges: radius 3" : {
         "bandMAE" : 0.371793502642238,
-        "boundaryF" : 0.3438819985415966,
-        "edgeDeltaE" : 17.19709147293507,
+        "boundaryF" : 0.38835905204514076,
+        "edgeDeltaE" : 17.197013841586845,
         "edgeDeltaE95" : 42.84924987528658,
-        "iou" : 0.7965696966141295,
+        "iou" : 0.7976147748332257,
         "keptBackground" : 0.25371405590535023,
-        "missedItem" : 0.0013293748466053942
+        "missedItem" : 1.914559380383684e-05
       },
       "edges: radius 3, tight levels" : {
         "bandMAE" : 0.36683488485957266,
-        "boundaryF" : 0.3438819985415966,
-        "edgeDeltaE" : 16.859813541459307,
+        "boundaryF" : 0.38835905204514076,
+        "edgeDeltaE" : 16.859779608051145,
         "edgeDeltaE95" : 42.89302791489513,
-        "iou" : 0.7965696966141295,
+        "iou" : 0.7976147748332257,
         "keptBackground" : 0.25371405590535023,
-        "missedItem" : 0.0013293748466053942
+        "missedItem" : 1.914559380383684e-05
       },
       "edges: radius 8, finer eps" : {
         "bandMAE" : 0.3711047784433485,
-        "boundaryF" : 0.3409816329399966,
-        "edgeDeltaE" : 17.005357587493876,
+        "boundaryF" : 0.3955121699219502,
+        "edgeDeltaE" : 17.005258188886554,
         "edgeDeltaE95" : 42.84335161080193,
-        "iou" : 0.7965306811013804,
+        "iou" : 0.7977504868954579,
         "keptBackground" : 0.25352043662337925,
-        "missedItem" : 0.001532512841880002
+        "missedItem" : 3.4613502922190903e-06
       },
       "edges: tight levels" : {
         "bandMAE" : 0.36836959432034955,
-        "boundaryF" : 0.33769013623061034,
-        "edgeDeltaE" : 16.897136078116162,
+        "boundaryF" : 0.38424417690416385,
+        "edgeDeltaE" : 16.89710501885956,
         "edgeDeltaE95" : 42.89302791489513,
-        "iou" : 0.7965957681096035,
+        "iou" : 0.797808156476716,
         "keptBackground" : 0.2534275210014725,
-        "missedItem" : 0.0015249411381157729
+        "missedItem" : 5.300192634960482e-06
       },
       "new" : {
         "bandMAE" : 0.3728991058339258,
-        "boundaryF" : 0.33769013623061034,
-        "edgeDeltaE" : 17.17448155906273,
+        "boundaryF" : 0.38424417690416385,
+        "edgeDeltaE" : 17.17436455444175,
         "edgeDeltaE95" : 42.84335161080193,
-        "iou" : 0.7965957681096035,
+        "iou" : 0.797808156476716,
         "keptBackground" : 0.2534275210014725,
-        "missedItem" : 0.0015249411381157729
+        "missedItem" : 5.300192634960482e-06
       },
       "previous app" : {
         "bandMAE" : 0.1779694626317573,
@@ -971,140 +971,140 @@
   },
   "timings" : {
     "01_navy_shirt_on_white" : {
-      "Apple model only" : 1.5691519975662231,
-      "BiRefNet only" : 4.9907310009002686,
-      "edges: radius 3" : 11.405431032180786,
-      "edges: radius 3, tight levels" : 11.252534031867981,
-      "edges: radius 8, finer eps" : 11.289093017578125,
-      "edges: tight levels" : 11.210028886795044,
-      "new" : 12.454715013504028,
-      "previous app" : 3.1355130672454834
+      "Apple model only" : 1.395827054977417,
+      "BiRefNet only" : 5.11686110496521,
+      "edges: radius 3" : 12.0296870470047,
+      "edges: radius 3, tight levels" : 12.576131939888,
+      "edges: radius 8, finer eps" : 12.481101989746094,
+      "edges: tight levels" : 12.206824898719788,
+      "new" : 12.30640697479248,
+      "previous app" : 3.3635870218276978
     },
     "02_white_on_white" : {
-      "Apple model only" : 0.8176829814910889,
-      "BiRefNet only" : 5.850447058677673,
-      "edges: radius 3" : 10.698912978172302,
-      "edges: radius 3, tight levels" : 10.898440957069397,
-      "edges: radius 8, finer eps" : 10.466160893440247,
-      "edges: tight levels" : 11.471158027648926,
-      "new" : 10.56752598285675,
-      "previous app" : 2.337283968925476
+      "Apple model only" : 0.560157060623169,
+      "BiRefNet only" : 5.6728609800338745,
+      "edges: radius 3" : 11.156291961669922,
+      "edges: radius 3, tight levels" : 12.86719000339508,
+      "edges: radius 8, finer eps" : 10.488692045211792,
+      "edges: tight levels" : 10.925264954566956,
+      "new" : 13.358973026275635,
+      "previous app" : 2.0531100034713745
     },
     "03_black_on_dark_wood" : {
-      "Apple model only" : 0.6596490144729614,
-      "BiRefNet only" : 9.164793014526367,
-      "edges: radius 3" : 15.310135006904602,
-      "edges: radius 3, tight levels" : 15.280562043190002,
-      "edges: radius 8, finer eps" : 14.380658030509949,
-      "edges: tight levels" : 14.304839015007019,
-      "new" : 14.644930005073547,
-      "previous app" : 1.8969190120697021
+      "Apple model only" : 0.7837209701538086,
+      "BiRefNet only" : 14.806766033172607,
+      "edges: radius 3" : 14.505918025970459,
+      "edges: radius 3, tight levels" : 15.441907048225403,
+      "edges: radius 8, finer eps" : 20.548756003379822,
+      "edges: tight levels" : 16.591873049736023,
+      "new" : 17.906439900398254,
+      "previous app" : 2.8904680013656616
     },
     "04_watch_thin_straps" : {
-      "Apple model only" : 0.5224319696426392,
-      "BiRefNet only" : 9.209542989730835,
-      "edges: radius 3" : 14.484626054763794,
-      "edges: radius 3, tight levels" : 14.504637002944946,
-      "edges: radius 8, finer eps" : 14.60790503025055,
-      "edges: tight levels" : 14.202031970024109,
-      "new" : 13.786067008972168,
-      "previous app" : 2.105586051940918
+      "Apple model only" : 0.6030950546264648,
+      "BiRefNet only" : 9.581825971603394,
+      "edges: radius 3" : 13.805900931358337,
+      "edges: radius 3, tight levels" : 15.360440969467163,
+      "edges: radius 8, finer eps" : 16.414635062217712,
+      "edges: tight levels" : 14.709596991539001,
+      "new" : 17.918838024139404,
+      "previous app" : 2.3370959758758545
     },
     "05_fine_chain_on_marble" : {
-      "BiRefNet only" : 9.03187906742096
+      "BiRefNet only" : 10.40586805343628
     },
     "06_mug_handle_gap" : {
-      "Apple model only" : 0.39895403385162354,
-      "BiRefNet only" : 4.813714981079102,
-      "edges: radius 3" : 10.39537799358368,
-      "edges: radius 3, tight levels" : 10.642704010009766,
-      "edges: radius 8, finer eps" : 10.399425983428955,
-      "edges: tight levels" : 9.875165939331055,
-      "new" : 9.997956037521362,
-      "previous app" : 1.7607280015945435
+      "Apple model only" : 0.4073810577392578,
+      "BiRefNet only" : 5.15758490562439,
+      "edges: radius 3" : 12.129341006278992,
+      "edges: radius 3, tight levels" : 15.828640937805176,
+      "edges: radius 8, finer eps" : 12.954743027687073,
+      "edges: tight levels" : 10.235259056091309,
+      "new" : 13.0591379404068,
+      "previous app" : 1.9280949831008911
     },
     "07_reflective_bottle" : {
-      "Apple model only" : 0.4971510171890259,
-      "BiRefNet only" : 9.865368962287903,
-      "edges: radius 3" : 14.904903054237366,
-      "edges: radius 3, tight levels" : 15.09829294681549,
-      "edges: radius 8, finer eps" : 14.78013801574707,
-      "edges: tight levels" : 14.20255708694458,
-      "new" : 15.156522989273071,
-      "previous app" : 1.9641679525375366
+      "Apple model only" : 0.5710369348526001,
+      "BiRefNet only" : 8.815786957740784,
+      "edges: radius 3" : 13.860521912574768,
+      "edges: radius 3, tight levels" : 15.398159980773926,
+      "edges: radius 8, finer eps" : 16.44916796684265,
+      "edges: tight levels" : 14.668143033981323,
+      "new" : 16.34304404258728,
+      "previous app" : 1.9710149765014648
     },
     "08_fuzzy_knit_edge" : {
-      "Apple model only" : 0.38685595989227295,
-      "BiRefNet only" : 5.415665984153748,
-      "edges: radius 3" : 10.662966012954712,
-      "edges: radius 3, tight levels" : 10.507084012031555,
-      "edges: radius 8, finer eps" : 10.667050004005432,
-      "edges: tight levels" : 10.115500926971436,
-      "new" : 10.52376401424408,
-      "previous app" : 1.8392729759216309
+      "Apple model only" : 0.5168379545211792,
+      "BiRefNet only" : 5.993375062942505,
+      "edges: radius 3" : 11.428292036056519,
+      "edges: radius 3, tight levels" : 11.763792991638184,
+      "edges: radius 8, finer eps" : 11.864410042762756,
+      "edges: tight levels" : 10.786635994911194,
+      "new" : 13.061521053314209,
+      "previous app" : 2.138858914375305
     },
     "09_sunglasses_gaps" : {
-      "Apple model only" : 0.43357396125793457,
-      "BiRefNet only" : 9.582247018814087,
-      "edges: radius 3" : 15.099557042121887,
-      "edges: radius 3, tight levels" : 13.74693500995636,
-      "edges: radius 8, finer eps" : 13.949030995368958,
-      "edges: tight levels" : 13.80991005897522,
-      "new" : 13.74948000907898,
-      "previous app" : 1.691094994544983
+      "Apple model only" : 0.7269159555435181,
+      "BiRefNet only" : 10.392411947250366,
+      "edges: radius 3" : 16.782997012138367,
+      "edges: radius 3, tight levels" : 17.58385705947876,
+      "edges: radius 8, finer eps" : 16.332723021507263,
+      "edges: tight levels" : 18.030225038528442,
+      "new" : 24.92549705505371,
+      "previous app" : 2.3923341035842896
     },
     "10_comb_narrow_teeth" : {
-      "Apple model only" : 0.4696260690689087,
-      "BiRefNet only" : 10.241461992263794,
-      "edges: radius 3" : 14.66972804069519,
-      "edges: radius 3, tight levels" : 14.501700043678284,
-      "edges: radius 8, finer eps" : 15.375424027442932,
-      "edges: tight levels" : 14.932155013084412,
-      "new" : 14.906672954559326,
-      "previous app" : 2.1013399362564087
+      "Apple model only" : 0.5160670280456543,
+      "BiRefNet only" : 9.704892039299011,
+      "edges: radius 3" : 14.445770025253296,
+      "edges: radius 3, tight levels" : 16.076833963394165,
+      "edges: radius 8, finer eps" : 15.715005040168762,
+      "edges: tight levels" : 14.614720106124878,
+      "new" : 15.77049195766449,
+      "previous app" : 2.0309640169143677
     },
     "11_red_shirt_24mp" : {
-      "Apple model only" : 0.7441449165344238,
-      "BiRefNet only" : 5.88264000415802,
-      "edges: radius 3" : 13.453328013420105,
-      "edges: radius 3, tight levels" : 13.558642029762268,
-      "edges: radius 8, finer eps" : 13.570640087127686,
-      "edges: tight levels" : 13.145121932029724,
-      "new" : 13.448837995529175,
-      "previous app" : 4.856207966804504
+      "Apple model only" : 0.5556620359420776,
+      "BiRefNet only" : 5.477308988571167,
+      "edges: radius 3" : 13.747658967971802,
+      "edges: radius 3, tight levels" : 13.615518927574158,
+      "edges: radius 8, finer eps" : 14.431494951248169,
+      "edges: tight levels" : 13.262794017791748,
+      "new" : 16.509063005447388,
+      "previous app" : 5.203974008560181
     },
     "12_striped_shirt_on_carpet" : {
-      "Apple model only" : 0.5693589448928833,
-      "BiRefNet only" : 5.342473983764648,
-      "edges: radius 3" : 7.767358064651489,
-      "edges: radius 3, tight levels" : 7.538179993629456,
-      "edges: radius 8, finer eps" : 7.185019016265869,
-      "edges: tight levels" : 7.558102965354919,
-      "new" : 7.829596042633057,
-      "previous app" : 3.062994956970215
+      "Apple model only" : 0.7881419658660889,
+      "BiRefNet only" : 5.612242102622986,
+      "edges: radius 3" : 7.977456092834473,
+      "edges: radius 3, tight levels" : 7.766867995262146,
+      "edges: radius 8, finer eps" : 7.3405269384384155,
+      "edges: tight levels" : 7.901858925819397,
+      "new" : 7.901204943656921,
+      "previous app" : 3.055130958557129
     },
     "13_leather_vest_cropped_lining" : {
-      "Apple model only" : 0.7329709529876709,
-      "BiRefNet only" : 9.379334092140198,
-      "edges: radius 3" : 11.890231013298035,
-      "edges: radius 3, tight levels" : 11.75207805633545,
-      "edges: radius 8, finer eps" : 11.482432961463928,
-      "edges: tight levels" : 11.689409017562866,
-      "new" : 11.400603890419006,
-      "previous app" : 3.044528007507324
+      "Apple model only" : 0.7353960275650024,
+      "BiRefNet only" : 12.00863802433014,
+      "edges: radius 3" : 13.970435976982117,
+      "edges: radius 3, tight levels" : 14.575933933258057,
+      "edges: radius 8, finer eps" : 14.251338005065918,
+      "edges: tight levels" : 14.476057052612305,
+      "new" : 15.046126961708069,
+      "previous app" : 3.3950570821762085
     },
     "14_shirt_closeup_fills_frame" : {
-      "BiRefNet only" : 9.65083396434784
+      "BiRefNet only" : 11.542272090911865
     },
     "15_shirt_cut_off_by_frame" : {
-      "Apple model only" : 0.5818300247192383,
-      "BiRefNet only" : 9.485506057739258,
-      "previous app" : 2.900070071220398
+      "Apple model only" : 0.6066000461578369,
+      "BiRefNet only" : 11.51588499546051,
+      "previous app" : 3.375741958618164
     },
     "16_vest_closeup_corners" : {
-      "Apple model only" : 0.5419778823852539,
-      "BiRefNet only" : 9.370124101638794,
-      "previous app" : 3.2909910678863525
+      "Apple model only" : 0.6298049688339233,
+      "BiRefNet only" : 11.13674008846283,
+      "previous app" : 3.7770529985427856
     }
   }
 }
