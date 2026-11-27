@@ -82,7 +82,9 @@ struct ItemEditor: View {
         }
         .fullScreenCover(item: $tool) { t in ToolScreen(tool: t, startID: id) }
         .background(Color.clear.fullScreenCover(isPresented: $touchUp) { TouchUpScreen(id: id) })
+        #if PERSONAL
         .sheet(isPresented: $listing) { ListingScreen(id: id) }
+        #endif
         .alert("Clearcut", isPresented: Binding(get: { notice != nil }, set: { if !$0 { notice = nil } })) {
             Button("OK", role: .cancel) { notice = nil }
         } message: {
@@ -127,7 +129,9 @@ struct ItemEditor: View {
                         }
                     }
                     HStack(spacing: 10) {
+                        #if PERSONAL
                         pill("Listing") { listing = true }
+                        #endif
                         if item.removed {
                             pill(hangerBusy ? "Working" : item.hangerRemoved ? "Put hook back" : "Remove hook") { toggleHanger(item) }
                                 .disabled(hangerBusy)

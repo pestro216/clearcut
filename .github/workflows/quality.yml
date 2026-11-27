@@ -25,7 +25,9 @@ jobs:
 
 
       - name: Unit tests
-        run: swift test 2>&1 | tail -40
+        run: |
+          swift test 2>&1 | tail -60
+          exit ${PIPESTATUS[0]}
 
       - uses: actions/cache@v4
         with:

@@ -1,6 +1,8 @@
+#if PERSONAL
 import SwiftUI
 import UIKit
 
+/// Personal build only (the App Store version has no listings, decision 27 Nov 2026).
 /// A ready-to-copy title and description for one item, made on the phone from its photos:
 /// labels read for brand, size and fabric, Vision for the kind of item, the cutout for its
 /// colour. Nothing is written that wasn't read from the photos.
@@ -15,7 +17,7 @@ struct ListingScreen: View {
     @State private var working = false
     @State private var copied: String?
     /// The online version, when asked for.
-    @State private var online: OnlineWriter.Listing?
+    @State private var online: GeminiWriter.Listing?
     @State private var usePhone = false
     @State private var onlineBusy = false
     @State private var onlineError: String?
@@ -58,21 +60,21 @@ struct ListingScreen: View {
         .onAppear(perform: setUp)
         .onDisappear { store.listings[id] = facts }
         .onChange(of: chosen) { _, _ in make(); online = nil; onlineError = nil }
-        .sheet(isPresented: $keySheet) { KeySheet { if OnlineWriter.hasKey { describeOnline() } } }
+        .sheet(isPresented: $keySheet) { KeySheet { if GeminiWriter.hasKey { describeOnline() } } }
     }
 
     @ViewBuilder private var onlineSection: some View {
         VStack(alignment: .leading, spacing: 8) {
             if online != nil {
-                Button(usePhone ? "Show the AI version" : "Show the phone's version") { usePhone.toggle(); copied = nil }
+                Button(usePhone ? "Show Gemini's version" : "Show the phone's version") { usePhone.toggle(); copied = nil }
                     .font(.system(size: 15, weight: .medium))
             }
             Button {
-                if OnlineWriter.hasKey { describeOnline() } else { keySheet = true }
+                if GeminiWriter.hasKey { describeOnline() } else { keySheet = true }
             } label: {
                 HStack(spacing: 10) {
                     if onlineBusy { ProgressView() }
-                    Text(onlineBusy ? "Claude is looking at the photos" : online == nil ? "Describe with AI" : "Describe again with AI")
+                    Text(onlineBusy ? "Gemini is looking at the photos" : online == nil ? "Describe with Gemini" : "Describe again with Gemini")
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .frame(maxWidth: .infinity).padding(.vertical, 13)
@@ -84,9 +86,9 @@ struct ListingScreen: View {
             if let onlineError {
                 Text(onlineError).font(.system(size: 14)).foregroundStyle(Theme.warning)
             }
-            Text("Sends the chosen photos to Anthropic's Claude, which recognises the item and can search the web for its exact name. Nothing else in Clearcut goes online. Costs about 1p per item on your Anthropic account.")
+            Text("Sends the chosen photos to Google's Gemini, which recognises the item and can check Google Search for its exact name. Nothing else in Clearcut goes online. Free within Google's daily limit.")
                 .font(.system(size: 13)).foregroundStyle(Theme.muted).fixedSize(horizontal: false, vertical: true)
-            if OnlineWriter.hasKey {
+            if GeminiWriter.hasKey {
                 Button("Change API key") { keySheet = true }.font(.system(size: 13))
             }
         }
@@ -100,7 +102,7 @@ struct ListingScreen: View {
         onlineError = nil
         Task {
             do {
-                let result = try await OnlineWriter.describe(photos: photos, hints: hints)
+                let result = try await GeminiWriter.describe(photos: photos, hints: hints)
                 if want == ordered { online = result; usePhone = false; copied = nil }
             } catch {
                 onlineError = error.localizedDescription
@@ -183,7 +185,7 @@ struct ListingScreen: View {
     }
 }
 
-/// Where the Anthropic API key is typed in. It is kept in the iPhone's Keychain, on this phone only.
+/// Where the Gemini API key is typed in. It is kept in the iPhone's Keychain, on this phone only.
 private struct KeySheet: View {
     @Environment(\.dismiss) private var dismiss
     let saved: () -> Void
@@ -193,25 +195,26 @@ private struct KeySheet: View {
         NavigationStack {
             Form {
                 Section {
-                    SecureField("Anthropic API key", text: $key)
+                    SecureField("Gemini API key", text: $key)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 } footer: {
-                    Text("Make a key at console.anthropic.com, under API keys, and paste it here. It is kept in this iPhone's Keychain and only sent to Anthropic.")
+                    Text("Get a free key at aistudio.google.com: sign in with your Google account and choose Get API key. Paste it here. It is kept in this iPhone's Keychain and only sent to Google.")
                 }
-                if OnlineWriter.hasKey {
-                    Section { Button("Remove the saved key", role: .destructive) { OnlineWriter.saveKey(""); dismiss() } }
+                if GeminiWriter.hasKey {
+                    Section { Button("Remove the saved key", role: .destructive) { GeminiWriter.saveKey(""); dismiss() } }
                 }
             }
-            .navigationTitle("Describe with AI")
+            .navigationTitle("Describe with Gemini")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Save") { OnlineWriter.saveKey(key); dismiss(); saved() }
+                    Button("Save") { GeminiWriter.saveKey(key); dismiss(); saved() }
                         .disabled(key.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
             }
         }
     }
 }
+#endif

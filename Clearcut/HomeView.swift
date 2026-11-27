@@ -67,6 +67,11 @@ struct HomeView: View {
 enum Copyright {
     static let owner = "Woolfall"
     static let year = "2026"
+    #if PERSONAL
+    static let privacy = "Your photos stay on your phone. Clearcut has no accounts and no tracking, and every cutout is made on the phone itself. The one exception is Describe with Gemini in a listing: only when you tap it, that item's photos are sent to Google to write the listing. Finished photos are only added to your library when you tap Save."
+    #else
+    static let privacy = "Your photos never leave your phone. Clearcut has no accounts, no tracking and no internet connection: every cutout is made on the phone itself. Finished photos are only added to your library when you tap Save."
+    #endif
 }
 
 /// A looping demonstration on the home screen: an item as photographed, then a line sweeps across
@@ -226,7 +231,7 @@ struct AboutView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 22) {
                     section("Clearcut", "Version \(version)\n© \(Copyright.year) \(Copyright.owner). All rights reserved.")
-                    section("Privacy", "Your photos stay on your phone. Clearcut has no accounts and no tracking, and every cutout is made on the phone itself. The one exception is Describe with AI in a listing: only when you tap it, that item's photos are sent to Anthropic to write the listing. Finished photos are only added to your library when you tap Save.")
+                    section("Privacy", Copyright.privacy)
                     section("Cutout model", "BiRefNet (Zheng et al., 2024), MIT licence, converted for iPhone by the birefnet-lite-coreml project, MIT licence. Full licence texts are below.")
                     section("Surfaces", "Surface photos from Poly Haven (polyhaven.com), CC0.")
                     CrashReportsSection()
