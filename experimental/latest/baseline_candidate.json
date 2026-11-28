@@ -131,6 +131,17 @@
     "keptBackground" : 0.25865232110038056,
     "missedItem" : 3.245015898955397e-06
   },
+  "15_shirt_cut_off_by_frame" : {
+    "bandMAE" : 0.07956830193010019,
+    "boundaryF" : 0.9849031398815637,
+    "connectivity" : 5.371195521712303,
+    "edgeDeltaE" : 7.214812109550142,
+    "edgeDeltaE95" : 22.09585283878503,
+    "gradient" : 1.0893230889691234,
+    "iou" : 0.999628939243314,
+    "keptBackground" : 0.00022211271030670327,
+    "missedItem" : 0.00014903046368965896
+  },
   "R_columbia_anorak_arms_out_concrete" : {
     "bandMAE" : 0.22896103191139847,
     "boundaryF" : 0.6065173206986352,
