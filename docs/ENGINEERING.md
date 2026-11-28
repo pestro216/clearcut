@@ -399,3 +399,28 @@ agreement with the first pass: 0.97 to 1.00 on every photo where the canvas pass
 (4 real garment photos touching the frame, 4 made-up scenes); 0.61 or less, or no subject, on every
 photo where they helped. Change: canvas passes skipped when Apple confirms (0.95 or more); on
 these 23 scenes this changes no result and saves one or two passes on eight.
+
+**Quality run 60 (branch result).** Every score identical to run 59 on all 23 shared scenes;
+network passes 49 to 39. Summary against `main` (run 47):
+
+| | `main` (run 47) | Branch (run 60) |
+|---|---|---|
+| Real photos, mean overlap (11) | 0.818 | 0.985 |
+| Real photos, garment missed | 17.7% | 0.95% |
+| Real photos, boundary F (2 px) | 0.617 | 0.668 |
+| Real photos, kept background | 0.51% | 0.55% |
+| Made-up scenes, mean overlap (12) | 0.972 | 0.976 |
+| Network passes per normal garment photo | 2 (whole + crop, or + mirrored canvas) | 1 |
+| Time per photo, GitHub's Mac (varies about 25% run to run) | 9.7 s real, 8.2 s made-up | 4.3 s real, 5.0 s made-up |
+
+Close-ups (overlap): striped sleeve 0.30 to 0.998, underarm 0.35 to 0.999, Columbia side 0.47 to
+0.963 (flagged Check), hem and front close-up unchanged (0.998, 0.995; already rescued on `main`).
+`docs/experimental-closeups-2026-11-28.jpg`: the five close-ups, network result before and after
+(made on this PC with `tools/netlab`, not the app's finished cutouts).
+
+Remaining: the comb scene still fails its old baseline (0.952 against 0.987; `main` 0.913). The
+Columbia cuff close-up keeps 0.933 (5% missed, its folded-back cuff). Kept background rose very
+slightly (0.51 to 0.55%). Not measured: time and memory on the iPhone 11 (each network pass 6 to 9 s
+there, so dropping a pass should save that much per normal photo); thermal behaviour in long
+batches; the Neural Engine stays off. Next speed step if needed: spread matting and the box blurs
+over the phone's cores (0.6 to 2 s per photo on the Mac).
