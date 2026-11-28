@@ -33,6 +33,8 @@ public final class CutoutNetwork: @unchecked Sendable {
     /// Whether the last run used the Neural Engine or GPU, and how long the network itself took (seconds).
     public private(set) var lastRunAccelerated = false
     public private(set) var lastSeconds: Double = 0
+    /// How many predictions this network has made (each pass of a photo is one), for the test bench.
+    public private(set) var runCount = 0
     /// Whether the last photo was brightened or given more contrast before the network saw it.
     public private(set) var lastExposureCorrected = false
 
@@ -205,6 +207,7 @@ public final class CutoutNetwork: @unchecked Sendable {
         defer { lock.unlock() }
         let started = Date()
         defer { lastSeconds = Date().timeIntervalSince(started) }
+        runCount += 1
         if accelerate, let fast = CutoutNetwork.fastCandidate {
             let checking = CutoutNetwork.trust(fast.name) == nil
             // Marked as failed until it passes: if iOS closes the app during the check, this

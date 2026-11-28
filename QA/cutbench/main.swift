@@ -113,17 +113,26 @@ func runNetworkOnly(_ cg: CGImage, _ photo: RGBAImage) throws -> Output? {
 func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool = true, guided: Bool = true, linear: Bool = true,
             surface: Bool = false, useNetwork: Bool = true, tweak: (inout MatteOptions) -> Void = { _ in }) throws -> Output? {
     let start = Date()
+    let runsBefore = network?.runCount ?? 0
     guard let seg = try Segmenter.segment(cg, zoom: zoom, network: useNetwork ? network : nil) else { return nil }
+    let tSeg = Date()
     var o = MatteOptions(); o.colourEvidence = colour; o.guidedRefinement = guided; o.linearEdges = linear
     o.surfaceEvidence = surface; o.surface = surface ? batchSurface : nil
     tweak(&o)
     let m = Matting.refine(full: photo, segmentation: seg, options: o)
+    let tMatte = Date()
     if surface, let l = m.learnedSurface { batchSurface = l }
     if case .failed(let why) = m.confidence { lastFailure = why; return nil }
     let fg = Matting.foreground(full: photo, alpha: m.alpha)
     let conf: String
     switch m.confidence { case .good: conf = "good"; case .check(let s): conf = "check: \(s)"; case .failed(let s): conf = "failed: \(s)" }
-    return Output(alpha: m.alpha, fg: fg, seconds: Date().timeIntervalSince(start), confidence: conf, notes: m.notes)
+    // Where the time goes: segmentation (network passes and the second opinion), matting, colour.
+    var notes = m.notes
+    notes["secSegment"] = tSeg.timeIntervalSince(start)
+    notes["secMatting"] = tMatte.timeIntervalSince(tSeg)
+    notes["secForeground"] = Date().timeIntervalSince(tMatte)
+    notes["networkPasses"] = Double((network?.runCount ?? 0) - runsBefore)
+    return Output(alpha: m.alpha, fg: fg, seconds: Date().timeIntervalSince(start), confidence: conf, notes: notes)
 }
 
 let methods: [(String, (CGImage, RGBAImage) throws -> Output?)] = [
