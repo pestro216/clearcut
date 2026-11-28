@@ -280,6 +280,14 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(Segmenter.acceptCanvas(plain: garment, wide: garment, image: img), .agree)
     }
 
+    func testOverlapOfTwoMaps() {
+        var a = Plane(width: 10, height: 10, value: 0), b = Plane(width: 10, height: 10, value: 0)
+        for i in 0..<50 { a.data[i] = 1 }
+        for i in 25..<75 { b.data[i] = 1 }
+        XCTAssertEqual(Segmenter.overlap(a, b), 25.0 / 75.0, accuracy: 1e-6)
+        XCTAssertEqual(Segmenter.overlap(Plane(width: 10, height: 10, value: 0), Plane(width: 10, height: 10, value: 0)), 1)
+    }
+
     func testGreyCanvasCheckRejectsASlabOfPlainSurfaceAboveASmallItem() {
         // Sunglasses-like: a small dark item on grained wood; the canvas pass also took the top
         // 40% of the wood (quality run 57). The slab matches the wood left below the item.

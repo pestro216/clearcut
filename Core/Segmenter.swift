@@ -23,6 +23,8 @@ public enum Segmenter {
     /// A first result running off more than this share of the frame's border is doubtful (was 3%;
     /// the Columbia side close-up's ruler touched 3.4%, too near the line).
     static let doubtfulBorderShare: Float = 0.02
+    /// The first pass is also doubtful when it and Apple's subject finder overlap less than this.
+    static let appleDisagreement: Float = 0.8
     /// The detail crop runs only when it covers less than this share of the photo.
     public static let zoomMaxShare: CGFloat = 0.5
 
@@ -96,17 +98,30 @@ public enum Segmenter {
     /// The cutout network, in up to three passes.
     ///
     /// 1. The whole photo, as is. Right for nearly every shot of a whole item.
-    /// 2. Only when that result looks doubtful (it runs off the frame, or it is small): the photo
-    ///    on a larger neutral canvas. On a close-up where the garment fills the frame, a cutout
+    /// 2. Only when that result looks doubtful (it runs off the frame, it is small, or Apple's
+    ///    subject finder sees a quite different item): the photo on a flat grey canvas, then if
+    ///    that is turned down, on its own mirrored edges. On a close-up where the garment fills the frame, a cutout
     ///    network picks the most distinct thing inside it (a tape measure, a label); with room
     ///    around it, the garment is the object. The canvas version is accepted only when what it
     ///    adds looks clearly unlike the background that remains, because on a plain backdrop the
     ///    backdrop itself can become "an object" against the canvas.
     /// 3. A tighter crop around the item, so the network spends its 1024 pixels on the item's
-    ///    edges. Used where it agrees with the result so far.
+    ///    edges, only when the crop is under half the photo. Used where it agrees so far.
     static func networkSegment(_ full: CGImage, ww: Int, wh: Int, zoom: Bool, network: CutoutNetwork) throws -> Segmentation? {
         let fw = CGFloat(full.width), fh = CGFloat(full.height)
         let whole = CGRect(x: 0, y: 0, width: fw, height: fh)
+        // Apple's subject finder first, while the network is unloaded (the two together don't fit
+        // in an iPhone 11): its view is the second opinion for parts the network drops (below),
+        // and a strong disagreement with the network's first pass marks the photo as doubtful.
+        // Skipped, rather than risk the app being closed, if memory is short anyway.
+        network.unload()
+        var small: RGBAImage? = nil
+        var vision: Plane? = nil
+        if Diagnostics.canSpare(450), let s = RGBAImage(cgImage: full, width: ww, height: wh) {
+            small = s
+            if let cg = s.makeOpaqueCGImage(), let v = try? mask(of: cg, network: nil) { vision = v.prob }
+        }
+        Diagnostics.note(vision == nil ? "second opinion skipped" : "second opinion ready")
         Diagnostics.note("network starts")
         // Never leave the network loaded, even when this photo gives up early: the next photo's
         // quick cutout runs Apple's model, and the two together don't fit in an iPhone 11.
@@ -114,8 +129,14 @@ public enum Segmenter {
         guard var prob = try pass(full, region: whole, pads: (0, 0, 0, 0), outW: ww, outH: wh, network: network) else { return nil }
         var canvasUsed = false
         var canvasKind = Canvas.mirrored
-        var notes: [String: Double] = ["doubtful": doubtful(prob) ? 1 : 0, "greyCanvas": -1, "mirroredCanvas": 0]
-        if doubtful(prob), let small = RGBAImage(cgImage: full, width: ww, height: wh) {
+        // A close-up whose ruler barely touches the frame isn't caught by the border test (the
+        // Columbia side close-up, quality run 58); Apple's model then sees far more item.
+        let agreement = vision.map { overlap($0, prob) } ?? 1
+        let isDoubtful = doubtful(prob) || agreement < appleDisagreement
+        var notes: [String: Double] = ["doubtful": isDoubtful ? 1 : 0, "greyCanvas": -1, "mirroredCanvas": 0,
+                                       "appleAgreement": vision == nil ? -1 : Double(agreement)]
+        if small == nil, isDoubtful { small = RGBAImage(cgImage: full, width: ww, height: wh) }
+        if isDoubtful, let small {
             let m = 0.35 * max(fw, fh)
             // Close-ups first: the photo on a flat grey canvas, so a garment that fills the frame
             // becomes an object with an outline instead of "the background" (the network then
@@ -183,14 +204,10 @@ public enum Segmenter {
         // model loads: the two together went over an iPhone 11's memory limit.
         network.unload()
         Diagnostics.note("network unloaded")
-        // A second opinion from Apple's subject finder, for parts the network dropped. Skipped,
-        // rather than risk the app being closed, if memory is short anyway.
-        if Diagnostics.canSpare(450), let small = RGBAImage(cgImage: full, width: ww, height: wh),
-           let cg = small.makeOpaqueCGImage(), let vision = try? mask(of: cg, network: nil) {
-            _ = recoverParts(&prob, vision: vision.prob, image: small)
+        // The second opinion, for parts the network dropped.
+        if let vision, let small {
+            _ = recoverParts(&prob, vision: vision, image: small)
             Diagnostics.note("second opinion done")
-        } else {
-            Diagnostics.note("second opinion skipped")
         }
         return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed, notes: notes)
     }
@@ -358,6 +375,18 @@ public enum Segmenter {
             if dB > 0.5 * dA && dB > 2 / 4096 { surfaceLike += 1 }
         }
         return Float(surfaceLike) < 0.4 * Float(added) ? .accept : .reject
+    }
+
+    /// Intersection over union of two maps' item areas (above 0.5).
+    static func overlap(_ a: Plane, _ b: Plane) -> Float {
+        guard a.count == b.count, a.count > 0 else { return 0 }
+        var inter = 0, uni = 0
+        for i in 0..<a.count {
+            let x = a.data[i] > 0.5, y = b.data[i] > 0.5
+            if x && y { inter += 1 }
+            if x || y { uni += 1 }
+        }
+        return uni == 0 ? 1 : Float(inter) / Float(uni)
     }
 
     /// Share of a histogram's pixels in a colour bin and its 26 neighbours, per bin.

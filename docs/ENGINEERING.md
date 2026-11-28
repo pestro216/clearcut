@@ -379,3 +379,14 @@ the border, so it sits on the 3% "doubtful" line). Fixes: added colours are now 
 added region itself (surface-like when at least half as common in the remaining surface), unit
 test with a slab of wood above a small item; doubtful from 2% of the border; the bench notes
 record the canvas decisions and stage timings.
+
+**Quality run 58.** Sunglasses back to 0.974 (as on `main`). Gate fails only on the comb scene's
+old baseline (0.987), which `main` also fails (0.913); the branch has 0.952. Real photos: overlap
+0.940, missed 5.5%, 4.8 s per photo (run 57 measured 6.4 s for nearly the same code, so GitHub's
+timing varies by about a quarter). Stage times per photo: each network pass about 2 s, matting
+0.6 to 1.7 s, foreground colour 0.15 to 2.2 s (24 MP). The Columbia side close-up was not
+doubtful on the Mac at all (border test), so the grey canvas never ran. Change: Apple's subject
+finder now runs before the network (it ran after it; same memory rule, the two never loaded
+together) and a first pass that overlaps Apple's view by less than 0.8 is doubtful too. The bench
+records `appleAgreement` for every photo, to judge later whether the second pass can be skipped
+on photos that touch the frame but agree (four real photos pay for a pass that changes nothing).
