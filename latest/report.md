@@ -2,41 +2,41 @@
 
 Cutout network: BiRefNet Lite 1024 (Core ML, CPU), loaded in 6.6 s.
 
-Network probe on 01_navy_shirt_on_white: raw output -23.969 to 22.359, mean -4.666; item area 25.6%; one pass 2.45 s.
+Network probe on 01_navy_shirt_on_white: raw output -23.969 to 22.359, mean -4.666; item area 25.6%; one pass 2.38 s.
 
-Generated 2026-11-27T22:49:29Z. Lower is better for errors; higher for IoU and boundary F.
+Generated 2026-11-28T00:50:40Z. Lower is better for errors; higher for IoU and boundary F.
 
 
 ## Full-resolution export check
 
-11_red_shirt_24mp: 5712 x 4284 in, 5712 x 4284 out (same size), cutout 11.66 s, compositing and JPEG 4.27 s, JPEG 4.3 MB, peak memory so far 7198 MB.
+11_red_shirt_24mp: 5712 x 4284 in, 5712 x 4284 out (same size), cutout 10.25 s, compositing and JPEG 3.99 s, JPEG 4.3 MB, peak memory so far 7121 MB.
 ## Shipping method by scene
 
 | Scene | IoU | Boundary F | Edge alpha error | Missed item | Kept background | Edge ΔE | Edge ΔE 95% | Gradient | Connectivity | Time | Confidence |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| 01_navy_shirt_on_white | 0.9992 | 1.000 | 0.063 | 0.00% | 0.08% | 4.04 | 8.85 | 0.95 | 5.06 | 7.09 s | good |
-| 02_white_on_white | 0.9976 | 0.997 | 0.170 | 0.24% | 0.00% | 10.47 | 21.08 | 2.05 | 8.50 | 5.04 s | good |
-| 03_black_on_dark_wood | 0.9996 | 1.000 | 0.089 | 0.03% | 0.02% | 10.14 | 27.06 | 0.71 | 3.22 | 7.08 s | check: Item and background are similar in colour, so edges may be soft |
-| 04_watch_thin_straps | 0.9985 | 1.000 | 0.017 | 0.00% | 0.15% | 2.37 | 7.05 | 0.10 | 0.39 | 8.98 s | good |
-| 06_mug_handle_gap | 0.9997 | 1.000 | 0.023 | 0.03% | 0.00% | 1.66 | 5.53 | 0.12 | 0.29 | 7.91 s | good |
-| 07_reflective_bottle | 0.9956 | 0.975 | 0.107 | 0.04% | 0.40% | 5.62 | 17.14 | 1.45 | 4.55 | 11.39 s | good |
-| 08_fuzzy_knit_edge | 0.9985 | 0.998 | 0.047 | 0.12% | 0.02% | 3.56 | 13.14 | 0.29 | 1.26 | 6.13 s | good |
-| 09_sunglasses_gaps | 0.9744 | 0.786 | 0.138 | 2.31% | 0.26% | 8.67 | 62.17 | 4.16 | 9.03 | 8.29 s | good |
-| 10_comb_narrow_teeth | 0.9129 | 0.916 | 0.101 | 4.47% | 4.65% | 6.62 | 32.64 | 7.45 | 51.53 | 7.12 s | check: Some background may be left between parts of the item |
-| 11_red_shirt_24mp | 0.9994 | 1.000 | 0.083 | 0.00% | 0.06% | 4.82 | 10.02 | 1.67 | 11.87 | 13.01 s | good |
-| 12_striped_shirt_on_carpet | 0.9976 | 0.919 | 0.103 | 0.12% | 0.11% | 8.62 | 30.21 | 6.40 | 23.43 | 7.25 s | good |
-| 13_leather_vest_cropped_lining | 0.7945 | 0.335 | 0.390 | 0.00% | 25.87% | 17.88 | 42.92 | 14.15 | 2382.77 | 9.28 s | check: The item fills almost the whole frame |
-| R_columbia_anorak_arms_out_concrete | 0.9890 | 0.604 | 0.227 | 0.05% | 1.06% | 13.32 | 41.97 | 12.64 | 32.06 | 10.97 s | good |
-| R_columbia_anorak_front_concrete | 0.9871 | 0.709 | 0.199 | 0.63% | 0.67% | 12.67 | 42.95 | 11.86 | 40.01 | 7.30 s | good |
-| R_columbia_cuff_closeup_tape | 0.9326 | 0.353 | 0.303 | 5.06% | 1.80% | 15.12 | 43.16 | 20.05 | 212.38 | 9.24 s | good |
-| R_columbia_hem_closeup_tape | 0.9980 | 0.837 | 0.162 | 0.06% | 0.14% | 9.05 | 29.49 | 6.36 | 51.63 | 7.40 s | good |
-| R_columbia_side_closeup_tape | 0.4697 | 0.262 | 0.246 | 52.97% | 0.13% | 12.94 | 45.85 | 19.14 | 2187.01 | 9.44 s | good |
-| R_michigan_cuff_tape | 0.9927 | 0.779 | 0.143 | 0.48% | 0.25% | 10.15 | 27.33 | 5.44 | 24.29 | 10.69 s | good |
-| R_michigan_front_closeup_tape | 0.9949 | 0.693 | 0.147 | 0.09% | 0.42% | 12.13 | 44.22 | 8.37 | 32.22 | 8.83 s | good |
-| R_michigan_jacket_back_concrete | 0.9918 | 0.578 | 0.162 | 0.35% | 0.47% | 12.02 | 44.28 | 11.75 | 29.76 | 7.77 s | good |
-| R_michigan_jacket_front_open_collar | 0.9938 | 0.663 | 0.148 | 0.04% | 0.58% | 11.97 | 45.60 | 9.79 | 23.61 | 12.27 s | good |
-| R_michigan_sleeve_stripes_tape | 0.2982 | 0.609 | 0.252 | 70.16% | 0.05% | 13.45 | 47.74 | 9.66 | 3558.90 | 13.55 s | check: Item and background are similar in colour, so edges may be soft |
-| R_michigan_underarm_closeup | 0.3465 | 0.701 | 0.107 | 65.33% | 0.07% | 7.92 | 29.00 | 6.26 | 2568.13 | 9.64 s | check: Item and background are similar in colour, so edges may be soft |
+| 01_navy_shirt_on_white | 0.9992 | 1.000 | 0.063 | 0.00% | 0.08% | 4.04 | 8.85 | 0.95 | 5.06 | 9.38 s | good |
+| 02_white_on_white | 0.9976 | 0.997 | 0.170 | 0.24% | 0.00% | 10.47 | 21.08 | 2.05 | 8.50 | 5.83 s | good |
+| 03_black_on_dark_wood | 0.9996 | 1.000 | 0.089 | 0.03% | 0.02% | 10.14 | 27.06 | 0.71 | 3.22 | 6.96 s | check: Item and background are similar in colour, so edges may be soft |
+| 04_watch_thin_straps | 0.9985 | 1.000 | 0.017 | 0.00% | 0.15% | 2.37 | 7.05 | 0.10 | 0.39 | 7.16 s | good |
+| 06_mug_handle_gap | 0.9997 | 1.000 | 0.023 | 0.03% | 0.00% | 1.66 | 5.53 | 0.12 | 0.29 | 4.80 s | good |
+| 07_reflective_bottle | 0.9956 | 0.975 | 0.107 | 0.04% | 0.40% | 5.62 | 17.14 | 1.45 | 4.55 | 6.55 s | good |
+| 08_fuzzy_knit_edge | 0.9985 | 0.998 | 0.047 | 0.12% | 0.02% | 3.56 | 13.14 | 0.29 | 1.26 | 4.65 s | good |
+| 09_sunglasses_gaps | 0.9744 | 0.786 | 0.138 | 2.31% | 0.26% | 8.67 | 62.17 | 4.16 | 9.03 | 9.17 s | good |
+| 10_comb_narrow_teeth | 0.9129 | 0.916 | 0.101 | 4.47% | 4.65% | 6.62 | 32.64 | 7.45 | 51.53 | 8.62 s | check: Some background may be left between parts of the item |
+| 11_red_shirt_24mp | 0.9994 | 1.000 | 0.083 | 0.00% | 0.06% | 4.82 | 10.02 | 1.67 | 11.87 | 8.68 s | good |
+| 12_striped_shirt_on_carpet | 0.9976 | 0.919 | 0.103 | 0.12% | 0.11% | 8.62 | 30.21 | 6.40 | 23.43 | 5.03 s | good |
+| 13_leather_vest_cropped_lining | 0.7945 | 0.335 | 0.390 | 0.00% | 25.87% | 17.88 | 42.92 | 14.15 | 2382.77 | 9.79 s | check: The item fills almost the whole frame |
+| R_columbia_anorak_arms_out_concrete | 0.9890 | 0.604 | 0.227 | 0.05% | 1.06% | 13.32 | 41.97 | 12.64 | 32.06 | 11.80 s | good |
+| R_columbia_anorak_front_concrete | 0.9871 | 0.709 | 0.199 | 0.63% | 0.67% | 12.67 | 42.95 | 11.86 | 40.01 | 10.30 s | good |
+| R_columbia_cuff_closeup_tape | 0.9326 | 0.353 | 0.303 | 5.06% | 1.80% | 15.12 | 43.16 | 20.05 | 212.38 | 7.79 s | good |
+| R_columbia_hem_closeup_tape | 0.9980 | 0.837 | 0.162 | 0.06% | 0.14% | 9.05 | 29.49 | 6.36 | 51.63 | 6.43 s | good |
+| R_columbia_side_closeup_tape | 0.4697 | 0.262 | 0.246 | 52.97% | 0.13% | 12.94 | 45.85 | 19.14 | 2187.01 | 6.68 s | good |
+| R_michigan_cuff_tape | 0.9927 | 0.779 | 0.143 | 0.48% | 0.25% | 10.15 | 27.33 | 5.44 | 24.29 | 7.13 s | good |
+| R_michigan_front_closeup_tape | 0.9949 | 0.693 | 0.147 | 0.09% | 0.42% | 12.13 | 44.22 | 8.37 | 32.22 | 6.57 s | good |
+| R_michigan_jacket_back_concrete | 0.9918 | 0.578 | 0.162 | 0.35% | 0.47% | 12.02 | 44.28 | 11.75 | 29.76 | 5.99 s | good |
+| R_michigan_jacket_front_open_collar | 0.9938 | 0.663 | 0.148 | 0.04% | 0.58% | 11.97 | 45.60 | 9.79 | 23.61 | 9.68 s | good |
+| R_michigan_sleeve_stripes_tape | 0.2982 | 0.609 | 0.252 | 70.16% | 0.05% | 13.45 | 47.74 | 9.66 | 3558.90 | 9.64 s | check: Item and background are similar in colour, so edges may be soft |
+| R_michigan_underarm_closeup | 0.3465 | 0.701 | 0.107 | 65.33% | 0.07% | 7.92 | 29.00 | 6.26 | 2568.13 | 8.58 s | check: Item and background are similar in colour, so edges may be soft |
 
 ## Methods compared (mean over scenes)
 
@@ -53,94 +53,94 @@ Generated 2026-11-27T22:49:29Z. Lower is better for errors; higher for IoU and b
 
 **No cutout produced** (Apple's model found no subject; the app keeps these as originals and flags them): 05_fine_chain_on_marble, 14_shirt_closeup_fills_frame, 15_shirt_cut_off_by_frame, 16_vest_closeup_corners. Not included in the means above.
 
-Peak memory of the whole benchmark process: 7198 MB.
+Peak memory of the whole benchmark process: 7121 MB.
 
 ## Real photos (no reference mask)
 
 | Photo | Item area | Soft edge share | Edge width | Pieces | Time | Confidence |
 |---|---|---|---|---|---|---|
-| web_03_0.jpg | 50.1% | 28.9% | 8.8 px | 1 | 6.66 s | check: Item and background are similar in colour, so edges may be soft |
-| web_03_1.jpg | 54.6% | 53.6% | 11.7 px | 1 | 4.28 s | good |
+| web_03_0.jpg | 50.1% | 28.9% | 8.8 px | 1 | 5.95 s | check: Item and background are similar in colour, so edges may be soft |
+| web_03_1.jpg | 54.6% | 53.6% | 11.7 px | 1 | 3.66 s | good |
 | web_04_0.jpg | none | | | | | Nothing to remove, the item fills the photo |
-| web_04_1.jpg | 73.3% | 59.2% | 8.4 px | 1 | 3.33 s | check: Item and background are similar in colour, so edges may be soft |
-| web_05_0.jpg | 46.1% | 27.6% | 6.8 px | 1 | 2.98 s | good |
-| web_05_1.jpg | 78.2% | 43.8% | 7.6 px | 1 | 3.31 s | check: Some background may be left between parts of the item |
-| web_09_0.jpg | 59.9% | 32.7% | 6.9 px | 1 | 5.24 s | good |
-| web_09_1.jpg | 60.6% | 32.2% | 11.9 px | 1 | 5.37 s | good |
-| web_10_0.jpg | 38.3% | 46.5% | 10.2 px | 1 | 3.45 s | good |
-| web_10_1.jpg | 36.2% | 34.5% | 7.2 px | 1 | 6.40 s | check: Some background may be left between parts of the item |
-| web_11_0.jpg | 11.9% | 58.3% | 12.0 px | 1 | 8.76 s | check: Item and background are similar in colour, so edges may be soft |
-| web_11_1.jpg | 23.3% | 61.0% | 9.7 px | 2 | 6.38 s | check: Item and background are similar in colour, so edges may be soft |
-| web_12_0.jpg | 58.7% | 41.4% | 9.7 px | 1 | 6.44 s | check: Item and background are similar in colour, so edges may be soft |
-| web_12_1.jpg | 65.6% | 49.9% | 8.9 px | 1 | 3.14 s | check: Some background may be left between parts of the item |
-| web_14_0.jpg | 38.4% | 39.3% | 9.0 px | 1 | 6.83 s | good |
-| web_14_1.jpg | 17.6% | 37.9% | 6.5 px | 4 | 5.88 s | check: Some background may be left between parts of the item |
-| web_15_0.jpg | 72.1% | 38.7% | 6.4 px | 1 | 4.77 s | check: Some background may be left between parts of the item |
-| web_15_1.jpg | 8.9% | 36.6% | 9.0 px | 1 | 6.10 s | check: Some background may be left between parts of the item |
-| web_16_0.jpg | 0.3% | 43.0% | 4.8 px | 4 | 6.09 s | check: Item and background are similar in colour, so edges may be soft |
-| web_16_1.jpg | 17.9% | 45.6% | 9.9 px | 1 | 4.33 s | check: Item and background are similar in colour, so edges may be soft |
-| web_19_0.jpg | 26.9% | 34.8% | 6.8 px | 1 | 4.74 s | good |
-| web_19_1.jpg | 22.0% | 58.5% | 10.4 px | 3 | 5.14 s | good |
-| web_20_0.jpg | 16.3% | 51.6% | 10.2 px | 1 | 4.50 s | good |
-| web_20_1.jpg | 59.3% | 34.2% | 7.2 px | 1 | 3.14 s | good |
-| web_21_0.jpg | 42.4% | 61.0% | 12.9 px | 1 | 2.63 s | check: Item and background are similar in colour, so edges may be soft |
-| web_21_1.jpg | 86.8% | 45.6% | 19.1 px | 1 | 3.17 s | good |
-| web_22_0.jpg | 42.7% | 22.7% | 5.7 px | 1 | 2.77 s | good |
-| web_22_1.jpg | 38.4% | 15.8% | 4.2 px | 1 | 2.73 s | good |
-| web_23_0.jpg | 66.2% | 66.7% | 16.4 px | 2 | 5.05 s | good |
-| web_23_1.jpg | 31.0% | 48.6% | 10.8 px | 1 | 6.35 s | check: Item and background are similar in colour, so edges may be soft |
-| web_24_0.jpg | 26.2% | 41.4% | 8.5 px | 1 | 5.10 s | check: Item and background are similar in colour, so edges may be soft |
-| web_24_1.jpg | 10.9% | 37.7% | 8.2 px | 1 | 6.42 s | check: Item and background are similar in colour, so edges may be soft |
-| web_25_0.jpg | 18.0% | 23.5% | 5.1 px | 1 | 4.98 s | check: Item and background are similar in colour, so edges may be soft |
-| web_25_1.jpg | 18.5% | 23.9% | 5.4 px | 1 | 4.71 s | check: Item and background are similar in colour, so edges may be soft |
-| web_27_0.jpg | 72.8% | 49.6% | 10.4 px | 1 | 4.66 s | check: Some background may be left between parts of the item |
-| web_27_1.jpg | 17.7% | 37.4% | 8.1 px | 1 | 2.85 s | check: Item and background are similar in colour, so edges may be soft |
-| web_28_0.jpg | 39.7% | 21.6% | 4.5 px | 1 | 2.81 s | check: Item and background are similar in colour, so edges may be soft |
-| web_28_1.jpg | 32.3% | 42.5% | 9.4 px | 1 | 5.95 s | check: Item and background are similar in colour, so edges may be soft |
-| web_30_0.jpg | 27.7% | 41.8% | 8.9 px | 1 | 4.77 s | check: Item and background are similar in colour, so edges may be soft |
-| web_30_1.jpg | 28.1% | 15.5% | 3.6 px | 1 | 5.94 s | good |
-| web_31_0.jpg | 83.1% | 51.7% | 17.1 px | 1 | 5.28 s | good |
-| web_31_1.jpg | 21.8% | 41.5% | 8.6 px | 1 | 3.15 s | good |
-| web_33_0.jpg | 7.6% | 40.1% | 8.9 px | 2 | 6.10 s | good |
-| web_33_1.jpg | 32.9% | 27.8% | 6.0 px | 1 | 2.56 s | good |
-| web_35_0.jpg | 26.6% | 13.0% | 2.7 px | 1 | 4.31 s | check: Item and background are similar in colour, so edges may be soft |
-| web_35_1.jpg | 10.5% | 40.8% | 9.1 px | 1 | 5.87 s | check: Some background may be left between parts of the item |
-| web_37_0.jpg | 39.0% | 55.7% | 6.5 px | 3 | 2.68 s | check: Some background may be left between parts of the item |
-| web_37_1.jpg | 17.2% | 41.5% | 8.2 px | 1 | 6.21 s | check: Some background may be left between parts of the item |
-| web_38_0.jpg | 28.3% | 38.4% | 8.5 px | 1 | 6.11 s | check: Item and background are similar in colour, so edges may be soft |
-| web_38_1.jpg | 44.4% | 29.3% | 6.7 px | 1 | 4.02 s | check: Item and background are similar in colour, so edges may be soft |
-| web_39_0.jpg | 44.3% | 40.1% | 8.4 px | 3 | 6.76 s | check: Some background may be left between parts of the item |
-| web_39_1.jpg | 32.3% | 31.1% | 6.5 px | 3 | 4.68 s | check: Item and background are similar in colour, so edges may be soft |
-| web_40_0.jpg | 22.6% | 50.4% | 6.8 px | 5 | 4.28 s | good |
-| web_40_1.jpg | 4.5% | 26.9% | 5.5 px | 1 | 8.89 s | good |
+| web_04_1.jpg | 73.3% | 59.2% | 8.4 px | 1 | 3.46 s | check: Item and background are similar in colour, so edges may be soft |
+| web_05_0.jpg | 46.1% | 27.6% | 6.8 px | 1 | 3.87 s | good |
+| web_05_1.jpg | 78.2% | 43.8% | 7.6 px | 1 | 3.91 s | check: Some background may be left between parts of the item |
+| web_09_0.jpg | 59.9% | 32.7% | 6.9 px | 1 | 5.58 s | good |
+| web_09_1.jpg | 60.6% | 32.2% | 11.9 px | 1 | 5.97 s | good |
+| web_10_0.jpg | 38.3% | 46.5% | 10.2 px | 1 | 3.31 s | good |
+| web_10_1.jpg | 36.2% | 34.5% | 7.2 px | 1 | 5.50 s | check: Some background may be left between parts of the item |
+| web_11_0.jpg | 11.9% | 58.3% | 12.0 px | 1 | 9.45 s | check: Item and background are similar in colour, so edges may be soft |
+| web_11_1.jpg | 23.3% | 61.0% | 9.7 px | 2 | 7.05 s | check: Item and background are similar in colour, so edges may be soft |
+| web_12_0.jpg | 58.7% | 41.4% | 9.7 px | 1 | 5.75 s | check: Item and background are similar in colour, so edges may be soft |
+| web_12_1.jpg | 65.6% | 49.9% | 8.9 px | 1 | 2.67 s | check: Some background may be left between parts of the item |
+| web_14_0.jpg | 38.4% | 39.3% | 9.0 px | 1 | 6.19 s | good |
+| web_14_1.jpg | 17.6% | 37.9% | 6.5 px | 4 | 4.92 s | check: Some background may be left between parts of the item |
+| web_15_0.jpg | 72.1% | 38.7% | 6.4 px | 1 | 7.00 s | check: Some background may be left between parts of the item |
+| web_15_1.jpg | 8.9% | 36.6% | 9.0 px | 1 | 6.12 s | check: Some background may be left between parts of the item |
+| web_16_0.jpg | 0.3% | 43.0% | 4.8 px | 4 | 6.74 s | check: Item and background are similar in colour, so edges may be soft |
+| web_16_1.jpg | 17.9% | 45.6% | 9.9 px | 1 | 4.39 s | check: Item and background are similar in colour, so edges may be soft |
+| web_19_0.jpg | 26.9% | 34.8% | 6.8 px | 1 | 4.60 s | good |
+| web_19_1.jpg | 22.0% | 58.5% | 10.4 px | 3 | 4.23 s | good |
+| web_20_0.jpg | 16.3% | 51.6% | 10.2 px | 1 | 4.36 s | good |
+| web_20_1.jpg | 59.3% | 34.2% | 7.2 px | 1 | 2.69 s | good |
+| web_21_0.jpg | 42.4% | 61.0% | 12.9 px | 1 | 2.86 s | check: Item and background are similar in colour, so edges may be soft |
+| web_21_1.jpg | 86.8% | 45.6% | 19.1 px | 1 | 3.24 s | good |
+| web_22_0.jpg | 42.7% | 22.7% | 5.7 px | 1 | 3.12 s | good |
+| web_22_1.jpg | 38.4% | 15.8% | 4.2 px | 1 | 2.47 s | good |
+| web_23_0.jpg | 66.2% | 66.7% | 16.4 px | 2 | 4.58 s | good |
+| web_23_1.jpg | 31.0% | 48.6% | 10.8 px | 1 | 6.62 s | check: Item and background are similar in colour, so edges may be soft |
+| web_24_0.jpg | 26.2% | 41.4% | 8.5 px | 1 | 4.50 s | check: Item and background are similar in colour, so edges may be soft |
+| web_24_1.jpg | 10.9% | 37.7% | 8.2 px | 1 | 7.85 s | check: Item and background are similar in colour, so edges may be soft |
+| web_25_0.jpg | 18.0% | 23.5% | 5.1 px | 1 | 4.54 s | check: Item and background are similar in colour, so edges may be soft |
+| web_25_1.jpg | 18.5% | 23.9% | 5.4 px | 1 | 4.20 s | check: Item and background are similar in colour, so edges may be soft |
+| web_27_0.jpg | 72.8% | 49.6% | 10.4 px | 1 | 5.00 s | check: Some background may be left between parts of the item |
+| web_27_1.jpg | 17.7% | 37.4% | 8.1 px | 1 | 3.25 s | check: Item and background are similar in colour, so edges may be soft |
+| web_28_0.jpg | 39.7% | 21.6% | 4.5 px | 1 | 2.53 s | check: Item and background are similar in colour, so edges may be soft |
+| web_28_1.jpg | 32.3% | 42.5% | 9.4 px | 1 | 4.26 s | check: Item and background are similar in colour, so edges may be soft |
+| web_30_0.jpg | 27.7% | 41.8% | 8.9 px | 1 | 5.04 s | check: Item and background are similar in colour, so edges may be soft |
+| web_30_1.jpg | 28.1% | 15.5% | 3.6 px | 1 | 4.49 s | good |
+| web_31_0.jpg | 83.1% | 51.7% | 17.1 px | 1 | 4.53 s | good |
+| web_31_1.jpg | 21.8% | 41.5% | 8.6 px | 1 | 2.95 s | good |
+| web_33_0.jpg | 7.6% | 40.1% | 8.9 px | 2 | 6.23 s | good |
+| web_33_1.jpg | 32.9% | 27.8% | 6.0 px | 1 | 2.51 s | good |
+| web_35_0.jpg | 26.6% | 13.0% | 2.7 px | 1 | 4.29 s | check: Item and background are similar in colour, so edges may be soft |
+| web_35_1.jpg | 10.5% | 40.8% | 9.1 px | 1 | 6.25 s | check: Some background may be left between parts of the item |
+| web_37_0.jpg | 39.0% | 55.7% | 6.5 px | 3 | 3.68 s | check: Some background may be left between parts of the item |
+| web_37_1.jpg | 17.2% | 41.5% | 8.2 px | 1 | 6.67 s | check: Some background may be left between parts of the item |
+| web_38_0.jpg | 28.3% | 38.4% | 8.5 px | 1 | 5.34 s | check: Item and background are similar in colour, so edges may be soft |
+| web_38_1.jpg | 44.4% | 29.3% | 6.7 px | 1 | 4.50 s | check: Item and background are similar in colour, so edges may be soft |
+| web_39_0.jpg | 44.3% | 40.1% | 8.4 px | 3 | 7.63 s | check: Some background may be left between parts of the item |
+| web_39_1.jpg | 32.3% | 31.1% | 6.5 px | 3 | 4.87 s | check: Item and background are similar in colour, so edges may be soft |
+| web_40_0.jpg | 22.6% | 50.4% | 6.8 px | 5 | 6.13 s | good |
+| web_40_1.jpg | 4.5% | 26.9% | 5.5 px | 1 | 8.93 s | good |
 | web_41_0.jpg | none | | | | | Nothing to remove, the item fills the photo |
-| web_42_0.jpg | 35.9% | 38.3% | 6.3 px | 2 | 3.36 s | good |
-| web_43_0.jpg | 43.4% | 24.0% | 5.2 px | 1 | 3.66 s | good |
-| web_43_1.jpg | 49.7% | 42.6% | 8.3 px | 1 | 3.72 s | good |
-| web_44_0.jpg | 42.4% | 41.4% | 5.6 px | 5 | 6.16 s | check: Some background may be left between parts of the item |
-| web_44_1.jpg | 36.7% | 33.3% | 6.7 px | 1 | 5.77 s | check: Item and background are similar in colour, so edges may be soft |
-| web_45_0.jpg | 21.9% | 33.2% | 8.2 px | 2 | 3.87 s | check: Item and background are similar in colour, so edges may be soft |
-| web_45_1.jpg | 34.4% | 46.1% | 8.2 px | 1 | 6.08 s | check: Some background may be left between parts of the item |
-| web_46_0.jpg | 29.6% | 20.4% | 5.1 px | 1 | 4.04 s | good |
-| web_46_1.jpg | 45.6% | 35.1% | 6.4 px | 2 | 7.57 s | check: Some background may be left between parts of the item |
+| web_42_0.jpg | 35.9% | 38.3% | 6.3 px | 2 | 3.23 s | good |
+| web_43_0.jpg | 43.4% | 24.0% | 5.2 px | 1 | 3.18 s | good |
+| web_43_1.jpg | 49.7% | 42.6% | 8.3 px | 1 | 3.34 s | good |
+| web_44_0.jpg | 42.4% | 41.4% | 5.6 px | 5 | 6.14 s | check: Some background may be left between parts of the item |
+| web_44_1.jpg | 36.7% | 33.3% | 6.7 px | 1 | 6.40 s | check: Item and background are similar in colour, so edges may be soft |
+| web_45_0.jpg | 21.9% | 33.2% | 8.2 px | 2 | 2.94 s | check: Item and background are similar in colour, so edges may be soft |
+| web_45_1.jpg | 34.4% | 46.1% | 8.2 px | 1 | 4.41 s | check: Some background may be left between parts of the item |
+| web_46_0.jpg | 29.6% | 20.4% | 5.1 px | 1 | 3.00 s | good |
+| web_46_1.jpg | 45.6% | 35.1% | 6.4 px | 2 | 4.99 s | check: Some background may be left between parts of the item |
 | web_47_0.jpg | none | | | | | Nothing to remove, the item fills the photo |
 | web_47_1.jpg | none | | | | | Nothing to remove, the item fills the photo |
-| web_48_0.jpg | 11.0% | 18.2% | 3.8 px | 1 | 7.14 s | good |
-| web_48_1.jpg | 31.9% | 30.7% | 6.5 px | 1 | 4.91 s | good |
-| web_49_0.jpg | 18.7% | 39.2% | 7.4 px | 2 | 7.38 s | check: Some background may be left between parts of the item |
-| web_49_1.jpg | 27.4% | 42.9% | 8.8 px | 1 | 6.12 s | good |
-| web_50_0.jpg | 2.9% | 20.8% | 4.4 px | 1 | 11.70 s | good |
-| web_50_1.jpg | 32.9% | 30.3% | 8.0 px | 4 | 8.97 s | check: Item and background are similar in colour, so edges may be soft |
-| web_51_0.jpg | 29.3% | 35.5% | 7.7 px | 1 | 7.70 s | check: Some background may be left between parts of the item |
-| web_52_0.jpg | 68.9% | 48.4% | 9.9 px | 1 | 7.64 s | check: Item and background are similar in colour, so edges may be soft |
-| web_52_1.jpg | 9.9% | 46.2% | 8.0 px | 1 | 7.54 s | check: Item and background are similar in colour, so edges may be soft |
-| web_53_0.jpg | 46.2% | 56.3% | 11.9 px | 1 | 5.44 s | check: Item and background are similar in colour, so edges may be soft |
-| web_53_1.jpg | 15.0% | 50.4% | 10.0 px | 1 | 5.39 s | check: Item and background are similar in colour, so edges may be soft |
-| web_54_0.jpg | 33.2% | 11.4% | 2.4 px | 1 | 5.20 s | good |
-| web_54_1.jpg | 44.0% | 37.9% | 8.0 px | 1 | 5.51 s | good |
-| web_58_0.jpg | 59.0% | 60.3% | 12.6 px | 1 | 7.89 s | good |
-| web_60_0.jpg | 13.2% | 40.0% | 8.5 px | 1 | 8.38 s | check: Item and background are similar in colour, so edges may be soft |
-| web_60_1.jpg | 19.2% | 37.6% | 7.5 px | 1 | 6.61 s | good |
+| web_48_0.jpg | 11.0% | 18.2% | 3.8 px | 1 | 6.84 s | good |
+| web_48_1.jpg | 31.9% | 30.7% | 6.5 px | 1 | 5.04 s | good |
+| web_49_0.jpg | 18.7% | 39.2% | 7.4 px | 2 | 7.23 s | check: Some background may be left between parts of the item |
+| web_49_1.jpg | 27.4% | 42.9% | 8.8 px | 1 | 4.08 s | good |
+| web_50_0.jpg | 2.9% | 20.8% | 4.4 px | 1 | 6.77 s | good |
+| web_50_1.jpg | 32.9% | 30.3% | 8.0 px | 4 | 5.18 s | check: Item and background are similar in colour, so edges may be soft |
+| web_51_0.jpg | 29.3% | 35.5% | 7.7 px | 1 | 6.28 s | check: Some background may be left between parts of the item |
+| web_52_0.jpg | 68.9% | 48.4% | 9.9 px | 1 | 4.79 s | check: Item and background are similar in colour, so edges may be soft |
+| web_52_1.jpg | 9.9% | 46.2% | 8.0 px | 1 | 7.32 s | check: Item and background are similar in colour, so edges may be soft |
+| web_53_0.jpg | 46.2% | 56.3% | 11.9 px | 1 | 4.57 s | check: Item and background are similar in colour, so edges may be soft |
+| web_53_1.jpg | 15.0% | 50.4% | 10.0 px | 1 | 5.14 s | check: Item and background are similar in colour, so edges may be soft |
+| web_54_0.jpg | 33.2% | 11.4% | 2.4 px | 1 | 4.28 s | good |
+| web_54_1.jpg | 44.0% | 37.9% | 8.0 px | 1 | 4.55 s | good |
+| web_58_0.jpg | 59.0% | 60.3% | 12.6 px | 1 | 5.44 s | good |
+| web_60_0.jpg | 13.2% | 40.0% | 8.5 px | 1 | 6.55 s | check: Item and background are similar in colour, so edges may be soft |
+| web_60_1.jpg | 19.2% | 37.6% | 7.5 px | 1 | 4.10 s | good |
 
 **Regression check: FAILED**
 
