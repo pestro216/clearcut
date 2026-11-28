@@ -128,6 +128,7 @@ func runNew(_ cg: CGImage, _ photo: RGBAImage, zoom: Bool = true, colour: Bool =
     switch m.confidence { case .good: conf = "good"; case .check(let s): conf = "check: \(s)"; case .failed(let s): conf = "failed: \(s)" }
     // Where the time goes: segmentation (network passes and the second opinion), matting, colour.
     var notes = m.notes
+    for (k, v) in seg.notes { notes[k] = v }
     notes["secSegment"] = tSeg.timeIntervalSince(start)
     notes["secMatting"] = tMatte.timeIntervalSince(tSeg)
     notes["secForeground"] = Date().timeIntervalSince(tMatte)

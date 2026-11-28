@@ -280,6 +280,27 @@ final class CoreTests: XCTestCase {
         XCTAssertEqual(Segmenter.acceptCanvas(plain: garment, wide: garment, image: img), .agree)
     }
 
+    func testGreyCanvasCheckRejectsASlabOfPlainSurfaceAboveASmallItem() {
+        // Sunglasses-like: a small dark item on grained wood; the canvas pass also took the top
+        // 40% of the wood (quality run 57). The slab matches the wood left below the item.
+        let w = 120, h = 120
+        var img = RGBAImage(width: w, height: h, fill: (0, 0, 0))
+        var seed: UInt32 = 11
+        func noise() -> Int { seed = seed &* 1664525 &+ 1013904223; return Int(seed >> 27) - 16 }
+        var plain = Plane(width: w, height: h, value: 0)
+        for y in 0..<h { for x in 0..<w {
+            let i = y * w + x
+            let item = x >= 40 && x < 80 && y >= 55 && y < 70
+            let g = (x / 3) % 2 == 0 ? 12 : -12
+            let c = item ? (25, 22, 20) : (168 + g + noise(), 128 + g, 88 + g)
+            img.pixels[i * 4] = UInt8(max(0, min(255, c.0))); img.pixels[i * 4 + 1] = UInt8(c.1); img.pixels[i * 4 + 2] = UInt8(c.2)
+            if item { plain.data[i] = 1 }
+        } }
+        var wide = plain
+        for y in 0..<48 { for x in 0..<w { wide.data[y * w + x] = 1 } }
+        XCTAssertEqual(Segmenter.acceptCanvas(plain: plain, wide: wide, image: img), .reject)
+    }
+
     func testFalseHoleIsFilledButRealGapIsKept() {
         // Grey floor; a dark item with two non-solid patches inside it: one where the floor shows
         // through (a real gap) and one that is the item's own slightly lighter material.

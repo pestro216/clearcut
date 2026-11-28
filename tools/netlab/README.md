@@ -12,6 +12,7 @@ in `QA/.research/model/`. Each run needs about 7 GB of memory: run one at a time
 - `canvas.py SCENE VARIANT`: overlap with the reference for `plain`, or the photo padded by a share
   of its long side (`grey_0.35`, `reflect_0.35`, `replicate_0.35`, `white_0.5` ...).
 - `zoom.py SCENE`: whole photo against whole photo plus the detail crop, on edge measures.
-- `guard.py`: what `Segmenter.acceptCanvas` would decide for each cached canvas result.
+- `guard.py`: what `Segmenter.acceptCanvas` decides for each cached canvas result, and for slabs
+  of floor added to the normal photos (which it must reject).
 
 Results append to `QA/.research/results.txt`; network outputs are cached in `QA/.research/cache/`.

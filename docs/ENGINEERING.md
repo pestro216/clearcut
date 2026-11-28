@@ -368,3 +368,14 @@ GitHub run shows how much time they take.
 
 Not verified: compiled only on GitHub; the finished cutouts (after matting) are measured by the
 branch's quality run, not here; synthetic scenes (plain backdrops, small items) only there.
+
+**Quality run 57 (first push of the branch).** Built and unit tests passed. Real photos: mean
+overlap 0.818 to 0.940, missed garment 17.7% to 5.5%, time 9.7 to 6.4 s per photo (GitHub's Mac).
+Striped sleeve 0.30 to 0.998, underarm 0.35 to 0.999. Made-up scenes: comb 0.91 to 0.95, time
+8.2 to 7.7 s, but the sunglasses fell from 0.97 to 0.17: the grey canvas took the plain wood above
+them and the check let it through, because it judged added colours against the new result,
+which was mostly that wood. The Columbia side close-up was unchanged (its ruler touches 3.4% of
+the border, so it sits on the 3% "doubtful" line). Fixes: added colours are now compared with the
+added region itself (surface-like when at least half as common in the remaining surface), unit
+test with a slab of wood above a small item; doubtful from 2% of the border; the bench notes
+record the canvas decisions and stage timings.

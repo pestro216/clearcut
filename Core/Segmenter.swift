@@ -14,10 +14,15 @@ public struct Segmentation {
     public var prob: Plane
     public var instanceCount: Int
     public var zoomed: Bool
+    /// What the network passes decided, for the test bench (doubtful, grey canvas verdict, ...).
+    public var notes: [String: Double] = [:]
 }
 
 public enum Segmenter {
     public static let workLongSide = 1536
+    /// A first result running off more than this share of the frame's border is doubtful (was 3%;
+    /// the Columbia side close-up's ruler touched 3.4%, too near the line).
+    static let doubtfulBorderShare: Float = 0.02
     /// The detail crop runs only when it covers less than this share of the photo.
     public static let zoomMaxShare: CGFloat = 0.5
 
@@ -109,6 +114,7 @@ public enum Segmenter {
         guard var prob = try pass(full, region: whole, pads: (0, 0, 0, 0), outW: ww, outH: wh, network: network) else { return nil }
         var canvasUsed = false
         var canvasKind = Canvas.mirrored
+        var notes: [String: Double] = ["doubtful": doubtful(prob) ? 1 : 0, "greyCanvas": -1, "mirroredCanvas": 0]
         if doubtful(prob), let small = RGBAImage(cgImage: full, width: ww, height: wh) {
             let m = 0.35 * max(fw, fh)
             // Close-ups first: the photo on a flat grey canvas, so a garment that fills the frame
@@ -119,6 +125,7 @@ public enum Segmenter {
             if let grey = try pass(full, region: whole, pads: (m, m, m, m), outW: ww, outH: wh, network: network, canvas: .grey) {
                 verdict = acceptCanvas(plain: prob, wide: grey, image: small)
                 if verdict == .accept { prob = grey; canvasUsed = true; canvasKind = .grey }
+                notes["greyCanvas"] = verdict == .accept ? 1 : (verdict == .agree ? 0 : 2)
                 Diagnostics.note("grey canvas \(verdict)")
             }
             // The grey canvas can make a plain surface read as an object (the whole rectangle).
@@ -128,6 +135,7 @@ public enum Segmenter {
                preferWide(plain: prob, wide: wide, image: small) {
                 prob = wide
                 canvasUsed = true
+                notes["mirroredCanvas"] = 1
             }
         }
         guard prob.data.contains(where: { $0 > 0.5 }) else { return nil }
@@ -184,7 +192,7 @@ public enum Segmenter {
         } else {
             Diagnostics.note("second opinion skipped")
         }
-        return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed)
+        return Segmentation(prob: prob, instanceCount: 1, zoomed: zoomed, notes: notes)
     }
 
     /// Adds back parts Apple's subject finder includes but the network left out: a cuff, the end
@@ -305,7 +313,7 @@ public enum Segmenter {
         for x in 0..<w { on += (p.data[x] > 0.5 ? 1 : 0) + (p.data[(h - 1) * w + x] > 0.5 ? 1 : 0); total += 2 }
         for y in 0..<h { on += (p.data[y * w] > 0.5 ? 1 : 0) + (p.data[y * w + w - 1] > 0.5 ? 1 : 0); total += 2 }
         let area = Float(p.data.filter { $0 > 0.5 }.count) / Float(p.count)
-        return Float(on) / Float(total) > 0.03 || area < 0.15
+        return Float(on) / Float(total) > doubtfulBorderShare || area < 0.15
     }
 
     /// Whether the grey-canvas result should replace the plain one. `agree` when they barely
@@ -313,7 +321,11 @@ public enum Segmenter {
     /// takes in nearly the whole frame (the rectangle), adds almost nothing, or what it adds looks
     /// like the surface that remains. Colours are compared as distributions (16-level colour
     /// histograms, smoothed), not as averages: a navy and cream striped body averages out to a
-    /// grey much like concrete, but none of its colours is concrete's.
+    /// grey much like concrete, but none of its colours is concrete's. An added pixel counts as
+    /// surface when its colour is at least half as common in the remaining surface as in the
+    /// added region itself: a slab of wood above a pair of sunglasses matches the wood left below
+    /// them; a garment doesn't match the concrete around it (checked on Woolfall's close-ups and
+    /// on slabs of floor added to the normal photos, tools/netlab/guard_v2.py).
     static func acceptCanvas(plain: Plane, wide: Plane, image: RGBAImage) -> CanvasVerdict {
         let n = plain.count
         guard wide.count == n, image.width * image.height == n, n > 0 else { return .reject }
@@ -332,18 +344,18 @@ public enum Segmenter {
         if Float(rest) < 0.02 * Float(n) { return .accept }
         let px = image.pixels
         var bins = [Int](repeating: 0, count: n)
-        var restHist = [Int](repeating: 0, count: 4096), itemHist = [Int](repeating: 0, count: 4096)
+        var restHist = [Int](repeating: 0, count: 4096), addedHist = [Int](repeating: 0, count: 4096)
         for i in 0..<n {
             let p = i * 4
             let b = (Int(px[p]) >> 4) << 8 | (Int(px[p + 1]) >> 4) << 4 | Int(px[p + 2]) >> 4
             bins[i] = b
             let a = plain.data[i] > 0.5, w = wide.data[i] > 0.5
-            if w { itemHist[b] += 1 } else if !a { restHist[b] += 1 }
+            if w && !a { addedHist[b] += 1 } else if !a && !w { restHist[b] += 1 }
         }
         var surfaceLike = 0
         for i in 0..<n where wide.data[i] > 0.5 && plain.data[i] <= 0.5 {
-            let dB = binDensity(restHist, rest, bins[i]), dF = binDensity(itemHist, item, bins[i])
-            if dB > 3 * dF && dB > 2 / 4096 { surfaceLike += 1 }
+            let dB = binDensity(restHist, rest, bins[i]), dA = binDensity(addedHist, added, bins[i])
+            if dB > 0.5 * dA && dB > 2 / 4096 { surfaceLike += 1 }
         }
         return Float(surfaceLike) < 0.4 * Float(added) ? .accept : .reject
     }
