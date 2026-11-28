@@ -176,15 +176,15 @@
     "missedItem" : 0.0004061298585155555
   },
   "R_columbia_side_closeup_tape" : {
-    "bandMAE" : 0.24602815090573676,
-    "boundaryF" : 0.26178120682055084,
-    "connectivity" : 2187.0095291947127,
-    "edgeDeltaE" : 12.944197510279356,
-    "edgeDeltaE95" : 45.85496328421015,
-    "gradient" : 19.142609643335753,
-    "iou" : 0.46972598238020524,
-    "keptBackground" : 0.0013060303636297944,
-    "missedItem" : 0.5296605412242203
+    "bandMAE" : 0.19474370153076276,
+    "boundaryF" : 0.30672117399118115,
+    "connectivity" : 183.0800223812461,
+    "edgeDeltaE" : 12.141804452759558,
+    "edgeDeltaE95" : 37.56866540376156,
+    "gradient" : 11.682547910208832,
+    "iou" : 0.9629485142642092,
+    "keptBackground" : 0.0032240957509880705,
+    "missedItem" : 0.03394684752253121
   },
   "R_michigan_cuff_tape" : {
     "bandMAE" : 0.15569045460290235,
