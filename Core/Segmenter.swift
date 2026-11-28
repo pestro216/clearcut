@@ -25,6 +25,9 @@ public enum Segmenter {
     static let doubtfulBorderShare: Float = 0.02
     /// The first pass is also doubtful when it and Apple's subject finder overlap less than this.
     static let appleDisagreement: Float = 0.8
+    /// At or above this overlap with Apple's subject finder, a first pass that touches the frame
+    /// is trusted without the canvas passes.
+    static let appleConfirms: Float = 0.95
     /// The detail crop runs only when it covers less than this share of the photo.
     public static let zoomMaxShare: CGFloat = 0.5
 
@@ -131,10 +134,17 @@ public enum Segmenter {
         var canvasKind = Canvas.mirrored
         // A close-up whose ruler barely touches the frame isn't caught by the border test (the
         // Columbia side close-up, quality run 58); Apple's model then sees far more item.
-        let agreement = vision.map { overlap($0, prob) } ?? 1
-        let isDoubtful = doubtful(prob) || agreement < appleDisagreement
+        // And the other way: a whole garment whose sleeves run off the frame trips the border
+        // test, but when Apple's model sees the same item the canvas passes change nothing
+        // (quality run 59: agreement 0.97 to 1.00 on every such photo, 0.61 or less, or no
+        // subject at all, wherever a canvas pass helped). Without Apple's view, the border test
+        // decides alone.
+        let agreement = vision.map { overlap($0, prob) }
+        let confirmed = (agreement ?? 0) >= appleConfirms
+        let isDoubtful = (doubtful(prob) && !confirmed) || (agreement ?? 1) < appleDisagreement
         var notes: [String: Double] = ["doubtful": isDoubtful ? 1 : 0, "greyCanvas": -1, "mirroredCanvas": 0,
-                                       "appleAgreement": vision == nil ? -1 : Double(agreement)]
+                                       "appleAgreement": agreement.map { Double($0) } ?? -1,
+                                       "canvasSkipped": doubtful(prob) && confirmed ? 1 : 0]
         if small == nil, isDoubtful { small = RGBAImage(cgImage: full, width: ww, height: wh) }
         if isDoubtful, let small {
             let m = 0.35 * max(fw, fh)

@@ -390,3 +390,12 @@ finder now runs before the network (it ran after it; same memory rule, the two n
 together) and a first pass that overlaps Apple's view by less than 0.8 is doubtful too. The bench
 records `appleAgreement` for every photo, to judge later whether the second pass can be skipped
 on photos that touch the frame but agree (four real photos pay for a pass that changes nothing).
+
+**Quality run 59.** Columbia side close-up 0.47 to 0.963 (missed 53% to 3.4%, flagged Check).
+All 11 real photos: overlap 0.818 to 0.985, missed 17.7% to 0.95%; made-up scenes unchanged or
+better (comb 0.913 to 0.952). Timings on GitHub's machine were slower for every photo this run,
+including ones whose work didn't change, so speed is judged by network passes from here. Apple's
+agreement with the first pass: 0.97 to 1.00 on every photo where the canvas passes changed nothing
+(4 real garment photos touching the frame, 4 made-up scenes); 0.61 or less, or no subject, on every
+photo where they helped. Change: canvas passes skipped when Apple confirms (0.95 or more); on
+these 23 scenes this changes no result and saves one or two passes on eight.
