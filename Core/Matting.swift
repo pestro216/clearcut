@@ -383,11 +383,18 @@ public enum Matting {
             var total: Float = 0
             for i in 0..<n where bgW[i] == 1 { total += c.data[i] }
             let global = total / Float(max(1, bgCount))
-            var out = [Float](repeating: global, count: n)
-            for i in 0..<n {
-                let dn = den.data[i], dw = denWide.data[i]
-                if dn > 0.02 { out[i] = near.data[i] / dn }
-                else if dw > 0.005 { out[i] = wide.data[i] / dw }
+            let dnA = den.data, dwA = denWide.data, nA = near.data, wA = wide.data
+            let out = [Float](unsafeUninitializedCapacity: n) { oBuf, done in
+                let o = oBuf
+                Parallel.forBands(n, grain: 32_768) { range in
+                    for i in range {
+                        let dn = dnA[i], dw = dwA[i]
+                        if dn > 0.02 { o[i] = nA[i] / dn }
+                        else if dw > 0.005 { o[i] = wA[i] / dw }
+                        else { o[i] = global }
+                    }
+                }
+                done = n
             }
             return Plane(width: w, height: h, data: out)
         }
@@ -396,22 +403,27 @@ public enum Matting {
         // Distance from the background, tolerant of shadows (darker, same hue).
         var D = [Float](repeating: 0, count: n)
         var shadowLike = [Bool](repeating: false, count: n)
-        for i in 0..<n {
-            let r = R.data[i], g = G.data[i], b = B.data[i]
-            let rb = bR.data[i], gb = bG.data[i], bb = bB.data[i]
-            let dr = r - rb, dg = g - gb, db = b - bb
-            let euclid = sqrt(dr * dr + dg * dg + db * db)
-            let L = (r + g + b) / 3 + 0.004, Lb = (rb + gb + bb) / 3 + 0.004
-            let ratio = L / Lb
-            let cr = r / L - rb / Lb, cg = g / L - gb / Lb, cb = b / L - bb / Lb
-            let chroma = sqrt(cr * cr + cg * cg + cb * cb) * 0.33 * min(1, min(L, Lb) / 0.15)
-            if ratio > 0.35 && ratio < 1.04 && chroma < 0.06 {
-                shadowLike[i] = true
-                D[i] = chroma
-            } else {
-                D[i] = euclid
+        D.withUnsafeMutableBufferPointer { dBuf in shadowLike.withUnsafeMutableBufferPointer { sBuf in
+            let dp = dBuf, sp = sBuf
+            Parallel.forBands(n, grain: 16_384) { range in
+                for i in range {
+                    let r = R.data[i], g = G.data[i], b = B.data[i]
+                    let rb = bR.data[i], gb = bG.data[i], bb = bB.data[i]
+                    let dr = r - rb, dg = g - gb, db = b - bb
+                    let euclid = sqrt(dr * dr + dg * dg + db * db)
+                    let L = (r + g + b) / 3 + 0.004, Lb = (rb + gb + bb) / 3 + 0.004
+                    let ratio = L / Lb
+                    let cr = r / L - rb / Lb, cg = g / L - gb / Lb, cb = b / L - bb / Lb
+                    let chroma = sqrt(cr * cr + cg * cg + cb * cb) * 0.33 * min(1, min(L, Lb) / 0.15)
+                    if ratio > 0.35 && ratio < 1.04 && chroma < 0.06 {
+                        sp[i] = true
+                        dp[i] = chroma
+                    } else {
+                        dp[i] = euclid
+                    }
+                }
             }
-        }
+        } }
 
         // Background noise level (robust).
         var bgD: [Float] = []
@@ -427,7 +439,10 @@ public enum Matting {
         for i in stride(from: 0, to: n, by: 3) where core.data[i] >= 0.999 { coreZ.append(D[i] / noise) }
         let separation = coreZ.isEmpty ? 0 : median(coreZ)
         notes["separation"] = Double(separation)
-        if separation >= 8 { zOut = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1) }
+        // Distance from the background in noise units, lightly smoothed. Made once: the carving
+        // below and the "background left inside" check after the guided filter both use it.
+        let zMap: Plane? = separation >= 8 ? Plane(width: w, height: h, data: D).map { $0 / noise }.boxBlurred(radius: 1) : nil
+        if let zMap { zOut = zMap }
         guard separation >= 6 else {
             notes["colourEvidence"] = 0
             return "Item and background are similar in colour, so edges may be soft"
@@ -479,8 +494,7 @@ public enum Matting {
         // product that is itself clearly different from the background. A light product on a
         // light surface fails that second test, so it is never carved into.
         var carved = 0
-        if separation >= 8 {
-            let z = Plane(width: w, height: h, data: D.map { $0 / noise }).boxBlurred(radius: 1)
+        if let z = zMap {
             var hole = [Bool](repeating: false, count: n)
             for i in 0..<n where fg[i] && z.data[i] < 2.5 { hole[i] = true }
             let (hl, hs) = Regions.label(hole, width: w, height: h)
@@ -580,14 +594,18 @@ public enum Matting {
             }
             return Float(sum) / Float(total * 27)
         }
+        // Whether a colour bin looks like the surface depends only on the bin: judged once per
+        // bin rather than once per pixel.
+        let binIsSurface: [Bool] = (0..<4096).map { b in
+            let dB = density(bgHist, bgN, b), dF = density(fgHist, fgN, b)
+            return dB > 3 * dF && dB > 2 / 4096
+        }
         var total = [Int](repeating: 0, count: nc), surfaceLike = [Int](repeating: 0, count: nc)
         for i in 0..<n {
             let l = Int(lab[i])
             if l == 0 || outer[l] { continue }
             total[l] += 1
-            let b = bin(i)
-            let dB = density(bgHist, bgN, b), dF = density(fgHist, fgN, b)
-            var surface = dB > 3 * dF && dB > 2 / 4096
+            var surface = binIsSurface[bin(i)]
             if !surface {
                 let r = R.data[i] / mean.0, g = G.data[i] / mean.1, bl = B.data[i] / mean.2
                 let lo = min(r, g, bl), hi = max(r, g, bl)
@@ -621,23 +639,29 @@ public enum Matting {
         let mGG = mean(G * G), mGB = mean(G * B), mBB = mean(B * B)
 
         var aR = [Float](repeating: 0, count: n), aG = aR, aB = aR, bb = aR
-        for i in 0..<n {
-            let mr = mR.data[i], mg = mG.data[i], mb = mB.data[i], mp = mP.data[i]
-            let cr = mRP.data[i] - mr * mp, cg = mGP.data[i] - mg * mp, cb = mBP.data[i] - mb * mp
-            let s11 = mRR.data[i] - mr * mr + eps, s12 = mRG.data[i] - mr * mg, s13 = mRB.data[i] - mr * mb
-            let s22 = mGG.data[i] - mg * mg + eps, s23 = mGB.data[i] - mg * mb, s33 = mBB.data[i] - mb * mb + eps
-            // Inverse of the symmetric 3x3 covariance via cofactors.
-            let c11 = s22 * s33 - s23 * s23, c12 = s13 * s23 - s12 * s33, c13 = s12 * s23 - s13 * s22
-            let c22 = s11 * s33 - s13 * s13, c23 = s13 * s12 - s11 * s23, c33 = s11 * s22 - s12 * s12
-            let det = s11 * c11 + s12 * c12 + s13 * c13
-            if abs(det) < 1e-12 { bb[i] = mp; continue }
-            let inv = 1 / det
-            let ar = (c11 * cr + c12 * cg + c13 * cb) * inv
-            let ag = (c12 * cr + c22 * cg + c23 * cb) * inv
-            let ab = (c13 * cr + c23 * cg + c33 * cb) * inv
-            aR[i] = ar; aG[i] = ag; aB[i] = ab
-            bb[i] = mp - ar * mr - ag * mg - ab * mb
-        }
+        aR.withUnsafeMutableBufferPointer { aRp in aG.withUnsafeMutableBufferPointer { aGp in
+        aB.withUnsafeMutableBufferPointer { aBp in bb.withUnsafeMutableBufferPointer { bbp in
+            let aRo = aRp, aGo = aGp, aBo = aBp, bbo = bbp
+            Parallel.forBands(n, grain: 16_384) { range in
+                for i in range {
+                    let mr = mR.data[i], mg = mG.data[i], mb = mB.data[i], mp = mP.data[i]
+                    let cr = mRP.data[i] - mr * mp, cg = mGP.data[i] - mg * mp, cb = mBP.data[i] - mb * mp
+                    let s11 = mRR.data[i] - mr * mr + eps, s12 = mRG.data[i] - mr * mg, s13 = mRB.data[i] - mr * mb
+                    let s22 = mGG.data[i] - mg * mg + eps, s23 = mGB.data[i] - mg * mb, s33 = mBB.data[i] - mb * mb + eps
+                    // Inverse of the symmetric 3x3 covariance via cofactors.
+                    let c11 = s22 * s33 - s23 * s23, c12 = s13 * s23 - s12 * s33, c13 = s12 * s23 - s13 * s22
+                    let c22 = s11 * s33 - s13 * s13, c23 = s13 * s12 - s11 * s23, c33 = s11 * s22 - s12 * s12
+                    let det = s11 * c11 + s12 * c12 + s13 * c13
+                    if abs(det) < 1e-12 { bbo[i] = mp; continue }
+                    let inv = 1 / det
+                    let ar = (c11 * cr + c12 * cg + c13 * cb) * inv
+                    let ag = (c12 * cr + c22 * cg + c23 * cb) * inv
+                    let ab = (c13 * cr + c23 * cg + c33 * cb) * inv
+                    aRo[i] = ar; aGo[i] = ag; aBo[i] = ab
+                    bbo[i] = mp - ar * mr - ag * mg - ab * mb
+                }
+            }
+        } } } }
         let maR = mean(Plane(width: w, height: h, data: aR))
         let maG = mean(Plane(width: w, height: h, data: aG))
         let maB = mean(Plane(width: w, height: h, data: aB))
@@ -670,33 +694,45 @@ public enum Matting {
         let sx = Float(w) / Float(fw), sy = Float(h) / Float(fh)
         let inv255: Float = 1.0 / 255.0
         let span = max(0.001, high - low)
+        let cMin: Float = linear ? 0.03 : 0.06, cSpan: Float = linear ? 0.08 : 0.12
+        // Every plane sampled below has the working size, so each full-resolution pixel works out
+        // its four neighbours and weights once and reads all of them with it.
+        let planes = [maR, maG, maB, mb, bandRaw, p] + near + wide
         var out = [UInt8](repeating: 0, count: fw * fh)
+        planes.withPixelPointers { (P: [UnsafePointer<Float>]) -> Void in
+        lin.withUnsafeBufferPointer { linp in
         full.pixels.withUnsafeBufferPointer { px in
-            out.withUnsafeMutableBufferPointer { o in
-                for y in 0..<fh {
+            out.withUnsafeMutableBufferPointer { ob in
+                let o = ob
+                let pAR = P[0], pAG = P[1], pAB = P[2], pB = P[3], pBand = P[4], pP = P[5]
+                let nF = (P[6], P[7], P[8]), nB = (P[9], P[10], P[11])
+                let wF = (P[12], P[13], P[14]), wB = (P[15], P[16], P[17])
+                Parallel.forBands(fh, grain: Parallel.rowGrain(width: fw)) { rows in
+                for y in rows {
                     let fy = (Float(y) + 0.5) * sy
                     for x in 0..<fw {
                         let fx = (Float(x) + 0.5) * sx
                         let i = y * fw + x
+                        let s = Bilinear(fx, fy, width: w, height: h)
                         let r0 = Float(px[i * 4]) * inv255, g0 = Float(px[i * 4 + 1]) * inv255, b0 = Float(px[i * 4 + 2]) * inv255
-                        var q = maR.sample(fx, fy) * r0 + maG.sample(fx, fy) * g0 + maB.sample(fx, fy) * b0 + mb.sample(fx, fy)
-                        if bandRaw.sample(fx, fy) > 0.001 {
-                            var set = near
-                            if near[0].sample(fx, fy) < 0 || near[3].sample(fx, fy) < 0 { set = wide }
-                            let fr = set[0].sample(fx, fy), fgc = set[1].sample(fx, fy), fb = set[2].sample(fx, fy)
-                            let br = set[3].sample(fx, fy), bg = set[4].sample(fx, fy), bbc = set[5].sample(fx, fy)
+                        var q = s.read(pAR) * r0 + s.read(pAG) * g0 + s.read(pAB) * b0 + s.read(pB)
+                        let band = s.read(pBand)
+                        if band > 0.001 {
+                            let useWide = s.read(nF.0) < 0 || s.read(nB.0) < 0
+                            let F = useWide ? wF : nF, Bk = useWide ? wB : nB
+                            let fr = s.read(F.0), fgc = s.read(F.1), fb = s.read(F.2)
+                            let br = s.read(Bk.0), bg = s.read(Bk.1), bbc = s.read(Bk.2)
                             if fr >= 0 && br >= 0 {
                                 let er = fr - br, eg = fgc - bg, eb = fb - bbc
                                 let c2 = er * er + eg * eg + eb * eb
                                 let c = sqrt(c2)
-                                let cMin: Float = linear ? 0.03 : 0.06, cSpan: Float = linear ? 0.08 : 0.12
                                 if c > cMin {
-                                    let lr = lin[Int(px[i * 4])], lg = lin[Int(px[i * 4 + 1])], lb = lin[Int(px[i * 4 + 2])]
+                                    let lr = linp[Int(px[i * 4])], lg = linp[Int(px[i * 4 + 1])], lb = linp[Int(px[i * 4 + 2])]
                                     var ap = ((lr - br) * er + (lg - bg) * eg + (lb - bbc) * eb) / c2
                                     ap = ap < 0 ? 0 : (ap > 1 ? 1 : ap)
                                     let t = min(1, (c - cMin) / cSpan)
                                     let trustContrast = t * t * (3 - 2 * t)
-                                    let pc = p.sample(fx, fy)
+                                    let pc = s.read(pP)
                                     let m = 2 * pc - 1
                                     let trustBand = 1 - m * m
                                     let wgt = trustContrast * trustBand
@@ -709,7 +745,7 @@ public enum Matting {
                         // Surface fibres caught along the edge (carpet pile, fabric fuzz of the
                         // surface): a pixel that looks exactly like the surface and nothing like
                         // the item is surface, whatever the smooth matte said.
-                        if let surface, a > 0, a < 1, bandRaw.sample(fx, fy) > 0.001,
+                        if let surface, a > 0, a < 1, band > 0.001,
                            surface.distance(r0, g0, b0) < surface.low * 2,
                            (item.map { $0.distance(r0, g0, b0) > $0.high } ?? false) {
                             a *= 0.15
@@ -717,7 +753,10 @@ public enum Matting {
                         o[i] = UInt8(a * 255 + 0.5)
                     }
                 }
+                }
             }
+        }
+        }
         }
         return out
     }
@@ -753,6 +792,8 @@ public enum Matting {
 
         // Fine pass at full resolution, in strips, only where the matte is partial.
         var out = full
+        let px = full.pixels
+        let toLin = Linear.toLinear
         let r2 = max(2, Int(0.0025 * longF))
         let strip = 192
         let margin = r2 + 1
@@ -766,36 +807,65 @@ public enum Matting {
             if !partial { y0 = y1; continue }
             let ys = max(0, y0 - margin), ye = min(fh, y1 + margin), sh = ye - ys
             let m = fw * sh
-            var a = [Float](repeating: 0, count: m)
-            var Ic = [[Float]](repeating: [Float](repeating: 0, count: m), count: 3)
-            var Fc = Ic, Bc = Ic
-            for yy in 0..<sh {
-                let y = ys + yy
-                let fy = (Float(y) + 0.5) * sy
-                for x in 0..<fw {
-                    let i = y * fw + x, j = yy * fw + x
-                    a[j] = Float(alpha[i]) / 255
-                    let fx = (Float(x) + 0.5) * sx
-                    for c in 0..<3 {
-                        Ic[c][j] = Linear.toLinear[Int(full.pixels[i * 4 + c])]
-                        Fc[c][j] = F1[c].sample(fx, fy)
-                        Bc[c][j] = B1[c].sample(fx, fy)
+            let rowGrain = Parallel.rowGrain(width: fw)
+            let a = [Float](unsafeUninitializedCapacity: m) { aBuf, done in
+                let ap = aBuf
+                Parallel.forBands(sh, grain: rowGrain) { rows in
+                    for yy in rows {
+                        let row = (ys + yy) * fw
+                        for x in 0..<fw { ap[yy * fw + x] = Float(alpha[row + x]) / 255 }
                     }
                 }
+                done = m
+            }
+            // Photo colour in linear light, and the coarse pass's item and background colours
+            // sampled at each pixel. One pass per channel; each pixel's sample weights are worked
+            // out once per pass and used for both planes.
+            var Ic = [[Float]](repeating: [Float](repeating: 0, count: m), count: 3)
+            var Fc = Ic, Bc = Ic
+            for c in 0..<3 {
+                let f1 = F1[c].data, b1 = B1[c].data
+                Ic[c].withUnsafeMutableBufferPointer { iBuf in Fc[c].withUnsafeMutableBufferPointer { fBuf in
+                Bc[c].withUnsafeMutableBufferPointer { bBuf in
+                    let ip = iBuf, fp = fBuf, bp = bBuf
+                    Parallel.forBands(sh, grain: rowGrain) { rows in
+                        for yy in rows {
+                            let y = ys + yy
+                            let fy = (Float(y) + 0.5) * sy
+                            for x in 0..<fw {
+                                let i = y * fw + x, j = yy * fw + x
+                                let fx = (Float(x) + 0.5) * sx
+                                let s = Bilinear(fx, fy, width: ww, height: wh)
+                                ip[j] = toLin[Int(px[i * 4 + c])]
+                                fp[j] = s.read(f1)
+                                bp[j] = s.read(b1)
+                            }
+                        }
+                    }
+                } } }
             }
             let aP = Plane(width: fw, height: sh, data: a)
             let (F2, _) = blurFusion(I: Ic.map { Plane(width: fw, height: sh, data: $0) },
                                      F: Fc.map { Plane(width: fw, height: sh, data: $0) },
                                      B: Bc.map { Plane(width: fw, height: sh, data: $0) },
                                      alpha: aP, radius: r2)
-            for y in y0..<y1 {
-                let yy = y - ys
-                for x in 0..<fw {
-                    let i = y * fw + x
-                    let av = alpha[i]
-                    if av == 0 || av == 255 { continue }
-                    let j = yy * fw + x
-                    for c in 0..<3 { out.pixels[i * 4 + c] = Linear.toSRGB(F2[c].data[j]) }
+            let f20 = F2[0].data, f21 = F2[1].data, f22 = F2[2].data
+            out.pixels.withUnsafeMutableBufferPointer { oBuf in
+                let op = oBuf
+                let top = y0
+                Parallel.forBands(y1 - top, grain: rowGrain) { rows in
+                    for y in (top + rows.lowerBound)..<(top + rows.upperBound) {
+                        let yy = y - ys
+                        for x in 0..<fw {
+                            let i = y * fw + x
+                            let av = alpha[i]
+                            if av == 0 || av == 255 { continue }
+                            let j = yy * fw + x
+                            op[i * 4] = Linear.toSRGB(f20[j])
+                            op[i * 4 + 1] = Linear.toSRGB(f21[j])
+                            op[i * 4 + 2] = Linear.toSRGB(f22[j])
+                        }
+                    }
                 }
             }
             y0 = y1
@@ -812,11 +882,17 @@ public enum Matting {
         for c in 0..<3 {
             let Fb = Plane.combine((F[c] * alpha).boxBlurred(radius: r), blurA) { x, d in d > 1e-5 ? x / d : 0 }
             let Bb = Plane.combine((B[c] * inv).boxBlurred(radius: r), blurInv) { x, d in d > 1e-5 ? x / d : 0 }
-            var f = [Float](repeating: 0, count: n)
-            for i in 0..<n {
-                let a = alpha.data[i]
-                let v = Fb.data[i] + a * (I[c].data[i] - a * Fb.data[i] - (1 - a) * Bb.data[i])
-                f[i] = v < 0 ? 0 : (v > 1 ? 1 : v)
+            let al = alpha.data, fb = Fb.data, bb = Bb.data, ic = I[c].data
+            let f = [Float](unsafeUninitializedCapacity: n) { fBuf, done in
+                let fp = fBuf
+                Parallel.forBands(n, grain: 32_768) { range in
+                    for i in range {
+                        let a = al[i]
+                        let v = fb[i] + a * (ic[i] - a * fb[i] - (1 - a) * bb[i])
+                        fp[i] = v < 0 ? 0 : (v > 1 ? 1 : v)
+                    }
+                }
+                done = n
             }
             Fo.append(Plane(width: alpha.width, height: alpha.height, data: f))
             Bo.append(Bb)

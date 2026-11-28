@@ -107,28 +107,34 @@ public struct Plane {
 
     public init(bytes: [UInt8], width: Int, height: Int) {
         self.width = width; self.height = height
-        var d = [Float](repeating: 0, count: bytes.count)
-        bytes.withUnsafeBufferPointer { s in
-            d.withUnsafeMutableBufferPointer { o in
-                for i in 0..<s.count { o[i] = Float(s[i]) * (1.0 / 255.0) }
+        let n = bytes.count
+        data = [Float](unsafeUninitializedCapacity: n) { oBuf, done in
+            let o = oBuf
+            bytes.withUnsafeBufferPointer { s in
+                Parallel.forBands(n, grain: 65_536) { r in
+                    for i in r { o[i] = Float(s[i]) * (1.0 / 255.0) }
+                }
             }
+            done = n
         }
-        data = d
     }
 
     public var count: Int { width * height }
 
     public func toBytes() -> [UInt8] {
-        var out = [UInt8](repeating: 0, count: count)
-        data.withUnsafeBufferPointer { s in
-            out.withUnsafeMutableBufferPointer { o in
-                for i in 0..<s.count {
-                    let v = s[i] * 255 + 0.5
-                    o[i] = v <= 0 ? 0 : (v >= 255 ? 255 : UInt8(v))
+        let n = data.count
+        return [UInt8](unsafeUninitializedCapacity: n) { oBuf, done in
+            let o = oBuf
+            data.withUnsafeBufferPointer { s in
+                Parallel.forBands(n, grain: 65_536) { r in
+                    for i in r {
+                        let v = s[i] * 255 + 0.5
+                        o[i] = v <= 0 ? 0 : (v >= 255 ? 255 : UInt8(v))
+                    }
                 }
             }
+            done = n
         }
-        return out
     }
 
     /// Resample with vImage (Lanczos for downscale, bilinear-quality for upscale).
@@ -147,41 +153,52 @@ public struct Plane {
     }
 
     /// Box filter of the given radius (window 2r+1), edges extended. Running sums, O(n) per pass.
+    /// Rows are split over the cores for the horizontal pass and columns for the vertical one, so
+    /// every running sum adds the same values in the same order as on one thread.
     public func boxBlurred(radius r: Int) -> Plane {
         guard r > 0, width > 0, height > 0 else { return self }
-        let w = width, h = height
+        let w = width, h = height, n = count
         let norm = 1 / Float(2 * r + 1)
-        var tmp = [Float](repeating: 0, count: count)
-        var out = [Float](repeating: 0, count: count)
-        data.withUnsafeBufferPointer { src in
-            tmp.withUnsafeMutableBufferPointer { t in
-                for y in 0..<h {
-                    let row = y * w
-                    var acc: Float = 0
-                    for k in -r...r { acc += src[row + min(w - 1, max(0, k))] }
-                    for x in 0..<w {
-                        t[row + x] = acc * norm
-                        acc += src[row + min(w - 1, x + r + 1)] - src[row + max(0, x - r)]
+        let tmp = [Float](unsafeUninitializedCapacity: n) { tBuf, done in
+            let t = tBuf
+            data.withUnsafeBufferPointer { src in
+                Parallel.forBands(h, grain: Parallel.rowGrain(width: w)) { rows in
+                    for y in rows {
+                        let row = y * w
+                        var acc: Float = 0
+                        for k in -r...r { acc += src[row + min(w - 1, max(0, k))] }
+                        for x in 0..<w {
+                            t[row + x] = acc * norm
+                            acc += src[row + min(w - 1, x + r + 1)] - src[row + max(0, x - r)]
+                        }
                     }
                 }
             }
+            done = n
         }
-        tmp.withUnsafeBufferPointer { t in
-            out.withUnsafeMutableBufferPointer { o in
-                var acc = [Float](repeating: 0, count: w)
-                for k in -r...r {
-                    let row = min(h - 1, max(0, k)) * w
-                    for x in 0..<w { acc[x] += t[row + x] }
-                }
-                for y in 0..<h {
-                    let row = y * w
-                    let addRow = min(h - 1, y + r + 1) * w, subRow = max(0, y - r) * w
-                    for x in 0..<w {
-                        o[row + x] = acc[x] * norm
-                        acc[x] += t[addRow + x] - t[subRow + x]
+        let out = [Float](unsafeUninitializedCapacity: n) { oBuf, done in
+            let o = oBuf
+            tmp.withUnsafeBufferPointer { t in
+                Parallel.forBands(w, grain: max(8, 32_768 / h)) { cols in
+                    let x0 = cols.lowerBound, cw = cols.count
+                    let acc = UnsafeMutablePointer<Float>.allocate(capacity: cw)
+                    defer { acc.deallocate() }
+                    acc.initialize(repeating: 0, count: cw)
+                    for k in -r...r {
+                        let row = min(h - 1, max(0, k)) * w + x0
+                        for x in 0..<cw { acc[x] += t[row + x] }
+                    }
+                    for y in 0..<h {
+                        let row = y * w + x0
+                        let addRow = min(h - 1, y + r + 1) * w + x0, subRow = max(0, y - r) * w + x0
+                        for x in 0..<cw {
+                            o[row + x] = acc[x] * norm
+                            acc[x] += t[addRow + x] - t[subRow + x]
+                        }
                     }
                 }
             }
+            done = n
         }
         return Plane(width: w, height: h, data: out)
     }
@@ -198,28 +215,35 @@ public struct Plane {
 
     /// Bilinear sample at continuous coordinates (pixel centres at integer + 0.5).
     @inline(__always) public func sample(_ fx: Float, _ fy: Float) -> Float {
-        let x = max(0, min(max(0, Float(width) - 1.001), fx - 0.5))
-        let y = max(0, min(max(0, Float(height) - 1.001), fy - 0.5))
-        let x0 = Int(x), y0 = Int(y)
-        let tx = x - Float(x0), ty = y - Float(y0)
-        let i = y0 * width + x0
-        let dx = x0 + 1 < width ? 1 : 0, dy = y0 + 1 < height ? width : 0
-        let a = data[i], b = data[i + dx], c = data[i + dy], d = data[i + dy + dx]
-        return (a * (1 - tx) + b * tx) * (1 - ty) + (c * (1 - tx) + d * tx) * ty
+        Bilinear(fx, fy, width: width, height: height).read(data)
     }
 
     public func map(_ f: (Float) -> Float) -> Plane {
-        Plane(width: width, height: height, data: data.map(f))
+        let n = data.count
+        let out = [Float](unsafeUninitializedCapacity: n) { oBuf, done in
+            let o = oBuf
+            data.withUnsafeBufferPointer { s in
+                Parallel.forBands(n, grain: 32_768) { r in
+                    for i in r { o[i] = f(s[i]) }
+                }
+            }
+            done = n
+        }
+        return Plane(width: width, height: height, data: out)
     }
 
     public static func combine(_ a: Plane, _ b: Plane, _ f: (Float, Float) -> Float) -> Plane {
-        var out = [Float](repeating: 0, count: a.count)
-        a.data.withUnsafeBufferPointer { pa in
-            b.data.withUnsafeBufferPointer { pb in
-                out.withUnsafeMutableBufferPointer { o in
-                    for i in 0..<o.count { o[i] = f(pa[i], pb[i]) }
+        let n = a.count
+        let out = [Float](unsafeUninitializedCapacity: n) { oBuf, done in
+            let o = oBuf
+            a.data.withUnsafeBufferPointer { pa in
+                b.data.withUnsafeBufferPointer { pb in
+                    Parallel.forBands(n, grain: 32_768) { r in
+                        for i in r { o[i] = f(pa[i], pb[i]) }
+                    }
                 }
             }
+            done = n
         }
         return Plane(width: a.width, height: a.height, data: out)
     }

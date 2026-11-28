@@ -352,4 +352,90 @@ final class CoreTests: XCTestCase {
         for y in 5..<9 { for x in 5..<9 { speck[y * w + x] = 255 } }
         XCTAssertGreaterThan(Metrics.connectivityError(speck, truth, w, h), 0)
     }
+
+    // MARK: Threading
+
+    /// A photo that sends every matting step to work: a lit, noisy floor, an item whose network
+    /// outline is soft and a few pixels off, a strap the network missed, a gap it filled, a dark
+    /// patch it left open, and a speck.
+    func busyScene() -> (RGBAImage, Segmentation) {
+        let fw = 1600, fh = 1200, ww = 800, wh = 600
+        var seed: UInt32 = 12345
+        func noise() -> Float { seed = seed &* 1_664_525 &+ 1_013_904_223; return Float(seed >> 8) / Float(1 << 24) - 0.5 }
+        func ellipse(_ u: Float, _ v: Float) -> Float { ((u - 0.5) / 0.28) * ((u - 0.5) / 0.28) + ((v - 0.5) / 0.32) * ((v - 0.5) / 0.32) }
+        func inGap(_ u: Float, _ v: Float) -> Bool { (u - 0.5) * (u - 0.5) + (v - 0.42) * (v - 0.42) < 0.05 * 0.05 }
+        func inPatch(_ u: Float, _ v: Float) -> Bool { (u - 0.42) * (u - 0.42) + (v - 0.6) * (v - 0.6) < 0.04 * 0.04 }
+        func inStrap(_ u: Float, _ v: Float) -> Bool { u > 0.76 && u < 0.9 && v > 0.48 && v < 0.51 }
+        func byte(_ f: Float) -> UInt8 { UInt8(max(0, min(255, f))) }
+        var photo = RGBAImage(width: fw, height: fh, fill: (0, 0, 0))
+        for y in 0..<fh { for x in 0..<fw {
+            let u = (Float(x) + 0.5) / Float(fw), v = (Float(y) + 0.5) / Float(fh)
+            let i = (y * fw + x) * 4
+            let item = (ellipse(u, v) <= 1 && !inGap(u, v)) || inStrap(u, v)
+            if item && inPatch(u, v) {
+                let n = noise() * 6
+                photo.pixels[i] = byte(15 + n); photo.pixels[i + 1] = byte(20 + n); photo.pixels[i + 2] = byte(60 + n)
+            } else if item {
+                let n = noise() * 6
+                photo.pixels[i] = byte(30 + n); photo.pixels[i + 1] = byte(40 + n); photo.pixels[i + 2] = byte(110 + n)
+            } else {
+                let l = 0.85 + 0.3 * u, n = noise() * 8
+                photo.pixels[i] = byte(150 * l + n); photo.pixels[i + 1] = byte(148 * l + n); photo.pixels[i + 2] = byte(140 * l + n)
+            }
+        } }
+        var prob = Plane(width: ww, height: wh, value: 0)
+        for y in 0..<wh { for x in 0..<ww {
+            let u = (Float(x) + 0.5) / Float(ww), v = (Float(y) + 0.5) / Float(wh)
+            let s = (1 - ellipse(u, v).squareRoot()) * 0.3 * Float(ww)
+            var q = 1 / (1 + exp(-(s - 3) / 2))
+            if inGap(u, v) { q = 0.9 }
+            if inPatch(u, v) { q = 0.5 }
+            if inStrap(u, v) && ellipse(u, v) > 1 { q = 0 }
+            prob.data[y * ww + x] = q
+        } }
+        for y in 60..<64 { for x in 80..<84 { prob.data[y * ww + x] = 1 } }
+        return (photo, Segmentation(prob: prob, instanceCount: 1, zoomed: false))
+    }
+
+    func testThreadedMattingMatchesSingleThread() {
+        let (photo, seg) = busyScene()
+        let saved = Parallel.threads
+        defer { Parallel.threads = saved }
+        Parallel.threads = 1
+        let m1 = Matting.refine(full: photo, segmentation: seg)
+        let f1 = Matting.foreground(full: photo, alpha: m1.alpha)
+        Parallel.threads = max(4, saved)
+        let m2 = Matting.refine(full: photo, segmentation: seg)
+        let f2 = Matting.foreground(full: photo, alpha: m2.alpha)
+
+        XCTAssertEqual(m1.notes["colourEvidence"], 1, "the scene should reach the colour evidence step")
+        XCTAssertEqual(m1.notes, m2.notes)
+        XCTAssertEqual(m1.confidence, m2.confidence)
+        func differences(_ a: [UInt8], _ b: [UInt8]) -> (count: Int, largest: Int) {
+            var count = 0, largest = 0
+            for i in 0..<min(a.count, b.count) where a[i] != b[i] { count += 1; largest = max(largest, abs(Int(a[i]) - Int(b[i]))) }
+            return (count + abs(a.count - b.count), largest)
+        }
+        let da = differences(m1.alpha, m2.alpha), df = differences(f1.pixels, f2.pixels)
+        XCTAssertEqual(da.count, 0, "alpha differs at \(da.count) pixels, by up to \(da.largest)/255")
+        XCTAssertEqual(df.count, 0, "foreground colour differs at \(df.count) values, by up to \(df.largest)/255")
+        let partial = m1.alpha.filter { $0 > 0 && $0 < 255 }.count
+        XCTAssertGreaterThan(partial, 1000, "the scene should have a soft edge for the foreground step")
+    }
+
+    func testThreadedBoxBlurMatchesSingleThread() {
+        var seed: UInt32 = 99
+        let w = 777, h = 333
+        var plane = Plane(width: w, height: h)
+        for i in 0..<plane.count { seed = seed &* 1_664_525 &+ 1_013_904_223; plane.data[i] = Float(seed >> 8) / Float(1 << 24) }
+        let saved = Parallel.threads
+        defer { Parallel.threads = saved }
+        for r in [1, 5, 40, 500] {
+            Parallel.threads = 1
+            let one = plane.boxBlurred(radius: r)
+            Parallel.threads = max(4, saved)
+            let many = plane.boxBlurred(radius: r)
+            XCTAssertEqual(one.data, many.data, "radius \(r)")
+        }
+    }
 }
