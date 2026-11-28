@@ -1,8 +1,9 @@
 name: Image quality
 
 on:
+  # Experimental branch: runs on its own pushes, reports under experimental/ on qa-results.
   push:
-    branches: [main]
+    branches: [experimental-cutout]
     paths: ['Core/**', 'QA/**', 'Package.swift', '.github/workflows/quality.yml']
   workflow_dispatch:
 
@@ -69,8 +70,8 @@ jobs:
         if: always()
         run: |
           cp "$RUNNER_TEMP/testset/01_navy_shirt_on_white/photo.jpg" qa_out/scene_01_photo.jpg 2>/dev/null || true
-          QA/publish.sh qa_out "latest" "Quality run ${{ github.run_number }}"
-          QA/publish.sh qa_out "runs/${{ github.run_number }}" "Quality run ${{ github.run_number }} archive"
+          QA/publish.sh qa_out "experimental/latest" "Experimental quality run ${{ github.run_number }}"
+          QA/publish.sh qa_out "experimental/runs/${{ github.run_number }}" "Experimental quality run ${{ github.run_number }} archive"
 
       - name: Fail on regression
         if: steps.bench.outputs.status != '0'

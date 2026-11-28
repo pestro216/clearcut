@@ -326,3 +326,45 @@ now judged on real photos first.
   front shots (originals not in the batch), the vest (no reference). Six shipping-label
   screenshots with other people's details were left out. Waiting on Mathew's decision about
   the public repo before moving the drafts into `QA/realset/`.
+
+## 15. Experimental branch `experimental-cutout`, 28 November 2026
+
+Asked for: an audit for speed and accuracy, on an experimental build of the personal app only.
+Measured on this PC with the same network (ONNX copy of BiRefNet Lite, `tools/netlab/`), whose raw
+output matches the app's (striped sleeve close-up: overlap 0.33 here, 0.32 on GitHub's Mac).
+
+**Where it went wrong.** On `QA/realset` (11 Woolfall photos, all on grey concrete) the raw network
+is fine when the garment covers up to about 45% of the frame (overlap 0.978 to 0.995) and fails on
+all five photos where it covers 58 to 75% (0.06 to 0.39). A salient-object network looks for an
+object *on* a background; when the garment fills the frame it treats the garment as the background
+and picks what lies on it (the ruler, a sleeve). The network's edges were right; its choice of
+object was wrong. So the cause is the model's framing, not resolution, thresholds or matting. In
+quality run 47 the app's safety nets rescued two of the five (hem, front close-up); three stayed
+broken (side 0.47, striped sleeve 0.30, underarm 0.35: 53 to 70% of the garment missed).
+
+**Canvas tests** (raw network overlap, five close-ups): plain 0.06 to 0.39; mirrored edges as the
+app does now 0.08 to 0.63; flat grey canvas padded by 0.35 of the long side **0.992 to 0.997 on
+all five**; grey 0.5 0.92 to 0.997; grey 0.2 0.62 to 0.998; grey 1.0 picks the whole rectangle.
+On the six normal photos grey 0.35 is 0.002 to 0.003 below plain, so it runs only where the app
+already ran its second, mirrored pass (first result doubtful): no extra network run.
+
+**Change 1, grey canvas for doubtful photos** (`Segmenter.networkSegment`, `acceptCanvas`). Its
+result is kept unless it covers 97% of the frame (the rectangle that made build 233e853 drop the
+grey canvas), agrees with the plain pass anyway, or what it adds looks like the surface left over.
+That last test compares colour *distributions* (16-level histograms, smoothed): the old
+`preferWide` compared average colours and would have rejected both striped Michigan close-ups,
+because navy and cream stripes average to concrete grey. No "surface in shadow" rule: black fabric
+passes it. On rejection the old mirrored pass runs as before. Unit test with a striped close-up,
+the whole frame and a grabbed piece of floor.
+
+**Change 2, detail crop only for small items** (`zoomMaxShare` 0.5, was 0.8). On the six normal
+photos the crop changed boundary F (2 px) by +0.019, +0.002, -0.001, -0.021, -0.009 (one had no
+crop): no gain, for a whole network run (6 to 9 s on an iPhone 11 CPU, 2.5 s on GitHub's Mac).
+
+**Speed, not changed here.** The network dominates (one pass 2.45 s, whole pipeline 7 to 13 s per
+photo on GitHub's Mac). The Neural Engine stays off (iPhone 11 memory kills, section 10). Matting
+and the box blurs are single-threaded; spreading them over cores is the next speed step, once the
+GitHub run shows how much time they take.
+
+Not verified: compiled only on GitHub; the finished cutouts (after matting) are measured by the
+branch's quality run, not here; synthetic scenes (plain backdrops, small items) only there.

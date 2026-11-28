@@ -1,8 +1,9 @@
 name: Build Clearcut
 
 on:
+  # Experimental branch: builds only Mathew's personal app, released as "experimental".
   push:
-    branches: [main]
+    branches: [experimental-cutout]
     paths-ignore: ['QA/**', 'tools/make_icon.py', 'tools/fetch_backgrounds.py', 'docs/**', 'Package.swift', '.github/workflows/quality.yml', '.github/workflows/backgrounds.yml', 'README.md']
   workflow_dispatch:
 
@@ -37,31 +38,6 @@ jobs:
       - name: Generate Xcode project
         run: xcodegen generate
 
-      - name: Build app
-        run: |
-          xcodebuild \
-            -project Clearcut.xcodeproj \
-            -scheme Clearcut \
-            -configuration Release \
-            -sdk iphoneos \
-            -destination 'generic/platform=iOS' \
-            -derivedDataPath build \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
-            build > build.log 2>&1 || {
-              echo "::group::Errors"
-              grep -E "error:" build.log | sort -u | head -80
-              echo "::endgroup::"
-              tail -60 build.log
-              exit 1
-            }
-          grep -E "warning:" build.log | grep -v "appintentsmetadataprocessor" | sort -u | head -40 || true
-
-      - name: Package IPA
-        run: |
-          mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/Clearcut.app Payload/
-          zip -qr Clearcut.ipa Payload
-
       # Mathew's own version: the same app plus listings written by Gemini (PERSONAL flag).
       # Not for the App Store. Its own bundle id and name ("My Clearcut"), so it installs next to
       # the store version and both can be tested on one phone.
@@ -75,7 +51,7 @@ jobs:
             -destination 'generic/platform=iOS' \
             -derivedDataPath build-personal \
             SWIFT_ACTIVE_COMPILATION_CONDITIONS=PERSONAL \
-            PRODUCT_BUNDLE_IDENTIFIER=app.clearcut.photos.personal APP_DISPLAY_NAME="My Clearcut" \
+            PRODUCT_BUNDLE_IDENTIFIER=app.clearcut.photos.personal APP_DISPLAY_NAME="My Clearcut Lab" \
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
             build > build-personal.log 2>&1 || {
               echo "::group::Errors"
@@ -95,16 +71,15 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: Clearcut
-          path: |
-            Clearcut.ipa
-            Clearcut-personal.ipa
+          name: Clearcut-experimental
+          path: Clearcut-personal.ipa
 
-      - name: Publish as the latest release
+      - name: Publish as the experimental release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release delete latest --yes --cleanup-tag || true
-          gh release create latest Clearcut.ipa Clearcut-personal.ipa \
-            --title "Clearcut build ${{ github.run_number }}" \
-            --notes "Clearcut-personal.ipa installs as My Clearcut (Mathew's own version, with listings written by Gemini). Clearcut.ipa is the App Store version, without listings. They install side by side."
+          gh release delete experimental --yes --cleanup-tag || true
+          gh release create experimental Clearcut-personal.ipa \
+            --target "${{ github.sha }}" --prerelease \
+            --title "Clearcut experimental build ${{ github.run_number }}" \
+            --notes "Experimental cutout engine (branch experimental-cutout). Installs over My Clearcut (same app ID) and shows as My Clearcut Lab. To go back, install Clearcut-personal.ipa from the latest release."

@@ -249,6 +249,37 @@ final class CoreTests: XCTestCase {
         XCTAssertLessThan(prob.data[70 * w + 117], 0.5, "shadow left out")
     }
 
+    func testGreyCanvasCheckAcceptsStripedCloseUpButNotTheFrameOrTheFloor() {
+        // A close-up: navy and cream stripes fill the frame except grey concrete in the bottom
+        // right. Their average colour is close to the concrete's, their colours are not.
+        let w = 120, h = 120
+        var img = RGBAImage(width: w, height: h, fill: (0, 0, 0))
+        var isFloor = [Bool](repeating: false, count: w * h)
+        var seed: UInt32 = 7
+        func noise() -> Int { seed = seed &* 1664525 &+ 1013904223; return Int(seed >> 28) - 8 }
+        for y in 0..<h { for x in 0..<w {
+            let i = y * w + x
+            let c: (Int, Int, Int)
+            if x >= 70 && y >= 70 { isFloor[i] = true; let v = 128 + noise(); c = (v, v + 2, v + 4) }
+            else if (x + y) / 12 % 2 == 0 { c = (35 + noise(), 50, 95) }
+            else { c = (220 + noise(), 210, 195) }
+            img.pixels[i * 4] = UInt8(c.0); img.pixels[i * 4 + 1] = UInt8(c.1); img.pixels[i * 4 + 2] = UInt8(c.2)
+        } }
+        // The plain pass kept only a ruler-sized strip; the grey canvas kept the whole garment.
+        var plain = Plane(width: w, height: h, value: 0)
+        for y in 50..<60 { for x in 0..<w { plain.data[y * w + x] = 1 } }
+        let garment = Plane(width: w, height: h, data: isFloor.map { $0 ? 0 : 1 })
+        XCTAssertEqual(Segmenter.acceptCanvas(plain: plain, wide: garment, image: img), .accept)
+        // The whole frame (the canvas made the photo itself the object).
+        XCTAssertEqual(Segmenter.acceptCanvas(plain: plain, wide: Plane(width: w, height: h, value: 1), image: img), .reject)
+        // The garment plus a large piece of the concrete.
+        var grab = garment
+        for y in 70..<h { for x in 70..<105 { grab.data[y * w + x] = 1 } }
+        XCTAssertEqual(Segmenter.acceptCanvas(plain: garment, wide: grab, image: img), .reject)
+        // Nearly the same as the plain pass.
+        XCTAssertEqual(Segmenter.acceptCanvas(plain: garment, wide: garment, image: img), .agree)
+    }
+
     func testFalseHoleIsFilledButRealGapIsKept() {
         // Grey floor; a dark item with two non-solid patches inside it: one where the floor shows
         // through (a real gap) and one that is the item's own slightly lighter material.

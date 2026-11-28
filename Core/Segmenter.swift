@@ -18,6 +18,12 @@ public struct Segmentation {
 
 public enum Segmenter {
     public static let workLongSide = 1536
+    /// The detail crop runs only when it covers less than this share of the photo.
+    public static let zoomMaxShare: CGFloat = 0.5
+
+    /// What surrounds the photo when the network is shown it on a larger canvas.
+    enum Canvas { case mirrored, grey }
+    enum CanvasVerdict { case accept, agree, reject }
 
     public static func segment(_ full: CGImage, zoom: Bool = true, network: CutoutNetwork? = nil) throws -> Segmentation? {
         let fw = full.width, fh = full.height
@@ -102,10 +108,24 @@ public enum Segmenter {
         defer { network.unload() }
         guard var prob = try pass(full, region: whole, pads: (0, 0, 0, 0), outW: ww, outH: wh, network: network) else { return nil }
         var canvasUsed = false
-        if doubtful(prob) {
+        var canvasKind = Canvas.mirrored
+        if doubtful(prob), let small = RGBAImage(cgImage: full, width: ww, height: wh) {
             let m = 0.35 * max(fw, fh)
-            if let wide = try pass(full, region: whole, pads: (m, m, m, m), outW: ww, outH: wh, network: network),
-               let small = RGBAImage(cgImage: full, width: ww, height: wh), preferWide(plain: prob, wide: wide, image: small) {
+            // Close-ups first: the photo on a flat grey canvas, so a garment that fills the frame
+            // becomes an object with an outline instead of "the background" (the network then
+            // picks whatever sits on top of it, such as a ruler or a sleeve). Kept only when what
+            // it adds doesn't look like the surface that remains and it isn't the whole frame.
+            var verdict = CanvasVerdict.reject
+            if let grey = try pass(full, region: whole, pads: (m, m, m, m), outW: ww, outH: wh, network: network, canvas: .grey) {
+                verdict = acceptCanvas(plain: prob, wide: grey, image: small)
+                if verdict == .accept { prob = grey; canvasUsed = true; canvasKind = .grey }
+                Diagnostics.note("grey canvas \(verdict)")
+            }
+            // The grey canvas can make a plain surface read as an object (the whole rectangle).
+            // Then the photo's own mirrored edges are tried, as before.
+            if verdict == .reject,
+               let wide = try pass(full, region: whole, pads: (m, m, m, m), outW: ww, outH: wh, network: network),
+               preferWide(plain: prob, wide: wide, image: small) {
                 prob = wide
                 canvasUsed = true
             }
@@ -117,8 +137,10 @@ public enum Segmenter {
             let margin = 0.08 * CGFloat(max(box.width, box.height)) * s
             let r = CGRect(x: CGFloat(box.minX) * s - margin, y: CGFloat(box.minY) * s - margin,
                            width: CGFloat(box.width) * s + 2 * margin, height: CGFloat(box.height) * s + 2 * margin).intersection(whole).integral.intersection(whole)
-            // Only worth it when the crop is clearly smaller than the photo.
-            if r.width * r.height < 0.8 * fw * fh {
+            // Only worth it when the crop is much smaller than the photo: on Woolfall's real photos
+            // (garments filling 30 to 45% of the frame) the crop gave no better edges than the
+            // whole photo, after the full-size edge refinement, but cost a whole network run.
+            if r.width * r.height < zoomMaxShare * fw * fh {
                 // Canvas only on sides where the item runs off the frame, and only if the canvas
                 // was needed for the whole photo too.
                 let pad = canvasUsed ? 0.12 * max(r.width, r.height) : 0
@@ -126,7 +148,7 @@ public enum Segmenter {
                 let pads = (touch.l ? pad : 0, touch.t ? pad : 0, touch.r ? pad : 0, touch.b ? pad : 0)
                 let rx = Int((r.minX / s).rounded()), ry = Int((r.minY / s).rounded())
                 let rw = max(1, min(ww - rx, Int((r.width / s).rounded()))), rh = max(1, min(wh - ry, Int((r.height / s).rounded())))
-                if let detail = try pass(full, region: r, pads: pads, outW: rw, outH: rh, network: network) {
+                if let detail = try pass(full, region: r, pads: pads, outW: rw, outH: rh, network: network, canvas: canvasKind) {
                     var inter = 0, uni = 0
                     for y in 0..<rh { for x in 0..<rw {
                         let a = prob.data[(ry + y) * ww + rx + x] > 0.5, b = detail.data[y * rw + x] > 0.5
@@ -286,6 +308,61 @@ public enum Segmenter {
         return Float(on) / Float(total) > 0.03 || area < 0.15
     }
 
+    /// Whether the grey-canvas result should replace the plain one. `agree` when they barely
+    /// differ (nothing to gain, and no need to try the mirrored canvas either). `reject` when it
+    /// takes in nearly the whole frame (the rectangle), adds almost nothing, or what it adds looks
+    /// like the surface that remains. Colours are compared as distributions (16-level colour
+    /// histograms, smoothed), not as averages: a navy and cream striped body averages out to a
+    /// grey much like concrete, but none of its colours is concrete's.
+    static func acceptCanvas(plain: Plane, wide: Plane, image: RGBAImage) -> CanvasVerdict {
+        let n = plain.count
+        guard wide.count == n, image.width * image.height == n, n > 0 else { return .reject }
+        var inter = 0, uni = 0, added = 0, rest = 0, item = 0
+        for i in 0..<n {
+            let a = plain.data[i] > 0.5, b = wide.data[i] > 0.5
+            if a && b { inter += 1 }
+            if a || b { uni += 1 }
+            if b { item += 1 }
+            if b && !a { added += 1 }
+            if !a && !b { rest += 1 }
+        }
+        if Float(item) >= 0.97 * Float(n) { return .reject }
+        if uni > 0 && Float(inter) / Float(uni) >= 0.9 { return .agree }
+        if Float(added) < 0.01 * Float(n) { return .reject }
+        if Float(rest) < 0.02 * Float(n) { return .accept }
+        let px = image.pixels
+        var bins = [Int](repeating: 0, count: n)
+        var restHist = [Int](repeating: 0, count: 4096), itemHist = [Int](repeating: 0, count: 4096)
+        for i in 0..<n {
+            let p = i * 4
+            let b = (Int(px[p]) >> 4) << 8 | (Int(px[p + 1]) >> 4) << 4 | Int(px[p + 2]) >> 4
+            bins[i] = b
+            let a = plain.data[i] > 0.5, w = wide.data[i] > 0.5
+            if w { itemHist[b] += 1 } else if !a { restHist[b] += 1 }
+        }
+        var surfaceLike = 0
+        for i in 0..<n where wide.data[i] > 0.5 && plain.data[i] <= 0.5 {
+            let dB = binDensity(restHist, rest, bins[i]), dF = binDensity(itemHist, item, bins[i])
+            if dB > 3 * dF && dB > 2 / 4096 { surfaceLike += 1 }
+        }
+        return Float(surfaceLike) < 0.4 * Float(added) ? .accept : .reject
+    }
+
+    /// Share of a histogram's pixels in a colour bin and its 26 neighbours, per bin.
+    static func binDensity(_ hist: [Int], _ total: Int, _ b: Int) -> Float {
+        guard total > 0 else { return 0 }
+        let r = b >> 8, g = (b >> 4) & 15, bl = b & 15
+        var sum = 0
+        for dr in -1...1 { let rr = r + dr; if rr < 0 || rr > 15 { continue }
+            for dg in -1...1 { let gg = g + dg; if gg < 0 || gg > 15 { continue }
+                for db in -1...1 { let bb = bl + db; if bb < 0 || bb > 15 { continue }
+                    sum += hist[rr << 8 | gg << 4 | bb]
+                }
+            }
+        }
+        return Float(sum) / Float(total * 27)
+    }
+
     /// Whether the canvas result should replace the plain one: they disagree, and what the canvas
     /// version adds looks clearly unlike the background that remains (or nearly nothing remains).
     static func preferWide(plain: Plane, wide: Plane, image: RGBAImage) -> Bool {
@@ -335,12 +412,13 @@ public enum Segmenter {
     }
 
     /// Runs the network on a region of the photo extended by the given padding (left, top, right,
-    /// bottom, in photo pixels). The padding continues the photo's own edges, mirrored and
-    /// blurred, so there is no frame for the network to pick out: on a flat grey canvas a photo
-    /// with a small item on a plain surface reads as "a rectangle", and the whole frame is kept.
+    /// bottom, in photo pixels). Mirrored: the padding continues the photo's own edges, mirrored
+    /// and blurred, so there is no frame for the network to pick out. Grey: a flat grey canvas,
+    /// which makes a frame-filling close-up read as an object, but can make a small item on a
+    /// plain surface read as "a rectangle" (so its result is checked by `acceptCanvas`).
     /// Returns the region's probability at outW x outH.
     private static func pass(_ full: CGImage, region: CGRect, pads: (CGFloat, CGFloat, CGFloat, CGFloat),
-                             outW: Int, outH: Int, network: CutoutNetwork) throws -> Plane? {
+                             outW: Int, outH: Int, network: CutoutNetwork, canvas kind: Canvas = .mirrored) throws -> Plane? {
         let side = CutoutNetwork.side
         let cw = region.width + pads.0 + pads.2, ch = region.height + pads.1 + pads.3
         let sx = CGFloat(side) / cw, sy = CGFloat(side) / ch
@@ -352,7 +430,7 @@ public enum Segmenter {
         let n = side * side
         let padded = ox > 0 || oy > 0 || iw < side || ih < side
         var canvas = RGBAImage(width: side, height: side, fill: (128, 128, 128))
-        if padded {
+        if padded && kind == .mirrored {
             @inline(__always) func reflect(_ u: Int, _ len: Int) -> Int {
                 if len == 1 { return 0 }
                 let period = 2 * len
